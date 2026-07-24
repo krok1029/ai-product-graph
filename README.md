@@ -46,13 +46,16 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## Repository 狀態
 
-目前這個 repository 只包含規劃文件。實作應該在 MVP 範圍、資料模型、MCP tool 設計和整合策略確認後再開始。
+目前這個 repository 包含規劃文件與 Phase 1A 的 source layout；TypeScript scaffold 與功能實作尚未開始。
 
 ## 資料夾結構
 
 ```text
 .
+├── AGENTS.md
 ├── README.md
+├── data/
+│   └── .gitkeep
 ├── docs/
 │   ├── 00-vision.md
 │   ├── 01-product-requirements.md
@@ -65,13 +68,23 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 │   ├── 08-roadmap.md
 │   ├── 09-skills-and-tools.md
 │   ├── 10-mcp-first-architecture.md
+│   ├── 11-implementation-plan.md
+│   ├── 12-mcp-tool-spec.md
+│   ├── 13-sqlite-schema.md
+│   ├── 14-phase-1a-scaffold-spec.md
+│   ├── 15-codex-mcp-setup.md
 │   ├── adr/
+│   ├── agents/
 │   ├── prompts/
 │   └── research/
-├── design/
-├── app/
-├── packages/
-└── infra/
+└── src/
+    ├── domain/
+    ├── application/
+    ├── adapters/
+    │   └── mcp/
+    └── infrastructure/
+        ├── migrations/
+        └── sqlite/
 ```
 
 ## 建議下一步
