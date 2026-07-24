@@ -24,13 +24,32 @@ type ToolResult<T> = {
   ok: boolean;
   data?: T;
   error?: {
-    code: string;
+    code: ToolErrorCode;
     message: string;
     details?: unknown;
   };
   audit_log_id?: string;
 };
 ```
+
+### ToolErrorCode
+
+```ts
+type ToolErrorCode =
+  | "VALIDATION_ERROR"
+  | "NOT_FOUND"
+  | "CONFLICT"
+  | "STORAGE_ERROR"
+  | "INTERNAL_ERROR";
+```
+
+Error code 使用規則：
+
+- `VALIDATION_ERROR`：input schema、required field、enum 或 business rule 不合法。
+- `NOT_FOUND`：指定 entity 不存在，或不屬於目前 project。
+- `CONFLICT`：狀態衝突，例如 approve 已 archived 的 entity。
+- `STORAGE_ERROR`：SQLite migration、query、transaction 或 persistence failure。
+- `INTERNAL_ERROR`：未預期錯誤。
 
 ### ProductBriefJson
 

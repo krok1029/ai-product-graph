@@ -3,6 +3,9 @@
 ## 設計原則
 
 - SQLite 是第一版 canonical storage。
+- SQLite driver 使用 `better-sqlite3`。
+- 預設 database path 是 `./data/ai-product-graph.sqlite`。
+- 可用 `AI_PRODUCT_GRAPH_DB_PATH` 覆蓋 database path。
 - 主要 ID 使用 ULID。
 - 主要 entities 保留 `slug`，供顯示、搜尋和外部匯出。
 - AI generated content 一律先 `draft`。
@@ -370,6 +373,8 @@ blocked_by
 src/infrastructure/migrations/001_initial_schema.sql
 src/infrastructure/migrations/002_add_indexes.sql
 ```
+
+Phase 1A 直接建立完整 schema，不只建立 `projects` / `ideas` / `audit_log`。但第一批 repository 和 use cases 只實作 projects / ideas / audit log。
 
 需要一張 migration tracking table：
 
