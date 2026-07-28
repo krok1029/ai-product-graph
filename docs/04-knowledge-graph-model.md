@@ -25,6 +25,8 @@
 | `feature_area` | 大型產品能力區塊 |
 | `epic` | 一組相關實作工作 |
 | `ticket` | 可實作的工作項目 |
+| `implementation_target` | Ticket Revision 中對應單一 repository 的 required delivery target |
+| `external_work_item` | Plane、GitHub 等外部工具中的同步投影 |
 | `acceptance_criterion` | 可驗證的完成條件 |
 | `decision` | 產品或技術決策 |
 | `repository` | 程式碼 repository |
@@ -54,6 +56,14 @@
 本機 MCP server 先用 SQLite tables。Schema 要保持可攜，方便之後遷移到 Postgres。
 
 ```text
+graph_revisions
+  id
+  project_id
+  graph_draft_batch_id
+  source_product_brief_version_id
+  sequence_number
+  created_at
+
 graph_nodes
   id
   project_id
@@ -63,6 +73,9 @@ graph_nodes
   source
   external_ref
   metadata
+  lifecycle_status
+  created_in_graph_revision_id
+  last_changed_in_graph_revision_id
   created_at
   updated_at
 
@@ -74,6 +87,9 @@ graph_edges
   relation_type
   confidence
   metadata
+  lifecycle_status
+  created_in_graph_revision_id
+  last_changed_in_graph_revision_id
   created_at
   updated_at
 ```
@@ -93,7 +109,25 @@ SQLite 比較適合本機 MCP MVP：
 ## Graph 品質規則
 
 - 每張 ticket 應該連到至少一個 product goal 或 pain point。
+- 每個 Implementation Target 必須連到單一 Ticket 與單一 Repository；Ticket Revision 保存當版 required membership 與 scope。
+- 新版 Ticket Revision 對同一 Repository 必須重用 active Target identity；移除時 archive，重新加入時建立新 identity。
+- Product／project-level External Work Item 必須 `traces_to` Ticket；repository-specific External Work Item 必須 `traces_to` 單一 Implementation Target。
+- 同一 internal owner 在同一 External Container 最多只能有一個 active External Work Item；替換時 archive 舊 mapping 並建立新 mapping。
+- MVP 首次 External Work Item export 必須由使用者明確觸發；active mapping 才會 enrollment 後續 approved revision 與狀態同步。
+- First export 必須引用 current approved Ticket Revision；repository-specific export 的 Implementation Target 必須屬於該 revision 且符合 External Container Repository。
+- 外部 specification content 必須先保存為 immutable External Work Item Snapshot；與 approved Ticket Revision 不同時建立 Content Drift，不得直接改寫 canonical specification。
+- Outbound content sync 只能更新 adapter-managed fields，且必須先驗證外部 concurrency token 仍符合最後同步 snapshot；external-only fields 不得修改。
+- 每個 External Work Item 的 Sync Attempt 必須獨立且可冪等重試；partial failure 不得回滾內部 approval 或其他成功同步。
+- 需要外部副作用的 domain transaction 必須原子寫入 durable Sync Intents；外部 API 只可在 commit 後呼叫。
+- 同一 External Work Item 的 Sync Intents 必須依 per-mapping sequence 處理；只有尚未開始的 content updates 可被新版 supersede，lifecycle intents 不得省略。
+- Terminal-failed content update 可由新版 desired content 取代而不重試；failed lifecycle intent 必須阻擋該 mapping 的後續 intents。
+- 永久無法完成的 mapping 只能透過使用者 Decision 終止；archive 後才從 Sync Health 排除，且 failures 不得改寫為 success。
+- Sync Health 必須由目前應同步 revision／event 與各 active mappings 的 latest attempts 衍生，不得手動更新。
 - 每個 feature area 應該連到至少一個 persona 或 workflow。
 - 每個 PR 應該連到至少一張 ticket。
-- AI 建立的 nodes 在成為 canonical 前應該可以被 review。
+- AI proposed graph changes 必須在 Graph Draft Batch 層級 review，batch 核准前不是 canonical nodes 或 edges。
+- Graph Draft Batch 可以是 no-op reconciliation：`changes` 為空，但必須包含 `reconciliation_summary` 並經使用者核准。
+- 每次 Graph Draft Batch 成功套用都建立單調遞增的 Graph Revision；no-op batch 也建立 Graph Revision，但不修改任何 GraphNode 或 GraphEdge。
+- Graph Revision 必須保存來源 Product Brief Version；成功核准對應 batch 時，Project 的 Product Intent Reconciliation pointers 必須在同一 transaction 前進。
+- Product Intent Reconciliation 為 `pending` 時不得執行 implementation handoff 或 Result Acceptance；完成後只讓引用已變更或 archived nodes 的 Ticket Revisions 失效。
 - Graph changes 第一版使用簡單 audit log 追蹤，不做完整 event sourcing。

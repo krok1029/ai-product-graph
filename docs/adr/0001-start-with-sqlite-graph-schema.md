@@ -20,6 +20,8 @@ Proposed
 - `graph_edges`
 - JSON metadata fields
 - repository layer，之後可以支援 Postgres
+- connection factory 對每個 SQLite connection 執行 `PRAGMA foreign_keys = ON` 並讀回確認為 `1`；無法啟用時拒絕使用該 connection
+- migrations 完成後、開始服務前執行 `PRAGMA foreign_key_check`；任何 violation 都停止啟動，不自動修復
 
 ## Consequences
 
@@ -30,6 +32,8 @@ Benefits：
 - 本機安裝更容易。
 - 更適合單人 MCP usage。
 - Operational complexity 更低。
+- 每個 runtime connection 都會強制執行 schema 的 referential-integrity contract。
+- Startup 會在服務 request 前揭露過去於 foreign-key enforcement 關閉時形成的孤兒 references。
 
 Trade-offs：
 
@@ -37,6 +41,8 @@ Trade-offs：
 - 有些 graph queries 會需要 recursive SQL 或 application-side traversal。
 - Hosted usage、team collaboration 或 vector search 可能需要遷移到 Postgres。
 - 如果 graph query 變得核心且複雜，之後可能需要 Neo4j、Memgraph 或 ArangoDB。
+- Connection initialization 多一個 mandatory pragma 與 read-back gate；初始化失敗時 server 必須停止，而不能降級為未啟用 foreign keys。
+- 既有資料若違反 foreign keys，升級後會停止啟動並要求明確修復，而不是繼續以降級模式服務。
 
 ## Revisit When
 

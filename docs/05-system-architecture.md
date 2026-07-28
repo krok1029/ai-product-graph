@@ -42,6 +42,7 @@ Application Layer
   -> DTOs
   -> Draft / Approval Workflow
   -> Audit Log Writer
+  -> Durable Sync Intent / Outbox Writer
 
 AI Orchestration
   -> Prompt templates
@@ -61,6 +62,7 @@ Integrations
   -> Plane adapter after MVP core
   -> GitHub adapter later
   -> Coding agent handoff adapter
+  -> Post-commit Sync Intent processor
 ```
 
 ## 建置順序
@@ -83,6 +85,7 @@ Integrations
 - AI output 一律先成為 draft，approve 後才寫入 canonical data。
 - Graph edits 使用簡單 audit log，不做完整 event sourcing。
 - Domain model 不依賴外部整合；外部介面透過 ports & adapters 接入。
+- Approval transaction 只原子保存 domain state 與 durable Sync Intents，不在 transaction 內呼叫外部 API；integration processor 在 commit 後執行並可於服務重啟後恢復。
 - 第一版 implementation 只產生 handoff，不內建執行 coding agent。
 - 第一版 MCP transport 使用 stdio。
 - Primary target MCP client 是 Codex，但保持標準 MCP 相容。

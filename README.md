@@ -48,6 +48,8 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 目前這個 repository 包含規劃文件與 Phase 1A 的 source layout；TypeScript scaffold 與功能實作尚未開始。
 
+日常操作與文件閱讀入口請先看 [`docs/16-operation-manual.md`](docs/16-operation-manual.md)。欄位級 MCP 契約與 storage 細節再分別查 `docs/12-mcp-tool-spec.md`、`docs/13-sqlite-schema.md`。
+
 ## 資料夾結構
 
 ```text
@@ -73,6 +75,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 │   ├── 13-sqlite-schema.md
 │   ├── 14-phase-1a-scaffold-spec.md
 │   ├── 15-codex-mcp-setup.md
+│   ├── 16-operation-manual.md
 │   ├── adr/
 │   ├── agents/
 │   ├── prompts/
@@ -89,7 +92,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## 建議下一步
 
-先閱讀 `docs/` 裡的文件。第一個實作版本已決定採用：
+先閱讀 `docs/16-operation-manual.md`；不需要從頭逐篇閱讀所有 `docs/` 文件。第一個實作版本已決定採用：
 
 ```text
 本機 MCP server + Node.js + TypeScript + SQLite

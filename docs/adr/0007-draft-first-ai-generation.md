@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-AI Product Graph 會透過 AI 生成 Product Brief、graph nodes、graph edges、tickets 和 implementation brief。
+AI Product Graph 會透過 AI 生成 Product Brief、graph proposed changes、tickets 和 implementation brief。
 
 這些生成內容會直接影響 project knowledge graph 和後續 coding agent 的實作上下文。如果錯誤內容直接寫入 canonical data，會污染 graph，讓 tickets 和後續實作建立在錯誤假設上。
 
@@ -58,7 +58,7 @@ AI Product Graph 會透過 AI 生成 Product Brief、graph nodes、graph edges�
 
 第一版採用選項 B：AI 生成內容一律 draft first。
 
-Product Brief、graph nodes、graph edges 和 tickets 必須先建立為 draft。使用者 approve 後，才可以成為 canonical data。
+Product Brief Version、Graph Draft Batch、Ticket revisions 和 Implementation Brief 必須先建立為 draft。Graph proposed changes 在 batch 核准前不是 canonical GraphNodes 或 GraphEdges；使用者 approve 適用的 review unit 後，內容才可以成為 canonical data。
 
 ## Rationale
 
@@ -74,6 +74,6 @@ Product Brief、graph nodes、graph edges 和 tickets 必須先建立為 draft�
 
 ## Consequences
 
-- MCP tools 應區分 `create_draft_*`、`approve_*` 或在 input 中明確標示 draft 行為。
+- MCP tools 應區分 `create_draft_*`、`approve_*` 或在 input 中明確標示 draft 行為；graph 必須以 batch 為 review unit。
 - Resources 應能顯示 draft 和 canonical data 的差異。
 - Ticket 只有 approved 後才可外部匯出或進入 implementation handoff。

@@ -11,11 +11,16 @@
 
 ## 共用型別
 
-### EntityStatus
+### ReviewStatus 與 LifecycleStatus
 
 ```ts
-type EntityStatus = "draft" | "approved" | "archived";
+type ReviewStatus = "draft" | "approved";
+type LifecycleStatus = "active" | "archived";
 ```
+
+- `review_status` 只存在於需要人類審查的內容，例如 Product Brief Version 與 Ticket Revision；穩定 aggregate identity 沒有 `review_status`。
+- `lifecycle_status` 適用所有 entities。
+- Idea Record、Feedback Record 與 Observed Evidence 沒有 `review_status`。
 
 ### ToolResult
 
@@ -39,6 +44,7 @@ type ToolErrorCode =
   | "VALIDATION_ERROR"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "STALE_HANDOFF"
   | "STORAGE_ERROR"
   | "INTERNAL_ERROR";
 ```
@@ -47,9 +53,12 @@ Error code 使用規則：
 
 - `VALIDATION_ERROR`：input schema、required field、enum 或 business rule 不合法。
 - `NOT_FOUND`：指定 entity 不存在，或不屬於目前 project。
-- `CONFLICT`：狀態衝突，例如 approve 已 archived 的 entity。
+- `CONFLICT`：狀態衝突，例如 approve lifecycle 已是 archived 的 entity。
+- `STALE_HANDOFF`：Implementation Brief 的產品來源或 repository baseline 已不再 current。
 - `STORAGE_ERROR`：SQLite migration、query、transaction 或 persistence failure。
 - `INTERNAL_ERROR`：未預期錯誤。
+
+SQLite connection factory 必須在任何 migration、query 或 transaction 前，對每個新 connection 執行 `PRAGMA foreign_keys = ON` 並讀回確認為 `1`。無法啟用或驗證時不得把該 connection 提供給 MCP tools；server startup 或 connection acquisition 必須失敗，而不能在 foreign-key enforcement 關閉的狀態下繼續。所有 pending migrations 完成後、註冊或提供任何 MCP tool／resource 前，server 必須執行 `PRAGMA foreign_key_check`；結果非空時必須回報 storage integrity error 並停止啟動，不得自動刪除或修復資料。
 
 ### ProductBriefJson
 
@@ -98,7 +107,8 @@ Output：
   "project": {
     "id": "01J...",
     "slug": "ai-product-graph",
-    "name": "AI Product Graph"
+    "name": "AI Product Graph",
+    "lifecycle_status": "active"
   }
 }
 ```
@@ -172,15 +182,16 @@ Output：
   "idea": {
     "id": "01J...",
     "project_id": "01J...",
-    "status": "approved"
+    "lifecycle_status": "active"
   }
 }
 ```
 
 Notes：
 
-- 使用者直接輸入的 idea 可視為 approved。
-- AI 改寫後的 idea 應另建 draft。
+- 使用者直接輸入的內容保存為 canonical Idea Record，但不代表已核准實作。
+- Idea Record 沒有 `review_status`。
+- AI 改寫後的內容應另建 Idea Interpretation，且 `review_status` 為 `draft`。
 
 ### get_idea
 
@@ -212,6 +223,7 @@ Input：
 {
   "project_id": "01J...",
   "source_idea_id": "01J...",
+  "base_approved_version_id": null,
   "brief": {
     "product_goal": "",
     "target_users": [],
@@ -232,7 +244,16 @@ Output：
 {
   "product_brief": {
     "id": "01J...",
-    "status": "draft"
+    "project_id": "01J...",
+    "lifecycle_status": "active",
+    "current_approved_version_id": null
+  },
+  "version": {
+    "id": "01J...",
+    "version_number": 1,
+    "base_approved_version_id": null,
+    "review_status": "draft",
+    "lifecycle_status": "active"
   },
   "validation": {
     "warnings": []
@@ -244,18 +265,26 @@ Validation：
 
 - `brief.product_goal` required。
 - JSON schema required fields 必須存在。
+- `base_approved_version_id` 必須等於建立 draft 當下的 current approved version；第一版可以是 `null`。
 
-### approve_product_brief
+### approve_product_brief_version
 
-把 Product Brief draft 轉成 canonical approved brief。
+核准不可變的 Product Brief Version，並更新 Product Brief aggregate 的 current approved version pointer。
 
 Input：
 
 ```json
 {
-  "product_brief_id": "01J..."
+  "product_brief_version_id": "01J..."
 }
 ```
+
+Validation：
+
+- Version 的 `base_approved_version_id` 必須仍等於 Product Brief 的 current approved version。
+- Base mismatch 回傳 `CONFLICT`，不得更新 current approved pointer。
+- 核准只更新 Product Brief current pointer，不預先 archive 或重設所有衍生 Tickets。
+- 核准後 Product Intent Reconciliation 必須衍生為 `pending`，直到來源為此版本的 Graph Draft Batch 成功核准。
 
 Output：
 
@@ -263,37 +292,48 @@ Output：
 {
   "product_brief": {
     "id": "01J...",
-    "status": "approved",
+    "lifecycle_status": "active",
+    "current_approved_version_id": "01J..."
+  },
+  "version": {
+    "id": "01J...",
+    "review_status": "approved",
+    "lifecycle_status": "active",
     "approved_at": "2026-07-18T00:00:00.000Z"
-  }
+  },
+  "product_intent_reconciliation": {
+    "status": "pending",
+    "current_product_brief_version_id": "01J...",
+    "last_reconciled_product_brief_version_id": "01J..."
+  },
+  "archived_stale_version_ids": []
 }
 ```
 
-### create_graph_draft
+### create_graph_draft_batch
 
-儲存 graph nodes / edges draft。
+儲存一組 graph proposed changes。Review Status 屬於 batch，不屬於個別 proposed node / edge。若 Product Brief Version 與現有 graph 比較後不需要任何 node 或 edge 變更，可建立 no-op reconciliation batch；此時 `changes` 可為空，但必須提供 `reconciliation_summary`。
 
 Input：
 
 ```json
 {
   "project_id": "01J...",
-  "source_product_brief_id": "01J...",
-  "nodes": [
+  "base_graph_revision_id": "01J...",
+  "source_product_brief_version_id": "01J...",
+  "reconciliation_summary": "Compared the approved Product Brief Version with the current graph; no product-intent nodes or edges need changes.",
+  "changes": [
     {
-      "type": "product_goal",
-      "title": "",
-      "description": "",
-      "metadata": {}
-    }
-  ],
-  "edges": [
-    {
-      "source_temp_id": "n1",
-      "target_temp_id": "n2",
-      "relation_type": "supports",
-      "confidence": 0.8,
-      "metadata": {}
+      "change_id": "c1",
+      "operation": "add",
+      "entity_kind": "node",
+      "target_id": null,
+      "payload": {
+        "type": "product_goal",
+        "title": "",
+        "description": "",
+        "metadata": {}
+      }
     }
   ]
 }
@@ -303,33 +343,40 @@ Output：
 
 ```json
 {
-  "draft": {
-    "node_ids": [],
-    "edge_ids": []
+  "graph_draft_batch": {
+    "id": "01J...",
+    "base_graph_revision_id": "01J...",
+    "review_status": "draft",
+    "lifecycle_status": "active",
+    "change_count": 1,
+    "is_noop_reconciliation": false
   },
   "validation": {
-    "warnings": []
+    "warnings": [],
+    "conflicts": []
   }
 }
 ```
 
 Validation：
 
-- Node type 必須屬於支援清單。
-- Edge relation type 必須屬於支援清單。
-- Edge endpoints 必須存在於同一 batch 或既有 graph。
+- `operation` 必須是 `add`、`update` 或 `archive`。
+- `base_graph_revision_id` 必須等於建立 batch 當下的 Project current Graph Revision；graph 尚未建立 revision 時可以是 `null`。
+- `changes` 可以為空；空 changes 表示 no-op reconciliation，必須提供非空 `reconciliation_summary`。
+- Node type 與 edge relation type 必須屬於支援清單。
+- Edge endpoints 必須指向同一 batch 的 proposed node 或既有 active GraphNode。
+- Changes 必須位於 Product Brief extraction 的 ownership scope。
+- Identity 無法確定時必須回傳 conflict，且 batch 不可核准。
 
-### approve_graph_draft
+### approve_graph_draft_batch
 
-Approve graph draft nodes / edges。
+原子核准並套用整個 Graph Draft Batch。
 
 Input：
 
 ```json
 {
-  "project_id": "01J...",
-  "node_ids": [],
-  "edge_ids": []
+  "graph_draft_batch_id": "01J..."
 }
 ```
 
@@ -337,12 +384,44 @@ Output：
 
 ```json
 {
-  "approved": {
-    "node_ids": [],
-    "edge_ids": []
+  "graph_draft_batch": {
+    "id": "01J...",
+    "review_status": "approved",
+    "lifecycle_status": "active"
+  },
+  "graph_revision": {
+    "id": "01J...",
+    "sequence_number": 3,
+    "source_product_brief_version_id": "01J..."
+  },
+  "applied": {
+    "added_ids": [],
+    "updated_ids": [],
+    "archived_ids": [],
+    "is_noop_reconciliation": true,
+    "reconciliation_summary": "Compared the approved Product Brief Version with the current graph; no product-intent nodes or edges need changes."
+  },
+  "archived_stale_batch_ids": [],
+  "product_intent_reconciliation": {
+    "status": "current",
+    "current_product_brief_version_id": "01J...",
+    "last_reconciled_product_brief_version_id": "01J...",
+    "product_intent_graph_revision_id": "01J..."
   }
 }
 ```
+
+Validation：
+
+- Input 不接受個別 node IDs 或 edge IDs。
+- Batch 的 `base_graph_revision_id` 必須等於 approval 當下的 Project current Graph Revision。
+- Batch 的 `source_product_brief_version_id` 必須等於 approval 當下的 Product Brief current approved version；不相等時回傳 `CONFLICT`，且不得推進 Product Intent Reconciliation。
+- Base mismatch 回傳 `CONFLICT` 與目前 revision ID，不得自動 merge 或部分套用。
+- Batch 必須沒有 unresolved conflicts。
+- 所有 changes 必須在單一 transaction 中全數成功；失敗時不得部分套用。No-op reconciliation batch 不修改任何 GraphNode 或 GraphEdge。
+- 成功後必須在同一 transaction 更新 Project 的 `last_reconciled_product_brief_version_id` 與 `product_intent_graph_revision_id`，使 Product Intent Reconciliation 成為 `current`。
+- 成功後必須建立 Graph Revision，即使 batch 是 no-op reconciliation。
+- 成功後必須在同一 transaction archive 其他 base 已變 stale 的 active Graph Draft Batches。
 
 ### get_graph_context
 
@@ -353,7 +432,7 @@ Input：
 ```json
 {
   "project_id": "01J...",
-  "status": "approved",
+  "lifecycle_status": "active",
   "node_types": ["product_goal", "pain_point", "feature_area"],
   "max_depth": 2
 }
@@ -363,10 +442,16 @@ Output：
 
 ```json
 {
+  "graph_revision_id": "01J...",
   "nodes": [],
   "edges": []
 }
 ```
+
+Notes：
+
+- Canonical GraphNode 與 GraphEdge 沒有 `review_status`。
+- `lifecycle_status` 預設為 `active`。
 
 ### get_node_trace
 
@@ -393,24 +478,32 @@ Output：
 }
 ```
 
-### create_ticket_drafts
+### create_ticket_draft_batch
 
-儲存 client agent 產生的 ticket drafts。
+儲存 client agent 同一次產生的 Ticket Draft Batch。每個新工作單位會建立穩定 Ticket identity 與第一個 draft Ticket Revision。
 
 Input：
 
 ```json
 {
   "project_id": "01J...",
+  "source_graph_revision_id": "01J...",
   "source_node_ids": ["01J..."],
   "tickets": [
     {
       "title": "",
+      "traces_to_ticket_id": null,
       "user_story": "",
       "scope": [],
       "acceptance_criteria": [],
       "non_goals": [],
       "related_graph_node_ids": [],
+      "implementation_targets": [
+        {
+          "repository_id": "01J...",
+          "scope": []
+        }
+      ],
       "implementation_notes": []
     }
   ]
@@ -421,12 +514,31 @@ Output：
 
 ```json
 {
-  "tickets": [
-    {
+  "ticket_draft_batch": {
+    "id": "01J...",
+    "lifecycle_status": "active"
+  },
+  "tickets": [{
+    "ticket": {
       "id": "01J...",
-      "status": "draft"
-    }
-  ],
+      "lifecycle_status": "active",
+      "delivery_status": "planned"
+    },
+    "revision": {
+      "id": "01J...",
+      "revision_number": 1,
+      "base_approved_revision_id": null,
+      "source_graph_revision_id": "01J...",
+      "review_status": "draft",
+      "lifecycle_status": "active"
+    },
+    "proposed_implementation_targets": [
+      {
+        "repository_id": "01J...",
+        "scope": []
+      }
+    ]
+  }],
   "validation": {
     "warnings": []
   }
@@ -437,17 +549,39 @@ Validation：
 
 - `title` required。
 - `acceptance_criteria` 至少一項。
+- `traces_to_ticket_id` 若存在，必須指向同一 Project 中的 active 或 archived Ticket；建立後以 `traces_to` edge 保存關係。
+- `source_graph_revision_id` 必須是 Project 目前的 Graph Revision。
 - `related_graph_node_ids` 至少一項，且應包含 product goal 或 pain point trace。
+- `implementation_targets` 至少一項，且每個 target 對應單一 active Repository。
+- 同一 Ticket Revision 不得重複相同 `repository_id`。
+- First revision 的 stable Implementation Target identities 在 revision approval transaction 建立，draft output 只保存 proposed target specifications。
 
-### approve_ticket
+### create_ticket_revision_draft
 
-Approve ticket。
+為既有 Ticket 建立新的 immutable specification revision draft。
 
 Input：
 
 ```json
 {
-  "ticket_id": "01J..."
+  "ticket_id": "01J...",
+  "base_approved_revision_id": "01J...",
+  "source_graph_revision_id": "01J...",
+  "specification": {
+    "title": "",
+    "user_story": "",
+    "scope": [],
+    "acceptance_criteria": [],
+    "non_goals": [],
+    "related_graph_node_ids": [],
+    "dependencies": [],
+    "implementation_targets": [
+      {
+        "repository_id": "01J...",
+        "scope": []
+      }
+    ]
+  }
 }
 ```
 
@@ -457,10 +591,97 @@ Output：
 {
   "ticket": {
     "id": "01J...",
-    "status": "approved"
-  }
+    "lifecycle_status": "active",
+    "current_approved_revision_id": "01J..."
+  },
+  "revision": {
+    "id": "01J...",
+    "base_approved_revision_id": "01J...",
+    "source_graph_revision_id": "01J...",
+    "review_status": "draft",
+    "lifecycle_status": "active"
+  },
+  "proposed_implementation_targets": [
+    {
+      "implementation_target_id": "01J...",
+      "repository_id": "01J...",
+      "scope": [],
+      "identity_action": "reuse"
+    },
+    {
+      "implementation_target_id": null,
+      "repository_id": "01J...",
+      "scope": [],
+      "identity_action": "create_on_approval"
+    }
+  ],
+  "archived_stale_revision_ids": []
 }
 ```
+
+Validation：
+
+- `base_approved_revision_id` 必須等於建立 draft 當下的 Ticket current approved revision。
+- `source_graph_revision_id` 必須是 Project 目前的 Graph Revision。
+- Repository 已有同一 Ticket 的 active Implementation Target 時，draft 必須 reuse 該 identity；不得為同一 Repository 建立第二個 active Target。
+- Repository 只有 archived Target 時，draft 必須標示 `create_on_approval`，不得直接復活 archived identity。
+
+### approve_ticket_revision
+
+Approve 單一 Ticket Revision。Ticket Draft Batch 不是原子核准單位。
+
+Input：
+
+```json
+{
+  "ticket_revision_id": "01J..."
+}
+```
+
+Output：
+
+```json
+{
+  "ticket": {
+    "id": "01J...",
+    "lifecycle_status": "active",
+    "delivery_status": "planned",
+    "current_approved_revision_id": "01J..."
+  },
+  "revision": {
+    "id": "01J...",
+    "review_status": "approved",
+    "lifecycle_status": "active"
+  },
+  "implementation_targets": [
+    {
+      "id": "01J...",
+      "repository_id": "01J...",
+      "lifecycle_status": "active",
+      "identity_action": "reused"
+    }
+  ],
+  "archived_implementation_target_ids": [],
+  "archived_implementation_brief_ids": [],
+  "archived_implementation_result_ids": [],
+  "created_sync_intent_ids": []
+}
+```
+
+Validation：
+
+- Revision 的 `base_approved_revision_id` 必須仍等於 Ticket 的 current approved revision。
+- Base mismatch 回傳 `CONFLICT`，不得更新 current approved pointer。
+- Revision 引用的產品意圖必須仍是 active。
+- Revision 的相依 Tickets 必須已有 approved revision，或在同一次操作中一起核准。
+- 同一 Repository 的 existing active Implementation Target 必須沿用；新增 Repository 才建立新 identity。
+- 新 approved revision 移除的 active Targets 必須 archive；對其 active repository-specific mappings 建立 close Sync Intents。
+- Archived Target 日後重新加入時必須建立新 identity，不得 unarchive。
+- Replacement revision approval 必須把 Ticket Delivery Status 重設為 `planned`，不得保留舊 revision 的 `in_progress`、`blocked` 或 `done`。
+- Replacement revision approval 必須以 `source_revision_superseded` archive 綁定舊 revision 的所有 active Implementation Briefs 與 Implementation Results；保留它們的 Review Status、Acceptances 與 evidence。
+- Target reconciliation、current revision pointer update、Delivery Status reset、archive old artifacts、archive removed targets 與 Sync Intent creation 必須在同一 transaction 完成。
+- Active External Work Item mappings 必須收到新版 content 與 `planned` status 的 Sync Intents；外部同步失敗不回滾 approval。
+- 成功後必須在同一 transaction archive 其他 base 已變 stale 的 active Ticket Revisions。
 
 ### get_ticket_context
 
@@ -480,6 +701,7 @@ Output：
 ```json
 {
   "ticket": {},
+  "revision": {},
   "related_nodes": [],
   "related_edges": [],
   "markdown": ""
@@ -494,7 +716,8 @@ Input：
 
 ```json
 {
-  "ticket_id": "01J...",
+  "implementation_target_id": "01J...",
+  "supersedes_implementation_brief_id": null,
   "repo_context": {
     "repository_name": "",
     "summary": "",
@@ -511,26 +734,569 @@ Input：
 }
 ```
 
+Validation：
+
+- `implementation_target_id` 必須屬於 active approved Ticket Revision。
+- Repository Context Snapshot 的 repository identity 必須符合 Implementation Target。
+- Ticket Revision 引用的產品意圖 nodes 必須仍是 active 且自該 revision 核准後未變更。
+- Ticket dependencies 必須仍有效。
+- `supersedes_implementation_brief_id` 若存在，必須指向同一 Implementation Target 的 Implementation Brief；可以是同 revision 的 active predecessor，或 prior revision 的 archived predecessor。
+
 Output：
 
 ```json
 {
   "implementation_brief": {
     "id": "01J...",
-    "status": "draft"
+    "supersedes_implementation_brief_id": null,
+    "review_status": "draft",
+    "lifecycle_status": "active"
   }
 }
 ```
 
-### export_markdown_draft
+### approve_implementation_brief
 
-把 draft 或 approved entity render 成 Markdown。
+核准 Implementation Brief。若同一 Implementation Target 已有 active approved brief，新 brief 必須明確 supersede 舊 brief。
 
 Input：
 
 ```json
 {
-  "entity_type": "product_brief",
+  "implementation_brief_id": "01J..."
+}
+```
+
+Output：
+
+```json
+{
+  "implementation_brief": {
+    "id": "01J...",
+    "review_status": "approved",
+    "lifecycle_status": "active",
+    "supersedes_implementation_brief_id": "01J..."
+  },
+  "archived_implementation_brief_id": "01J..."
+}
+```
+
+Validation：
+
+- Repository Context Snapshot 必須符合 approval 所需的 baseline 規則。
+- 同一 Implementation Target 最多只能有一份 active approved brief。
+- 若已有 active approved brief，新 brief 的 `supersedes_implementation_brief_id` 必須指向它。
+- 若沒有 active approved brief，`supersedes_implementation_brief_id` 可選擇指向最近的 archived approved predecessor 作為 lineage，但不得改變 predecessor Lifecycle Status。
+- 核准新 brief 與 archive 被取代 brief 必須在單一 transaction 中完成。
+
+### get_implementation_handoff
+
+在交給 coding agent 前驗證 approved Implementation Brief 的產品來源與 repository freshness。只有 `current` 時才回傳 handoff payload。
+
+Input：
+
+```json
+{
+  "implementation_brief_id": "01J...",
+  "current_repository_state": {
+    "commit_sha": "abc123...",
+    "dirty_state_fingerprint": null
+  }
+}
+```
+
+Output：
+
+```json
+{
+  "freshness": "current",
+  "implementation_brief": {},
+  "implementation_target": {},
+  "ticket_revision": {},
+  "product_brief_version": {},
+  "repository_context_snapshot": {}
+}
+```
+
+Validation：
+
+- Project 的 Product Intent Reconciliation 必須是 `current`；否則回傳 `STALE_HANDOFF`，reason 為 `product_intent_unreconciled`。
+- Implementation Brief 必須是 active approved。
+- 綁定的 Ticket Revision 必須仍是 Ticket 的 current approved revision。
+- 綁定的 Product Brief Version 只作為生成 provenance；reconciliation 完成後，不得僅因 current Product Brief pointer 不同而判定 stale。
+- Ticket Revision 引用的產品意圖 nodes 必須仍是 active，且 `last_changed_in_graph_revision_id` 不得晚於 Ticket Revision 的 `source_graph_revision_id`；dependencies 必須仍有效。
+- 所有來源 entities 必須是 active。
+- Commit SHA 與 dirty-state fingerprint 必須符合 Repository Context Snapshot。
+- 任一條件不符或無法驗證時回傳 `STALE_HANDOFF`，且不得輸出 handoff payload。
+
+### record_observed_evidence
+
+保存由本機 MCP client 提供、通過格式與 repository identity 驗證的 Observed Evidence。此 tool 只記錄機器回報的可追溯 evidence，不代表 implementation 已被接受，也不會改變 Ticket Delivery Status。
+
+Input：
+
+```json
+{
+  "project_id": "01J...",
+  "repository_id": "01J...",
+  "evidence_type": "test_execution",
+  "idempotency_key": "repo-01J-test-pnpm-test-2026-07-24T00:00:00.000Z",
+  "payload": {
+    "command": "pnpm test",
+    "status": "passed",
+    "started_at": "2026-07-24T00:00:00.000Z",
+    "completed_at": "2026-07-24T00:01:00.000Z",
+    "summary": ""
+  }
+}
+```
+
+Output：
+
+```json
+{
+  "observed_evidence": {
+    "id": "01J...",
+    "project_id": "01J...",
+    "repository_id": "01J...",
+    "evidence_type": "test_execution",
+    "idempotency_key": "repo-01J-test-pnpm-test-2026-07-24T00:00:00.000Z",
+    "payload_hash": "sha256:abc123...",
+    "lifecycle_status": "active",
+    "created_at": "2026-07-24T00:01:00.000Z"
+  },
+  "created": true
+}
+```
+
+若同一 Project 內同一 idempotency key 已存在，但 repository、evidence type 或 payload hash 任一不同，Output：
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "CONFLICT",
+    "message": "Observed evidence idempotency key was reused with different evidence identity or payload.",
+    "details": {
+      "existing_observed_evidence_id": "01J...",
+      "existing_repository_id": "01J...",
+      "submitted_repository_id": "01J...",
+      "existing_evidence_type": "test_execution",
+      "submitted_evidence_type": "commit",
+      "existing_payload_hash": "sha256:abc123...",
+      "submitted_payload_hash": "sha256:def456..."
+    }
+  }
+}
+```
+
+Validation：
+
+- `project_id` required，且 Project 必須 active。
+- `repository_id` required，必須屬於同一 Project 且 Repository 必須 active。
+- Input 不接受 `implementation_target_id`；Observed Evidence 只綁定 Repository，Implementation Target binding 由 `submit_implementation_result` 透過 Implementation Brief / Target / Ticket Revision 建立。
+- `evidence_type` 必須是 `commit`、`pull_request`、`test_execution` 或 `artifact`。
+- `idempotency_key` required，且必須在 Project 內唯一，不是 Repository 內唯一；若同一 Project 內同一 key 已存在，只有 existing row 的 `repository_id`、`evidence_type` 與 `payload_hash` 都等於本次請求，tool 才能回傳既有 Observed Evidence 並標示 `created: false`。
+- Input 不接受 `payload_hash`；server 必須先對 validated payload 套用 schema-defined semantic normalization，再使用 RFC 8785 JSON Canonicalization Scheme 產生 canonical bytes，並計算 SHA-256 `payload_hash`。
+- `payload_json` 必須保存實際被 SHA-256 hash 的 RFC 8785 canonical JSON UTF-8 文字；Phase 1A 不保存 client 原始 payload。
+- 若同一 Project 內同一 `idempotency_key` 已存在，但 `repository_id`、`evidence_type` 或 `payload_hash` 任一不同，必須回傳 `CONFLICT`，不得改寫或建立新的 Observed Evidence。
+- `payload` 必須符合該 evidence type 的 schema。
+- Phase 1A 的四種 evidence payload schema 均為 closed schema，等同 JSON Schema `additionalProperties: false`；任何未宣告欄位必須被拒絕，不得進入 canonical payload 或 `payload_hash`。
+- `payload` 內所有 timestamp fields 必須使用固定的 UTC 毫秒格式 `YYYY-MM-DDTHH:mm:ss.sssZ`；不接受時區 offset、缺少毫秒或其他精度。Server 必須先驗證此格式，再計算 `payload_hash`。
+- Observed Evidence 沒有 `review_status`，也不需要 Approval。
+- Tool 不接受 AI summary、criterion verdict 或 acceptance claim；這些屬於 Evidence Interpretation 或 Implementation Result。
+- 成功保存 evidence 不得改變 Implementation Result、Result Acceptance 或 Ticket Delivery Status。
+
+Observed Evidence payload schemas：
+
+四種 payload 都是 closed schema，未列出的欄位一律拒絕。每種 payload 都必須包含 `schema_version`；Phase 1A 只接受整數 `1`。除非個別 schema 另有說明，所有 timestamp fields 均使用 `YYYY-MM-DDTHH:mm:ss.sssZ`。
+
+`commit`：
+
+```json
+{
+  "schema_version": 1,
+  "commit_sha": "abc123...",
+  "message": "Implement ticket workflow",
+  "authored_at": "2026-07-24T00:00:00.000Z",
+  "committed_at": "2026-07-24T00:01:00.000Z",
+  "parent_shas": ["def456..."],
+  "changed_files": ["src/index.ts"]
+}
+```
+
+Required fields：
+
+- `schema_version`
+- `commit_sha`
+- `committed_at`
+- `changed_files`
+
+`changed_files` 必須是 string array，欄位不可省略但可為空陣列 `[]`。每個 entry 必須是 repository-relative POSIX path；絕對路徑、反斜線與 `..` path segment 必須被拒絕。Server 必須在計算 `payload_hash` 前去除重複 entry，並以 Unicode code point lexical order 排序。空陣列只表示該 commit 沒有觀測到檔案變更，不代表任何 acceptance criterion 已滿足。
+
+`pull_request`：
+
+```json
+{
+  "schema_version": 1,
+  "provider": "github",
+  "external_id": "123",
+  "url": "https://github.com/acme/repo/pull/123",
+  "title": "Implement ticket workflow",
+  "source_branch": "feature/tickets",
+  "target_branch": "main",
+  "status": "open",
+  "head_commit_sha": "abc123...",
+  "created_at": "2026-07-24T00:00:00.000Z",
+  "updated_at": "2026-07-24T00:01:00.000Z"
+}
+```
+
+Required fields：
+
+- `schema_version`
+- `provider`
+- `external_id`
+- `url`
+- `title`
+- `status`
+- `head_commit_sha`
+
+Allowed `status` values：
+
+- `draft`
+- `open`
+- `merged`
+- `closed`
+
+`test_execution`：
+
+```json
+{
+  "schema_version": 1,
+  "command": "pnpm test",
+  "status": "passed",
+  "started_at": "2026-07-24T00:00:00.000Z",
+  "completed_at": "2026-07-24T00:01:00.000Z",
+  "exit_code": 0,
+  "summary": "",
+  "log_artifact_ref": null
+}
+```
+
+Required fields：
+
+- `schema_version`
+- `command`
+- `status`
+- `started_at`
+- `completed_at`
+- `exit_code`
+
+Allowed `status` values：
+
+- `passed`
+- `failed`
+- `errored`
+- `cancelled`
+
+`exit_code` consistency rules：
+
+- `passed`：必須是 `0`。
+- `failed`：必須是非零整數。
+- `errored`：可為 `null` 或整數。
+- `cancelled`：可為 `null` 或整數。
+
+`exit_code` 欄位本身仍為 required；只有 `errored` 與 `cancelled` 允許其值為 `null`。
+
+`completed_at` 必須晚於或等於 `started_at`；時間倒置的 payload 必須被拒絕。
+
+`artifact`：
+
+```json
+{
+  "schema_version": 1,
+  "artifact_type": "file",
+  "name": "coverage.json",
+  "uri": "file://relative-or-client-resolved-reference",
+  "content_hash": "sha256:abc123...",
+  "created_at": "2026-07-24T00:01:00.000Z",
+  "description": ""
+}
+```
+
+Required fields：
+
+- `schema_version`
+- `artifact_type`
+- `name`
+- `uri`
+- `content_hash`
+- `created_at`
+
+### submit_implementation_result
+
+提交 coding agent 的不可變候選結果。Observed Evidence 可先經 evidence ingestion 成為 canonical；summary 與 criterion verdicts 屬於 draft interpretation。
+
+Input：
+
+```json
+{
+  "implementation_brief_id": "01J...",
+  "supersedes_implementation_result_id": null,
+  "observed_evidence_ids": ["01J..."],
+  "summary": "",
+  "criterion_verdicts": [
+    {
+      "acceptance_criterion_id": "01J...",
+      "verdict": "satisfied",
+      "reason": "The referenced test execution passed the criterion's required behavior.",
+      "evidence_ids": ["01J..."]
+    }
+  ],
+  "unfinished_items": []
+}
+```
+
+Output：
+
+```json
+{
+  "implementation_result": {
+    "id": "01J...",
+    "implementation_brief_id": "01J...",
+    "supersedes_implementation_result_id": null,
+    "review_status": "draft",
+    "lifecycle_status": "active",
+    "submission_disposition": "reviewable",
+    "stale_at_submission": false,
+    "stale_reasons": []
+  }
+}
+```
+
+若來源已 stale，Output 改為：
+
+```json
+{
+  "implementation_result": {
+    "id": "01J...",
+    "implementation_brief_id": "01J...",
+    "supersedes_implementation_result_id": null,
+    "review_status": "draft",
+    "lifecycle_status": "archived",
+    "submission_disposition": "stale_archived",
+    "stale_at_submission": true,
+    "stale_reasons": ["ticket_revision_not_current"]
+  },
+  "observed_evidence_ids": ["01J..."]
+}
+```
+
+Validation：
+
+- Implementation Brief 必須存在，且 Result 永久綁定該 brief 的 Ticket Revision 與 Implementation Target。
+- Evidence references 必須存在並屬於 target Repository；同一 Observed Evidence 可被多個 Implementation Results 引用，只要每個 Result 的 Implementation Target 都屬於該 Repository。
+- Evidence references 不需要預先綁定 Implementation Target；每個 Result 本身才是 evidence 與該 Implementation Target 的綁定點。
+- Top-level `observed_evidence_ids` 定義該 Result 引用的完整 evidence set；每個 `criterion_verdicts[].evidence_ids` 必須是此集合的子集。任何 criterion 引用集合外的 Observed Evidence 都必須回傳 validation error，不得建立 Result。
+- Top-level `observed_evidence_ids` 可包含未被任何 `criterion_verdicts[].evidence_ids` 引用的 Observed Evidence；這些 evidence 可支撐 Result summary、unfinished items 或整體實作 provenance，但不支撐任何 acceptance criterion，也不得影響 Result Acceptance。
+- `supersedes_implementation_result_id` 若存在，必須指向同一 Implementation Target 的 active approved Result。
+- 每個 acceptance criterion 必須具有 verdict。`criterion_verdicts[].verdict` 只允許 `satisfied` 或 `unsatisfied`；若 client 提交 `waived`、`waiver_decision_id` 或任何 waiver decision payload，必須回傳 validation error。`satisfied` 必須提供 trim 後非空的 `reason`，簡述所引用 evidence 如何支撐 criterion，否則回傳 validation error；draft Result 可暫時保存 `evidence_ids` 為空但 reason 有效的 `satisfied` verdict，但該 Result 不具 acceptance eligibility。`unsatisfied` 也必須提供 trim 後非空的 `reason`，否則回傳 validation error；其 `evidence_ids` 可為空，也可引用 failed test 等反證。`submit_implementation_result` 不得建立 Waiver Decision；所有 submission verdict、reason 與 evidence references 在建立後不可由 Result Acceptance 修改。
+- Evidence ingestion 與 Result review eligibility 必須分開判定；格式與引用有效的 Observed Evidence 即使 handoff source 已 stale 仍應保存。
+- 若 Product Intent Reconciliation 為 `pending`，Result 必須建立為 archived draft，並加入 `product_intent_unreconciled` stale reason。
+- 若綁定的 Ticket Revision、Implementation Target、referenced intent nodes、dependencies 或其他相關 handoff source 在提交時已 stale，Result 必須建立為 archived draft，記錄 `stale_at_submission` 與 reasons，不回傳 validation error 丟棄整份提交。Reconciliation 完成後，Product Brief provenance pointer 不同本身不構成 stale。
+- Stale archived Result 不得 supersede active approved Result，不得執行 Result Acceptance，也不得改變 Ticket Delivery Status。
+- Client 可跨 Implementation Results 重用已保存的 evidence references，但每個 Result 的 criterion verdicts 必須獨立建立；其他 Result 的 verdicts 或 Result Acceptance 不得隨 evidence reference 一併沿用。
+
+### accept_implementation_result
+
+執行 Result Acceptance，把 draft Implementation Result 核准為 approved，並在所有 required targets 完成時更新 Ticket Delivery Status。
+
+Input：
+
+```json
+{
+  "idempotency_key": "accept-result-01J-2026-07-24T00:00:00.000Z",
+  "implementation_result_id": "01J...",
+  "waivers": [
+    {
+      "acceptance_criterion_id": "01J...",
+      "reason": "The unmet criterion is acceptable for this result because the scoped MVP excludes that behavior."
+    }
+  ]
+}
+```
+
+Output：
+
+```json
+{
+  "implementation_result": {
+    "id": "01J...",
+    "review_status": "approved",
+    "lifecycle_status": "active"
+  },
+  "result_acceptance": {
+    "id": "01J...",
+    "project_id": "01J...",
+    "implementation_result_id": "01J...",
+    "actor_id": "01J...",
+    "accepted_at": "2026-07-24T00:00:00.000Z"
+  },
+  "criterion_outcomes": [
+    {
+      "id": "01J...",
+      "result_acceptance_id": "01J...",
+      "acceptance_criterion_id": "01J...",
+      "submitted_verdict_id": "01J...",
+      "outcome": "waived",
+      "waiver_decision_id": "01J...",
+      "created_at": "2026-07-24T00:00:00.000Z"
+    }
+  ],
+  "waiver_decisions": [
+    {
+      "id": "01J...",
+      "project_id": "01J...",
+      "decision_type": "acceptance_criterion_waiver",
+      "summary": "The unmet criterion is acceptable for this result because the scoped MVP excludes that behavior.",
+      "actor_id": "01J...",
+      "created_at": "2026-07-24T00:00:00.000Z"
+    }
+  ],
+  "archived_result_ids": [],
+  "ticket": {
+    "id": "01J...",
+    "delivery_status": "done"
+  }
+}
+```
+
+Validation：
+
+- Project 的 Product Intent Reconciliation 必須是 `current`。
+- `idempotency_key` required，且唯一範圍是同一 Project、目前 Local Actor、`accept_implementation_result` operation。Server 必須先用 closed schema 與語意規則 normalize command：包含 `implementation_result_id`、trim 後的 waiver reasons，以及依 approved Ticket Revision acceptance criteria 原始順序排列的 waivers；`idempotency_key` 本身不參與 command fingerprint。Server 必須使用 RFC 8785 JSON Canonicalization Scheme 對 normalized command 產生 canonical bytes，再用 SHA-256 計算 `normalized_command_hash`，並在成功 transaction 中保存 Operation Receipt。
+- Input 不直接包含 `project_id`。Server 必須先以 `implementation_result_id` 做 identity-only resolution，僅確認 Result identity 存在並解析其 Project scope；此步不得驗證 Result 是否為 active draft、是否已有 Acceptance、handoff source 是否 current，或其他 lifecycle／business state。
+- 若 `implementation_result_id` 不存在，identity-only resolution 必須立即回傳 `NOT_FOUND`；server 不得在無法解析 Project scope 時查找或建立 Operation Receipt。
+- Operation Receipt lookup 必須先於 Result target state validation。Server 必須先查同一 Project、Local Actor、operation 與 `idempotency_key` 的 receipt；若命中且 normalized command hash 相同，直接 replay，不得因 Result 現在已非 active draft、已有 Acceptance 或其他由原成功 transaction 造成的狀態變化而回傳 `CONFLICT`。
+- 只有 Operation Receipt miss 時，server 才能繼續執行下列完整 Result target state validation。
+- 若同一 Project、Local Actor、operation 與 `idempotency_key` 已有 Operation Receipt，且 normalized command hash 相同，tool 必須回放 receipt 中保存的原始成功 response data，不得重新建立 Acceptance、Outcomes、Waiver Decisions、archive domain rows 或 Ticket status update。
+- 若同一 Project、Local Actor、operation 與 `idempotency_key` 已存在但 normalized command hash 不同，必須回傳 `CONFLICT`。不得把既有 Result Acceptance uniqueness error 假裝成 idempotent success，也不得覆寫 receipt 或 response。
+- 若同一 normalized command 使用不同 `idempotency_key` 重送，必須視為新的 logical command。若該 Result 已因先前成功 acceptance 而不再是 active draft，或已存在 Result Acceptance，必須回傳一般 `CONFLICT`；不得依 `implementation_result_id` 或既有 Result Acceptance 反查 Operation Receipt 並當作 replay。
+- 首次成功時建立的 Operation Receipt 必須只綁定本次 Result Acceptance：`result_acceptance_id` 必須等於新建 Acceptance ID，`result_revocation_id` 必須為 null，且 `operation_name` 必須是 `accept_implementation_result`。同一 Result Acceptance 最多只能有一筆 Operation Receipt，不得讓不同 idempotency keys 指向同一 Acceptance。
+- Operation Receipt 只在成功提交 domain transaction 後保存。Validation error、`NOT_FOUND`、`CONFLICT`、`STALE_HANDOFF`、`STORAGE_ERROR` 或其他失敗 response 不得保存；修正失敗原因後，相同 `idempotency_key` 可重新嘗試，除非已有成功 receipt。
+- 成功建立 receipt 後，該 Operation Receipt、Result Acceptance 與作為 target identity 的 Implementation Result 都不得 hard delete。Implementation Result 退出有效範圍時只能 archive；Receipt 與 Acceptance 沒有 Lifecycle Status，必須永久保留。
+- SQLite delete guards 必須無條件拒絕刪除 Operation Receipt 與 Result Acceptance，並在 Implementation Result 已可經 Acceptance 或 Revocation 連到任一 Receipt 時拒絕刪除該 Result。
+- Operation Receipt 的 `response_json` 只保存 successful `ToolResult.data` 的 RFC 8785 canonical JSON UTF-8 text，且不得保存完整 `{ ok, data, error, audit_log_id }` envelope。Replay 時 server 必須 parse 保存的 data 並重新組成目前標準的 `{ ok: true, data, audit_log_id? }`；若原始成功 response 有 `audit_log_id`，該 ID 必須由 receipt 的 audit log reference 重新帶回。
+- Replay 必須保持 `data` 完全等同原始成功的 domain response data，不得在 `data` 中新增 `replayed`、`receipt_id`、`idempotency_key` 或其他 replay／receipt marker。
+- Replay observability 只能透過 audit log、server log，或未來明確定義的非 domain envelope metadata 表示；不得改變 `ToolResult.data` shape 或內容。
+- 若 replay 本身建立 observability log，該 log ID 不得取代 replay response 的 top-level `audit_log_id`。Replay response 的 `audit_log_id` 必須是 receipt 保存的原始成功 domain transaction audit log ID；若原始成功 response 沒有 `audit_log_id`，replay 也不得因 replay observability 產生新的 top-level `audit_log_id`。
+- Input 是 closed schema；不得包含 `actor_id`、`accepted_at`、`approved_by`、`approved_by_actor_id`、`approved_at` 或其他 acceptance actor/time 欄位。Server 必須從目前 Local Actor 取得 `Result Acceptance.actor_id`；不得信任、靜默忽略或保存 client-provided values。
+- Result 必須是 active draft。
+- Result 不得已有任何 Result Acceptance 紀錄；每個 Implementation Result 最多只能接受一次，即使既有 Acceptance 後來被撤銷也不得重新接受。
+- `stale_at_submission = true` 或 Lifecycle Status 為 archived 的 Result 必須拒絕 acceptance。
+- 同一 Implementation Target 最多只能有一份 active approved Result。
+- 若 target 已有 active approved Result，新 Result 必須明確 supersede 它。
+- 綁定的 Ticket Revision 必須仍是 current approved，Implementation Target 必須仍屬於該 revision；referenced intent nodes 必須 active 且自 `source_graph_revision_id` 後未變更，dependencies 必須仍有效。
+- 綁定的 Product Brief Version 只作為 provenance；reconciliation 完成後，不要求等於 Product Brief current approved pointer。
+- 每個 criterion 必須建立最終 `satisfied` 或 `waived` Result Acceptance Criterion Outcome。每個 `satisfied` outcome 只能引用 submission 中同 criterion 的 `satisfied` verdict；該 verdict 必須具有 trim 後非空的 `reason`，並至少引用一份存在於該 Result evidence set 的 Observed Evidence。Reason 或 evidence list 不合法會阻止 acceptance。Input `waivers` 只能指定 submission 中已是 `unsatisfied` 的 acceptance criterion，且必須提供 trim 後非空的 waiver reason；指定 `satisfied`、不存在或重複的 criterion 必須回傳 validation error。`accept_implementation_result` 必須以同一 Local Actor 在同一 transaction 中建立 `decision_type = acceptance_criterion_waiver` 的 Waiver Decision 與 `waived` outcome；該 outcome 必須同時引用原 `unsatisfied` Verdict 與 Waiver Decision，且不得綁定其他 decision type。Result Acceptance 的 `project_id` 必須非空；Outcome 所引用 Verdict 的 Implementation Result 與 Waiver Decision 必須屬於同一 Project。Waiver Decision 的 `project_id` 必須由 Acceptance 衍生；input `waivers[]` 不接受 client-provided `project_id`、`decision_type` 或既有 Decision ID。Trim 後的 `waivers[].reason` 必須寫入 `Decision.summary`；waiver 使用者與時間必須使用 `Decision.actor_id`、`Decision.created_at`，且 actor 必須等於 Result Acceptance actor。Outcome 不得複製 waiver reason、actor 或 time。原 Verdict 的 verdict、reason 與 evidence references 不得修改；顯示 waiver 資訊時讀取 Decision。任何未被 waiver input 指定的 `unsatisfied`，以及任何未驗證 criterion，都會阻止 acceptance。
+- Ticket 只有在目前 approved Ticket Revision 的所有 required targets 都具有 active approved Result 時才更新為 `done`；否則維持目前 Delivery Status。
+- Waiver Decision、criterion outcomes、Acceptance、archive 被 supersede Result 與 archive 其他 draft attempts 必須在單一 transaction 中完成。
+- Server 必須在 transaction 開始時只擷取一次 canonical event time。`Result Acceptance.accepted_at`、每筆 `criterion_outcomes[].created_at` 與每筆本次建立的 `waiver_decisions[].created_at` 必須使用該同一值並完全相等，不得逐筆重新讀取 clock。
+- Output 每筆 `criterion_outcomes` 必須回傳完整 canonical fields：`id`、`result_acceptance_id`、`acceptance_criterion_id`、`submitted_verdict_id`、`outcome`、`waiver_decision_id`、`created_at`。`result_acceptance_id` 必須等於同一 response 的 `result_acceptance.id`；`created_at` 必須等於 `result_acceptance.accepted_at`；`satisfied` outcome 的 `waiver_decision_id` 必須明確回傳 `null`。
+- `criterion_outcomes` 必須依 approved Ticket Revision 中 `acceptance_criteria` 的原始陣列順序回傳，不得依資料庫 row order、Outcome ID 或 criterion ID 排序。`waiver_decisions` 必須依各 Decision 所對應 Outcome 在 `criterion_outcomes` 中的位置回傳。
+- Output 必須以完整 `waiver_decisions` objects 回傳本次建立的 Waiver Decisions，不得只回傳 Decision IDs。每個 `waived` criterion outcome 的 `waiver_decision_id` 必須在 `waiver_decisions` 中恰好對應一個 object；`satisfied` outcome 不得產生 Waiver Decision。
+- Output `result_acceptance` 必須回傳完整 canonical fields：`id`、`project_id`、`implementation_result_id`、`actor_id`、`accepted_at`。其中 Project 與 Result 必須與同一 response 的 Implementation Result 一致，server-derived actor 必須與本次建立的 Waiver Decisions 一致。`actor_id` 與 `accepted_at` 是接受操作者與時間的唯一權威來源；Implementation Result 不得保存或回傳 `approved_by`、`approved_by_actor_id` 或 `approved_at`。
+
+### revoke_result_acceptance
+
+撤銷一項在作成當時即無效且目前仍有效的 Result Acceptance，不要求 Ticket 已是 `done`。此操作保留原 Result、Acceptance、criterion outcomes 與 evidence 的歷史，只撤銷它們對目前完成狀態的效力。撤銷後該 Result 永久 archived，不能重新接受；修正必須提交新的 Implementation Result。
+
+Input：
+
+```json
+{
+  "idempotency_key": "revoke-acceptance-01J-2026-07-24T00:00:00.000Z",
+  "result_acceptance_id": "01J...",
+  "reason": "",
+  "next_delivery_status": "in_progress"
+}
+```
+
+Output：
+
+```json
+{
+  "implementation_result": {
+    "id": "01J...",
+    "review_status": "approved",
+    "lifecycle_status": "archived"
+  },
+  "result_revocation": {
+    "id": "01J...",
+    "project_id": "01J...",
+    "result_acceptance_id": "01J...",
+    "decision_id": "01J...",
+    "previous_delivery_status": "done",
+    "resulting_delivery_status": "in_progress"
+  },
+  "decision": {
+    "id": "01J...",
+    "project_id": "01J...",
+    "decision_type": "result_acceptance_revocation",
+    "summary": "The acceptance relied on invalid test evidence.",
+    "actor_id": "01J...",
+    "created_at": "2026-07-24T00:00:00.000Z"
+  },
+  "ticket": {
+    "id": "01J...",
+    "delivery_status": "in_progress"
+  }
+}
+```
+
+Validation：
+
+- `idempotency_key` required，且唯一範圍是同一 Project、目前 Local Actor、`revoke_result_acceptance` operation。Server 必須先用 closed schema 與語意規則 normalize command：包含 `result_acceptance_id`、trim 後的 `reason`，以及條件式 `next_delivery_status`；`idempotency_key` 本身不參與 command fingerprint。Server 必須使用 RFC 8785 JSON Canonicalization Scheme 對 normalized command 產生 canonical bytes，再用 SHA-256 計算 `normalized_command_hash`，並在成功 transaction 中保存 Operation Receipt。
+- Input 不直接包含 `project_id`。Server 必須先以 `result_acceptance_id` 做 identity-only resolution，僅確認 Acceptance identity 存在並解析其 Project scope；此步不得驗證 Acceptance 是否仍有效、Result 是否為 active approved、是否已有 Revocation，或其他 lifecycle／business state。
+- 若 `result_acceptance_id` 不存在，identity-only resolution 必須立即回傳 `NOT_FOUND`；server 不得在無法解析 Project scope 時查找或建立 Operation Receipt。
+- Operation Receipt lookup 必須先於 Acceptance target state validation。Server 必須先查同一 Project、Local Actor、operation 與 `idempotency_key` 的 receipt；若命中且 normalized command hash 相同，直接 replay，不得因 Result Acceptance 現在已被撤銷、Result 已 archived 或其他由原成功 transaction 造成的狀態變化而回傳 `CONFLICT`。
+- 只有 Operation Receipt miss 時，server 才能繼續執行下列完整 Acceptance target state validation。
+- 若同一 Project、Local Actor、operation 與 `idempotency_key` 已有 Operation Receipt，且 normalized command hash 相同，tool 必須回放 receipt 中保存的原始成功 response data，不得重新建立 Decision、Result Revocation、archive domain row 或 Ticket status update。
+- 若同一 Project、Local Actor、operation 與 `idempotency_key` 已存在但 normalized command hash 不同，必須回傳 `CONFLICT`。不得把既有 Result Revocation uniqueness error 假裝成 idempotent success，也不得覆寫 receipt 或 response。
+- 若同一 normalized command 使用不同 `idempotency_key` 重送，必須視為新的 logical command。若該 Result Acceptance 已因先前成功 revocation 而不再有效，或已存在 Result Revocation，必須回傳一般 `CONFLICT`；不得依 `result_acceptance_id` 或既有 Result Revocation 反查 Operation Receipt 並當作 replay。
+- 首次成功時建立的 Operation Receipt 必須只綁定本次 Result Revocation：`result_revocation_id` 必須等於新建 Revocation ID，`result_acceptance_id` 必須為 null，且 `operation_name` 必須是 `revoke_result_acceptance`。同一 Result Revocation 最多只能有一筆 Operation Receipt，不得讓不同 idempotency keys 指向同一 Revocation。
+- Operation Receipt 只在成功提交 domain transaction 後保存。Validation error、`NOT_FOUND`、`CONFLICT`、`STALE_HANDOFF`、`STORAGE_ERROR` 或其他失敗 response 不得保存；修正失敗原因後，相同 `idempotency_key` 可重新嘗試，除非已有成功 receipt。
+- 成功建立 receipt 後，該 Operation Receipt、Result Revocation、其 Result Acceptance 與作為 target identity 的 Implementation Result 都不得 hard delete。Implementation Result 退出有效範圍時只能 archive；Receipt、Acceptance 與 Revocation 沒有 Lifecycle Status，必須永久保留。
+- SQLite delete guards 必須無條件拒絕刪除 Operation Receipt、Result Acceptance 與 Result Revocation，並在 Implementation Result 已可經 Acceptance 或 Revocation 連到任一 Receipt 時拒絕刪除該 Result。
+- Operation Receipt 的 `response_json` 只保存 successful `ToolResult.data` 的 RFC 8785 canonical JSON UTF-8 text，且不得保存完整 `{ ok, data, error, audit_log_id }` envelope。Replay 時 server 必須 parse 保存的 data 並重新組成目前標準的 `{ ok: true, data, audit_log_id? }`；若原始成功 response 有 `audit_log_id`，該 ID 必須由 receipt 的 audit log reference 重新帶回。
+- Replay 必須保持 `data` 完全等同原始成功的 domain response data，不得在 `data` 中新增 `replayed`、`receipt_id`、`idempotency_key` 或其他 replay／receipt marker。
+- Replay observability 只能透過 audit log、server log，或未來明確定義的非 domain envelope metadata 表示；不得改變 `ToolResult.data` shape 或內容。
+- 若 replay 本身建立 observability log，該 log ID 不得取代 replay response 的 top-level `audit_log_id`。Replay response 的 `audit_log_id` 必須是 receipt 保存的原始成功 domain transaction audit log ID；若原始成功 response 沒有 `audit_log_id`，replay 也不得因 replay observability 產生新的 top-level `audit_log_id`。
+- `result_acceptance_id` 必須存在；tool 不接受 `implementation_result_id` 代替或推測要撤銷的 Acceptance。
+- Server 必須由 Result Acceptance 反查 Implementation Result、Implementation Target 與 Ticket。Result 必須是 active approved，且該 Acceptance 目前仍有效；Ticket 不需要已是 `done`。
+- Result Acceptance 的 `project_id` 必須非空；Result Revocation 與新建 Decision 的 `project_id` 必須由它設定且完全相同。Input 不接受 client-provided `project_id`，也不得建立跨 Project 關係。
+- Result Revocation 必須直接引用 input `result_acceptance_id`，不得只保存或接受 Result ID。
+- Result Acceptance 不得已有 Result Revocation；每個 Result Acceptance 最多只能撤銷一次。
+- `reason` required，trim 後必須非空，且必須說明原 acceptance 為何在作成當時即無效。
+- 若 Ticket 目前是 `done`，`next_delivery_status` required，且只能是 `in_progress` 或 `blocked`。
+- 若 Ticket 目前是 `planned`、`in_progress` 或 `blocked`，input 必須省略 `next_delivery_status`，操作後保留原 Delivery Status。
+- `next_delivery_status` 只是一個條件式 command input，不得原樣作為 Revocation history 欄位。Result Revocation 必須保存操作前的 `previous_delivery_status` 與操作後的 `resulting_delivery_status`；未改變狀態時兩者相同。
+- Revocation 必須建立 `decision_type = result_acceptance_revocation` 的 Decision node，以 trim 後的 input `reason` 作為 `Decision.summary`，並以 `Decision.actor_id`、`Decision.created_at` 記錄 Local Actor 與撤銷時間。Result Revocation 只保存 `decision_id`，不得另存或複製 reason、actor 或 time；顯示撤銷資訊時必須讀取 Decision。
+- Revocation 不得刪除或改寫原 Result、Acceptance 或 evidence。
+- Archive Result、建立 Result Revocation，以及必要時更新 Ticket Delivery Status，必須在單一 transaction 中完成。
+- Archived revoked Result 不得重新轉為 draft 或再次接受；任何修正必須透過 `submit_implementation_result` 建立新的 Result。
+- 新需求、後續 regression 或原 acceptance criteria 未涵蓋的問題不得使用此操作；應建立具有 `traces_to` 關係的 Follow-up Ticket，原 Ticket 維持 `done`。
+
+### export_markdown_draft
+
+把 active draft 或 approved entity render 成 Markdown。
+
+Input：
+
+```json
+{
+  "entity_type": "product_brief_version",
   "entity_id": "01J..."
 }
 ```

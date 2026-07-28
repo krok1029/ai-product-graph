@@ -60,13 +60,28 @@ Goal：
 Scope：
 
 - 建立 Plane adapter port。
-- 匯出 approved tickets 到 Plane work items。
-- 把 Plane work item status 同步回 graph。
+- 由使用者明確選擇 Ticket 與 Plane project 執行首次 export，不因 approval 或連線自動大量建立 work items。
+- 首次 Plane export 只能使用 Ticket 的 current approved revision，並在 create intent 保存 source revision ID。
+- Active mapping 建立後，自動同步後續 approved revisions 與適用狀態變更。
+- 把 Plane 一般進度同步為內部 `planned`、`in_progress` 或 `blocked`，並保存來源與 audit event。
+- 把 Plane closed／done 保存為 External Work Item 狀態，不得繞過 Result Acceptance 完成內部 Ticket。
+- 內部 Ticket 完成後向 Plane 同步關閉 work item。
+- 外部重新開啟已完成 Ticket 的 work item 時建立 Sync Conflict，且不得自動降低內部 Delivery Status。
+- 保存 immutable External Work Item Snapshots；外部 specification content 與 approved Ticket Revision 不同時建立 Content Drift。
+- 採用外部內容時建立 Ticket Revision Draft，不得直接改寫 approved specification。
+- Outbound content sync 以最後 snapshot 的 version／ETag／updated timestamp 保護；外部已變或無法驗證時建立 Content Drift 並停止覆蓋。
+- Adapter-managed 與 external-only fields 必須明確分離，labels、assignees、comments 等 external-only fields 不得覆蓋。
+- 每個 External Work Item 使用獨立、可冪等重試的 Sync Attempt；partial failure 不得回滾 internal approval 或已成功項目。
+- 使用 durable Sync Intent／outbox；approval transaction 不等待外部 API，服務重啟後可恢復 pending sync。
+- 同一 mapping 依序處理 intents；只 coalesce 尚未開始的 content updates，create／close／reopen 等 lifecycle operations 必須保序。
+- 新版 content 可取代 terminal-failed 舊 update 的 retry requirement；failed lifecycle operation 必須阻擋後續 intents。
+- 永久失敗的 mapping 只能經使用者 Decision replace 或 terminate；archive 後才從 Sync Health 排除。
+- 提供由 latest attempts 衍生的 `current | pending | failed` Sync Health。
 - 在有用時連到 modules 或 cycles。
 
 Exit criteria：
 
-- Product graph 可以驅動 Plane 中的 work creation。
+- Product graph 可以由使用者明確驅動 Plane 中的首次 work creation，且後續雙向狀態同步不會破壞內部 completion semantics；同步衝突可由使用者明確分類並追溯解決。
 
 ## Phase 4：GitHub Integration
 
@@ -76,14 +91,18 @@ Goal：
 
 Scope：
 
-- 匯出 ticket 到 GitHub Issue。
-- 把 issue URL 連到 graph。
-- 手動或透過 webhook 把 PR 連到 ticket。
+- 由使用者明確選擇 repository-specific Implementation Target 執行首次 GitHub Issue export。
+- 首次 GitHub export 必須驗證 target 屬於 current approved Ticket Revision，且 Repository 符合目標 GitHub container。
+- Active GitHub mapping 建立後，自動同步後續 approved revision content 與適用狀態變更。
+- Draft 只能 Markdown preview，不得建立 GitHub Issue 或 External Work Item mapping。
+- 把 issue URL 與 external status 連到 Implementation Target。
+- 保存 GitHub Issue content snapshots；規格差異不得直接改寫 approved Ticket Revision。
+- 手動或透過 webhook 把 PR 連到 Implementation Target，並可追溯到 Ticket。
 - 把 changed files 存成 graph nodes。
 
 Exit criteria：
 
-- 一張 ticket 可以追溯到 issue、PR 和 changed files。
+- 每個 Implementation Target 可以追溯到同一 Repository 的 issue、PR 和 changed files；Ticket 可聚合所有 targets 的工程追溯鏈。
 
 ## Phase 5：AI Implementation Loop
 
