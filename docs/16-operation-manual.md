@@ -15,7 +15,17 @@ ADR 是決策歷史，不是日常操作手冊。一般使用時不需要逐篇�
 
 ## 目前可用程度
 
-Repository 目前以規劃文件與 Phase 1A source layout 為主，TypeScript scaffold 與 MCP 功能尚未完成。因此本手冊描述的是已定案的操作契約，不代表所有 tools 現在都可執行。
+Repository 目前已建立 Phase 1A TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project／Idea／audit log 的第一條 vertical slice。Dependencies 尚未安裝，因此 build、typecheck、tests、smoke test 與 MCP stdio 啟動仍待驗證。
+
+目前已實作的 tools：
+
+- `create_project`
+- `list_projects`
+- `get_project`
+- `add_idea`
+- `get_idea`
+
+其餘章節描述的是已定案但尚未完整實作的操作契約。
 
 另有一個尚待實作補齊的操作缺口：
 

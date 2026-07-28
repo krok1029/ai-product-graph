@@ -1,0 +1,33 @@
+{
+  "name": "ai-product-graph",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.17.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json && node scripts/copy-migrations.mjs",
+    "start": "node dist/index.js",
+    "typecheck": "tsgo --noEmit",
+    "typecheck:ts6": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "smoke": "tsx src/smoke.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "better-sqlite3": "12.9.0",
+    "ulid": "^3.0.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20.19.0",
+    "@typescript/native-preview": "7.0.0-dev.20260627.2",
+    "tsx": "^4.20.0",
+    "typescript": "^6.0.0",
+    "vitest": "^4.0.0"
+  }
+}

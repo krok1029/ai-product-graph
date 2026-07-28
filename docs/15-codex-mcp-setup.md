@@ -6,8 +6,8 @@
 
 目前狀態：
 
-- Phase 1A 尚未完成 scaffold。
-- 以下設定會在 MCP server 可 build 後使用。
+- Phase 1A scaffold、完整 SQLite migrations 與第一批 Project／Idea tools 已建立。
+- Dependencies 尚未安裝；以下驗證需先由使用者手動執行 `pnpm install`。
 
 ## Build Server
 
@@ -21,6 +21,21 @@ Build：
 
 ```bash
 pnpm build
+```
+
+Typecheck：
+
+```bash
+pnpm typecheck
+pnpm typecheck:ts6
+```
+
+至少一個 typecheck command 必須通過；`typecheck:ts6` 是相容性 fallback。
+
+Tests：
+
+```bash
+pnpm test
 ```
 
 本機開發：

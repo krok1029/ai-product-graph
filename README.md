@@ -46,7 +46,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## Repository 狀態
 
-目前這個 repository 包含規劃文件與 Phase 1A 的 source layout；TypeScript scaffold 與功能實作尚未開始。
+目前這個 repository 已建立 Phase 1A TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project／Idea／audit log 的第一條 vertical slice。Dependencies 尚未安裝，因此 build、typecheck、Vitest、smoke test 與 MCP stdio 啟動仍需在手動執行 `pnpm install` 後完成驗證。
 
 日常操作與文件閱讀入口請先看 [`docs/16-operation-manual.md`](docs/16-operation-manual.md)。欄位級 MCP 契約與 storage 細節再分別查 `docs/12-mcp-tool-spec.md`、`docs/13-sqlite-schema.md`。
 
@@ -92,7 +92,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## 建議下一步
 
-先閱讀 `docs/16-operation-manual.md`；不需要從頭逐篇閱讀所有 `docs/` 文件。第一個實作版本已決定採用：
+先手動執行 `pnpm install`，再依 `docs/15-codex-mcp-setup.md` 執行 build、typecheck、test 與 smoke test。日常產品操作請閱讀 `docs/16-operation-manual.md`；不需要從頭逐篇閱讀所有 `docs/` 文件。第一個實作版本採用：
 
 ```text
 本機 MCP server + Node.js + TypeScript + SQLite
