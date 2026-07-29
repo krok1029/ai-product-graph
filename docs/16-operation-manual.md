@@ -15,7 +15,7 @@ ADR 是決策歷史，不是日常操作手冊。一般使用時不需要逐篇�
 
 ## 目前可用程度
 
-Repository 目前已建立 Phase 1A TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project／Idea／audit log 的第一條 vertical slice。Dependencies 尚未安裝，因此 build、typecheck、tests、smoke test 與 MCP stdio 啟動仍待驗證。
+Repository 目前已建立並驗證 Phase 1A TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project／Idea／audit log 的第一條 vertical slice。Build、兩套 typecheck、tests 與 smoke test 均已通過。
 
 目前已實作的 tools：
 

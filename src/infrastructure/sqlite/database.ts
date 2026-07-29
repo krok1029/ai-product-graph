@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { mkdirSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, fileURLToPath } from "node:path";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { ApplicationError } from "../../domain/errors.js";
 

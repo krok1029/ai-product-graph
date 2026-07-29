@@ -7,7 +7,7 @@
 目前狀態：
 
 - Phase 1A scaffold、完整 SQLite migrations 與第一批 Project／Idea tools 已建立。
-- Dependencies 尚未安裝；以下驗證需先由使用者手動執行 `pnpm install`。
+- Dependencies 已安裝；build、兩套 typecheck、Vitest 與 smoke test 已通過。
 
 ## Build Server
 
@@ -111,3 +111,4 @@ AI_PRODUCT_GRAPH_DB_PATH=/Users/limingfeng/Project/ai-product-graph/data/ai-prod
 - 確認 Node.js 版本至少是 20。
 - 確認 SQLite database path 的資料夾可寫入。
 - 如果使用 `pnpm dev`，確認 Codex 啟動環境能找到 `pnpm`。
+- 如果出現 `Could not locate the bindings file`，執行 `pnpm rebuild better-sqlite3`。專案已在 `pnpm.onlyBuiltDependencies` 允許這個 native dependency 的 install script。
