@@ -1,4 +1,12 @@
 export type LifecycleStatus = "active" | "archived";
+export type ReviewStatus = "draft" | "approved";
+
+export type LocalActor = {
+  id: string;
+  displayName: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type Project = {
   id: string;
@@ -6,6 +14,10 @@ export type Project = {
   name: string;
   description: string | null;
   lifecycleStatus: LifecycleStatus;
+  currentProductBriefId: string | null;
+  currentGraphRevisionId: string | null;
+  lastReconciledProductBriefVersionId: string | null;
+  productIntentGraphRevisionId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -17,6 +29,53 @@ export type Idea = {
   content: string;
   source: string;
   lifecycleStatus: LifecycleStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProductBriefJson = {
+  product_goal: string;
+  target_users: Array<{
+    name: string;
+    description: string;
+  }>;
+  pain_points: Array<{
+    title: string;
+    description: string;
+  }>;
+  core_workflows: Array<{
+    title: string;
+    steps: string[];
+  }>;
+  mvp_scope: string[];
+  non_goals: string[];
+  success_metrics: string[];
+  risks: string[];
+  open_questions: string[];
+};
+
+export type ProductBrief = {
+  id: string;
+  projectId: string;
+  sourceIdeaId: string | null;
+  slug: string;
+  currentApprovedVersionId: string | null;
+  lifecycleStatus: LifecycleStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProductBriefVersion = {
+  id: string;
+  productBriefId: string;
+  projectId: string;
+  versionNumber: number;
+  baseApprovedVersionId: string | null;
+  brief: ProductBriefJson;
+  reviewStatus: ReviewStatus;
+  lifecycleStatus: LifecycleStatus;
+  approvedByActorId: string | null;
+  approvedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

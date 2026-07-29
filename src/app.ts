@@ -15,7 +15,12 @@ export type App = {
 
 export function createApp(config: AppConfig = loadConfig()): App {
   const database = openDatabase(config.databasePath);
-  const service = new ProductGraphService(createSqlitePorts(database));
+  const service = new ProductGraphService(createSqlitePorts(database), {
+    actor: {
+      id: config.actorId,
+      displayName: config.actorDisplayName
+    }
+  });
 
   return {
     config,

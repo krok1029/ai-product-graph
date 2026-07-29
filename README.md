@@ -46,7 +46,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## Repository 狀態
 
-目前這個 repository 已建立並驗證 Phase 1A TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project／Idea／audit log 的第一條 vertical slice。Build、TypeScript 7／TypeScript 6 typecheck、Vitest 與 smoke test 均已通過。
+目前這個 repository 已建立並驗證 TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project、Idea、Product Brief Version approval 與 audit log workflows。Build、TypeScript 7／TypeScript 6 typecheck、Vitest、application smoke 與 MCP client end-to-end 驗證均已通過。
 
 日常操作與文件閱讀入口請先看 [`docs/16-operation-manual.md`](docs/16-operation-manual.md)。欄位級 MCP 契約與 storage 細節再分別查 `docs/12-mcp-tool-spec.md`、`docs/13-sqlite-schema.md`。
 
@@ -92,7 +92,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## 建議下一步
 
-依 `docs/15-codex-mcp-setup.md` 把已 build 的 stdio server 加入 Codex MCP 設定。日常產品操作請閱讀 `docs/16-operation-manual.md`；不需要從頭逐篇閱讀所有 `docs/` 文件。第一個實作版本採用：
+下一個實作切片是 Graph Draft Batch 與 Graph Revision reconciliation。日常產品操作請閱讀 `docs/16-operation-manual.md`；不需要從頭逐篇閱讀所有 `docs/` 文件。第一個實作版本採用：
 
 ```text
 本機 MCP server + Node.js + TypeScript + SQLite

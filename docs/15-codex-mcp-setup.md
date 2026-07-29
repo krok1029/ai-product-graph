@@ -6,7 +6,7 @@
 
 目前狀態：
 
-- Phase 1A scaffold、完整 SQLite migrations 與第一批 Project／Idea tools 已建立。
+- Phase 1A scaffold、完整 SQLite migrations、Project／Idea tools 與 Product Brief draft／approval workflow 已建立。
 - Dependencies 已安裝；build、兩套 typecheck、Vitest 與 smoke test 已通過。
 
 ## Build Server
@@ -88,9 +88,13 @@ pnpm --dir /Users/limingfeng/Project/ai-product-graph dev
 
 ```text
 AI_PRODUCT_GRAPH_DB_PATH=/Users/limingfeng/Project/ai-product-graph/data/ai-product-graph.sqlite
+AI_PRODUCT_GRAPH_ACTOR_ID=00000000000000000000000001
+AI_PRODUCT_GRAPH_ACTOR_NAME=Local User
 ```
 
 第一版 MCP server 不需要 LLM API key，因為 LLM generation 由 Codex client agent 執行。
+
+Approval actor 由 server environment 決定，不接受 MCP client 傳入。`AI_PRODUCT_GRAPH_ACTOR_ID` 應使用穩定 identity；更換 ID 代表不同的 Local Actor。
 
 ## First Tools To Verify
 
@@ -101,6 +105,8 @@ AI_PRODUCT_GRAPH_DB_PATH=/Users/limingfeng/Project/ai-product-graph/data/ai-prod
 - `get_project`
 - `add_idea`
 - `get_idea`
+- `create_product_brief_draft`
+- `approve_product_brief_version`
 
 ## Troubleshooting
 

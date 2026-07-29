@@ -6,7 +6,47 @@ import { z } from "zod";
 
 import type { ProductGraphService } from "../../application/product-graph-service.js";
 import { ApplicationError } from "../../domain/errors.js";
-import type { Idea, Project } from "../../domain/models.js";
+import type {
+  Idea,
+  ProductBrief,
+  ProductBriefVersion,
+  Project
+} from "../../domain/models.js";
+
+const productBriefJsonSchema = z
+  .object({
+    product_goal: z.string().min(1),
+    target_users: z.array(
+      z
+        .object({
+          name: z.string(),
+          description: z.string()
+        })
+        .strict()
+    ),
+    pain_points: z.array(
+      z
+        .object({
+          title: z.string(),
+          description: z.string()
+        })
+        .strict()
+    ),
+    core_workflows: z.array(
+      z
+        .object({
+          title: z.string(),
+          steps: z.array(z.string())
+        })
+        .strict()
+    ),
+    mvp_scope: z.array(z.string()),
+    non_goals: z.array(z.string()),
+    success_metrics: z.array(z.string()),
+    risks: z.array(z.string()),
+    open_questions: z.array(z.string())
+  })
+  .strict();
 
 export function createMcpServer(service: ProductGraphService): McpServer {
   const server = new McpServer({
@@ -110,6 +150,77 @@ export function createMcpServer(service: ProductGraphService): McpServer {
       toToolResult(() =>
         success({ idea: serializeIdea(service.getIdea(idea_id).idea) })
       )
+  );
+
+  server.registerTool(
+    "create_product_brief_draft",
+    {
+      title: "Create Product Brief Draft",
+      description: "Create an immutable draft Product Brief Version.",
+      inputSchema: {
+        project_id: z.string().min(1),
+        source_idea_id: z.string().min(1),
+        base_approved_version_id: z.string().min(1).nullable(),
+        brief: productBriefJsonSchema
+      }
+    },
+    async ({
+      project_id,
+      source_idea_id,
+      base_approved_version_id,
+      brief
+    }) =>
+      toToolResult(() => {
+        const result = service.createProductBriefDraft({
+          projectId: project_id,
+          sourceIdeaId: source_idea_id,
+          baseApprovedVersionId: base_approved_version_id,
+          brief
+        });
+        return success(
+          {
+            product_brief: serializeProductBrief(result.productBrief),
+            version: serializeProductBriefVersion(result.version),
+            validation: result.validation
+          },
+          result.auditLogId
+        );
+      })
+  );
+
+  server.registerTool(
+    "approve_product_brief_version",
+    {
+      title: "Approve Product Brief Version",
+      description:
+        "Approve a draft Product Brief Version using base-pointer concurrency.",
+      inputSchema: {
+        product_brief_version_id: z.string().min(1)
+      }
+    },
+    async ({ product_brief_version_id }) =>
+      toToolResult(() => {
+        const result = service.approveProductBriefVersion(
+          product_brief_version_id
+        );
+        return success(
+          {
+            product_brief: serializeProductBrief(result.productBrief),
+            version: serializeProductBriefVersion(result.version),
+            product_intent_reconciliation: {
+              status: result.productIntentReconciliation.status,
+              current_product_brief_version_id:
+                result.productIntentReconciliation
+                  .currentProductBriefVersionId,
+              last_reconciled_product_brief_version_id:
+                result.productIntentReconciliation
+                  .lastReconciledProductBriefVersionId
+            },
+            archived_stale_version_ids: result.archivedStaleVersionIds
+          },
+          result.auditLogId
+        );
+      })
   );
 
   server.registerResource(
@@ -261,6 +372,11 @@ function serializeProject(project: Project) {
     name: project.name,
     description: project.description,
     lifecycle_status: project.lifecycleStatus,
+    current_product_brief_id: project.currentProductBriefId,
+    current_graph_revision_id: project.currentGraphRevisionId,
+    last_reconciled_product_brief_version_id:
+      project.lastReconciledProductBriefVersionId,
+    product_intent_graph_revision_id: project.productIntentGraphRevisionId,
     created_at: project.createdAt,
     updated_at: project.updatedAt
   };
@@ -276,5 +392,35 @@ function serializeIdea(idea: Idea) {
     lifecycle_status: idea.lifecycleStatus,
     created_at: idea.createdAt,
     updated_at: idea.updatedAt
+  };
+}
+
+function serializeProductBrief(productBrief: ProductBrief) {
+  return {
+    id: productBrief.id,
+    project_id: productBrief.projectId,
+    source_idea_id: productBrief.sourceIdeaId,
+    slug: productBrief.slug,
+    current_approved_version_id: productBrief.currentApprovedVersionId,
+    lifecycle_status: productBrief.lifecycleStatus,
+    created_at: productBrief.createdAt,
+    updated_at: productBrief.updatedAt
+  };
+}
+
+function serializeProductBriefVersion(version: ProductBriefVersion) {
+  return {
+    id: version.id,
+    product_brief_id: version.productBriefId,
+    project_id: version.projectId,
+    version_number: version.versionNumber,
+    base_approved_version_id: version.baseApprovedVersionId,
+    brief: version.brief,
+    review_status: version.reviewStatus,
+    lifecycle_status: version.lifecycleStatus,
+    approved_by_actor_id: version.approvedByActorId,
+    approved_at: version.approvedAt,
+    created_at: version.createdAt,
+    updated_at: version.updatedAt
   };
 }

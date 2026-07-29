@@ -15,7 +15,7 @@ ADR 是決策歷史，不是日常操作手冊。一般使用時不需要逐篇�
 
 ## 目前可用程度
 
-Repository 目前已建立並驗證 Phase 1A TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project／Idea／audit log 的第一條 vertical slice。Build、兩套 typecheck、tests 與 smoke test 均已通過。
+Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project、Idea、Product Brief Version approval 與 audit log workflows。Build、兩套 typecheck、tests、application smoke 與 MCP client end-to-end 驗證均已通過。
 
 目前已實作的 tools：
 
@@ -24,6 +24,8 @@ Repository 目前已建立並驗證 Phase 1A TypeScript MCP scaffold、完整 SQ
 - `get_project`
 - `add_idea`
 - `get_idea`
+- `create_product_brief_draft`
+- `approve_product_brief_version`
 
 其餘章節描述的是已定案但尚未完整實作的操作契約。
 

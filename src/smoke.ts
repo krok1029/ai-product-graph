@@ -9,7 +9,11 @@ const directory = mkdtempSync(join(tmpdir(), "ai-product-graph-smoke-"));
 const databasePath = join(directory, "smoke.sqlite");
 
 try {
-  const app = createApp({ databasePath });
+  const app = createApp({
+    databasePath,
+    actorId: "00000000000000000000000003",
+    actorDisplayName: "Smoke Test User"
+  });
   try {
     const project = app.service.createProject({
       name: "Smoke Test Project",
@@ -22,6 +26,25 @@ try {
     });
     const projects = app.service.listProjects();
     const loadedIdea = app.service.getIdea(idea.idea.id);
+    const productBriefDraft = app.service.createProductBriefDraft({
+      projectId: project.project.id,
+      sourceIdeaId: idea.idea.id,
+      baseApprovedVersionId: null,
+      brief: {
+        product_goal: "Validate the Product Brief workflow.",
+        target_users: [],
+        pain_points: [],
+        core_workflows: [],
+        mvp_scope: ["Create and approve a Product Brief Version."],
+        non_goals: [],
+        success_metrics: ["The smoke test completes."],
+        risks: [],
+        open_questions: []
+      }
+    });
+    const productBriefApproval = app.service.approveProductBriefVersion(
+      productBriefDraft.version.id
+    );
     const auditLog = createSqlitePorts(app.database).auditLog.list();
 
     assert(projects.projects.length === 1, "Expected one project.");
@@ -29,7 +52,15 @@ try {
       loadedIdea.idea.projectId === project.project.id,
       "Idea should belong to the created project."
     );
-    assert(auditLog.length === 2, "Expected project and idea audit entries.");
+    assert(
+      productBriefApproval.version.reviewStatus === "approved",
+      "Product Brief Version should be approved."
+    );
+    assert(
+      productBriefApproval.productIntentReconciliation.status === "pending",
+      "Product intent reconciliation should be pending."
+    );
+    assert(auditLog.length === 4, "Expected four audit entries.");
 
     console.log(
       JSON.stringify({
@@ -37,6 +68,7 @@ try {
         databasePath,
         projectId: project.project.id,
         ideaId: idea.idea.id,
+        productBriefVersionId: productBriefApproval.version.id,
         auditLogEntries: auditLog.length
       })
     );

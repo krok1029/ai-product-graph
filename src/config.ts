@@ -2,6 +2,8 @@ import { resolve } from "node:path";
 
 export type AppConfig = {
   databasePath: string;
+  actorId: string;
+  actorDisplayName: string;
 };
 
 export function loadConfig(
@@ -11,6 +13,10 @@ export function loadConfig(
   return {
     databasePath:
       env.AI_PRODUCT_GRAPH_DB_PATH ??
-      resolve(cwd, "data/ai-product-graph.sqlite")
+      resolve(cwd, "data/ai-product-graph.sqlite"),
+    actorId:
+      env.AI_PRODUCT_GRAPH_ACTOR_ID ?? "00000000000000000000000001",
+    actorDisplayName:
+      env.AI_PRODUCT_GRAPH_ACTOR_NAME ?? "Local User"
   };
 }
