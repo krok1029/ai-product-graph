@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ProductGraphService } from "./product-graph-service.js";
 import { ApplicationError } from "../domain/errors.js";
-import type { ProductBriefJson } from "../domain/models.js";
+import type { ProductBriefJson, Repository } from "../domain/models.js";
 import {
   openDatabase,
   type SqliteDatabase
@@ -424,6 +424,85 @@ describe("ProductGraphService", () => {
       null
     );
   });
+
+  it("creates and approves a Ticket Revision with an Implementation Target", () => {
+    const { service, ports } = createTestService();
+    const graph = createApprovedGraphWithGoal(service);
+    const repository = seedRepository(ports, graph.projectId);
+
+    const draft = service.createTicketDraftBatch({
+      projectId: graph.projectId,
+      sourceGraphRevisionId: graph.graphRevisionId,
+      sourceNodeIds: [graph.goalNodeId],
+      tickets: [
+        sampleTicketInput(graph.goalNodeId, repository.id)
+      ]
+    });
+    const ticketItem = draft.tickets[0];
+    const approval = service.approveTicketRevision(
+      ticketItem?.revision.id ?? ""
+    );
+    const context = service.getTicketContext({
+      ticketId: approval.ticket.id,
+      includeMarkdown: true
+    });
+
+    expect(draft.ticketDraftBatch.sourceGraphRevisionId).toBe(
+      graph.graphRevisionId
+    );
+    expect(ticketItem?.revision.reviewStatus).toBe("draft");
+    expect(approval.revision.reviewStatus).toBe("approved");
+    expect(approval.ticket.currentApprovedRevisionId).toBe(
+      approval.revision.id
+    );
+    expect(approval.ticket.deliveryStatus).toBe("planned");
+    expect(approval.implementationTargets.targets).toHaveLength(1);
+    expect(approval.implementationTargets.targets[0]?.identityAction).toBe(
+      "created"
+    );
+    expect(context.relatedNodes[0]?.id).toBe(graph.goalNodeId);
+    expect(context.markdown).toContain("## Acceptance Criteria");
+    expect(service.getProject(graph.projectId).counts.tickets).toBe(1);
+  });
+
+  it("creates a replacement Ticket Revision that reuses active targets", () => {
+    const { service, ports } = createTestService();
+    const graph = createApprovedGraphWithGoal(service);
+    const repository = seedRepository(ports, graph.projectId);
+    const draft = service.createTicketDraftBatch({
+      projectId: graph.projectId,
+      sourceGraphRevisionId: graph.graphRevisionId,
+      sourceNodeIds: [graph.goalNodeId],
+      tickets: [sampleTicketInput(graph.goalNodeId, repository.id)]
+    });
+    const firstApproval = service.approveTicketRevision(
+      draft.tickets[0]?.revision.id ?? ""
+    );
+    const replacement = service.createTicketRevisionDraft({
+      ticketId: firstApproval.ticket.id,
+      baseApprovedRevisionId: firstApproval.revision.id,
+      sourceGraphRevisionId: graph.graphRevisionId,
+      specification: {
+        ...sampleTicketInput(graph.goalNodeId, repository.id),
+        title: "Build fast preset timer controls"
+      }
+    });
+    const approval = service.approveTicketRevision(replacement.revision.id);
+
+    expect(replacement.revision.revisionNumber).toBe(2);
+    expect(
+      replacement.proposedImplementationTargets[0]?.identityAction
+    ).toBe("reuse");
+    expect(approval.implementationTargets.targets[0]?.identityAction).toBe(
+      "reused"
+    );
+    expect(approval.ticket.currentApprovedRevisionId).toBe(
+      replacement.revision.id
+    );
+    expect(
+      ports.ticketRevisions.findById(firstApproval.revision.id)?.reviewStatus
+    ).toBe("approved");
+  });
 });
 
 const TEST_ACTOR_ID = "00000000000000000000000002";
@@ -469,6 +548,77 @@ function createApprovedProductBrief(service: ProductGraphService) {
     projectId,
     ideaId,
     approvedVersionId: approval.version.id
+  };
+}
+
+function createApprovedGraphWithGoal(service: ProductGraphService) {
+  const { projectId, approvedVersionId } =
+    createApprovedProductBrief(service);
+  const draft = service.createGraphDraftBatch({
+    projectId,
+    baseGraphRevisionId: null,
+    sourceProductBriefVersionId: approvedVersionId,
+    changes: [
+      {
+        changeId: "goal",
+        operation: "add",
+        entityKind: "node",
+        targetId: null,
+        payload: {
+          type: "product_goal",
+          title: "Ship a focused timer MVP"
+        }
+      }
+    ]
+  });
+  const approval = service.approveGraphDraftBatch(
+    draft.graphDraftBatch.id
+  );
+  return {
+    projectId,
+    graphRevisionId: approval.graphRevision.id,
+    goalNodeId: approval.applied.addedIds[0] as string
+  };
+}
+
+function seedRepository(
+  ports: ReturnType<typeof createSqlitePorts>,
+  projectId: string
+): Repository {
+  const repository: Repository = {
+    id: "01TESTREPOSITORY0000000001",
+    projectId,
+    slug: "app",
+    name: "App Repository",
+    rootPath: null,
+    remoteUrl: null,
+    lifecycleStatus: "active",
+    createdAt: "2026-07-28T00:00:00.000Z",
+    updatedAt: "2026-07-28T00:00:00.000Z"
+  };
+  ports.repositories.insert(repository);
+  return repository;
+}
+
+function sampleTicketInput(goalNodeId: string, repositoryId: string) {
+  return {
+    title: "Build preset countdown controls",
+    userStory:
+      "As a workout user, I can start a 30 second or 1 minute countdown quickly.",
+    scope: ["Add 30 second preset", "Add 1 minute preset"],
+    acceptanceCriteria: [
+      "A user can start a 30 second countdown in one tap.",
+      "A user can start a 1 minute countdown in one tap."
+    ],
+    nonGoals: ["Custom workout plans"],
+    relatedGraphNodeIds: [goalNodeId],
+    implementationTargets: [
+      {
+        repositoryId,
+        scope: ["Timer UI and countdown state"]
+      }
+    ],
+    implementationNotes: ["Keep controls usable on mobile."]
   };
 }
 

@@ -16,6 +16,10 @@ import {
   type GraphChangeInput
 } from "./graph-workflow.js";
 import type { ApplicationPorts } from "./ports.js";
+import {
+  TicketWorkflow,
+  type TicketSpecInput
+} from "./ticket-workflow.js";
 
 type ServiceOptions = {
   idFactory?: () => string;
@@ -31,6 +35,7 @@ export class ProductGraphService {
   private readonly clock: () => Date;
   private readonly actor: NonNullable<ServiceOptions["actor"]>;
   private readonly graphWorkflow: GraphWorkflow;
+  private readonly ticketWorkflow: TicketWorkflow;
 
   constructor(
     private readonly ports: ApplicationPorts,
@@ -43,6 +48,11 @@ export class ProductGraphService {
       displayName: "Local User"
     };
     this.graphWorkflow = new GraphWorkflow(ports, {
+      idFactory: this.idFactory,
+      clock: this.clock,
+      actor: this.actor
+    });
+    this.ticketWorkflow = new TicketWorkflow(ports, {
       idFactory: this.idFactory,
       clock: this.clock,
       actor: this.actor
@@ -421,6 +431,35 @@ export class ProductGraphService {
     maxDepth?: number;
   }) {
     return this.graphWorkflow.getContext(input);
+  }
+
+  createTicketDraftBatch(input: {
+    projectId: string;
+    sourceGraphRevisionId: string;
+    sourceNodeIds: string[];
+    tickets: TicketSpecInput[];
+  }) {
+    return this.ticketWorkflow.createDraftBatch(input);
+  }
+
+  createTicketRevisionDraft(input: {
+    ticketId: string;
+    baseApprovedRevisionId: string;
+    sourceGraphRevisionId: string;
+    specification: TicketSpecInput;
+  }) {
+    return this.ticketWorkflow.createRevisionDraft(input);
+  }
+
+  approveTicketRevision(ticketRevisionId: string) {
+    return this.ticketWorkflow.approveRevision(ticketRevisionId);
+  }
+
+  getTicketContext(input: {
+    ticketId: string;
+    includeMarkdown?: boolean;
+  }) {
+    return this.ticketWorkflow.getContext(input);
   }
 
   private requireProject(projectId: string): Project {

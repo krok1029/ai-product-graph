@@ -9,7 +9,8 @@ import { createSqlitePorts } from "../../infrastructure/sqlite/repositories.js";
 
 it("runs the Graph reconciliation workflow through MCP", async () => {
   const database = openDatabase(":memory:");
-  const service = new ProductGraphService(createSqlitePorts(database), {
+  const ports = createSqlitePorts(database);
+  const service = new ProductGraphService(ports, {
     actor: {
       id: "00000000000000000000000004",
       displayName: "MCP Test User"
@@ -32,7 +33,10 @@ it("runs the Graph reconciliation workflow through MCP", async () => {
       expect.arrayContaining([
         "create_graph_draft_batch",
         "approve_graph_draft_batch",
-        "get_graph_context"
+        "get_graph_context",
+        "create_ticket_draft_batch",
+        "approve_ticket_revision",
+        "get_ticket_context"
       ])
     );
 
@@ -105,6 +109,9 @@ it("runs the Graph reconciliation workflow through MCP", async () => {
         arguments: { graph_draft_batch_id: graphDraft.id }
       })
     );
+    const graphRevisionId = (
+      approval.graph_revision as { id: string }
+    ).id;
     const context = toolData(
       await client.callTool({
         name: "get_graph_context",
@@ -121,6 +128,78 @@ it("runs the Graph reconciliation workflow through MCP", async () => {
     ).toBe("current");
     expect(context.nodes).toHaveLength(1);
     expect(context.edges).toHaveLength(0);
+
+    const graphNodeId = ((context.nodes as Array<{ id: string }>)[0] as {
+      id: string;
+    }).id;
+    const repository = {
+      id: "01MCPREPOSITORY0000000001",
+      projectId: project.id,
+      slug: "app",
+      name: "App Repository",
+      rootPath: null,
+      remoteUrl: null,
+      lifecycleStatus: "active" as const,
+      createdAt: "2026-07-28T00:00:00.000Z",
+      updatedAt: "2026-07-28T00:00:00.000Z"
+    };
+    ports.repositories.insert(repository);
+    const ticketDraft = toolData(
+      await client.callTool({
+        name: "create_ticket_draft_batch",
+        arguments: {
+          project_id: project.id,
+          source_graph_revision_id: graphRevisionId,
+          source_node_ids: [graphNodeId],
+          tickets: [
+            {
+              title: "Build countdown preset controls",
+              user_story:
+                "As a user, I can start a preset countdown quickly.",
+              scope: ["Add preset controls"],
+              acceptance_criteria: [
+                "A user can start a preset countdown in one tap."
+              ],
+              non_goals: [],
+              related_graph_node_ids: [graphNodeId],
+              implementation_targets: [
+                {
+                  repository_id: repository.id,
+                  scope: ["Timer controls"]
+                }
+              ],
+              implementation_notes: []
+            }
+          ]
+        }
+      })
+    );
+    const ticketRevisionId = (
+      (ticketDraft.tickets as Array<{ revision: { id: string } }>)[0] as {
+        revision: { id: string };
+      }
+    ).revision.id;
+    const ticketApproval = toolData(
+      await client.callTool({
+        name: "approve_ticket_revision",
+        arguments: { ticket_revision_id: ticketRevisionId }
+      })
+    );
+    const ticketId = (ticketApproval.ticket as { id: string }).id;
+    const ticketContext = toolData(
+      await client.callTool({
+        name: "get_ticket_context",
+        arguments: {
+          ticket_id: ticketId,
+          include_markdown: true
+        }
+      })
+    );
+
+    expect((ticketApproval.revision as { review_status: string }).review_status)
+      .toBe("approved");
+    expect(ticketContext.related_nodes).toHaveLength(1);
+    expect(ticketContext.markdown).toContain("## Acceptance Criteria");
   } finally {
     await Promise.allSettled([client.close(), server.close()]);
     database.close();

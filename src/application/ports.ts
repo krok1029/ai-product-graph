@@ -5,13 +5,18 @@ import type {
   GraphEdge,
   GraphNode,
   GraphRevision,
+  ImplementationTarget,
   Idea,
   LifecycleStatus,
   LocalActor,
   Project,
   ProductBrief,
   ProductBriefVersion,
-  ProjectCounts
+  ProjectCounts,
+  Repository,
+  Ticket,
+  TicketDraftBatch,
+  TicketRevision
 } from "../domain/models.js";
 
 export interface LocalActorRepository {
@@ -125,6 +130,71 @@ export interface GraphEdgeRepository {
   archive(edgeId: string, graphRevisionId: string, archivedAt: string): void;
 }
 
+export interface RepositoryRepository {
+  insert(repository: Repository): void;
+  findById(id: string): Repository | null;
+}
+
+export interface TicketDraftBatchRepository {
+  insert(batch: TicketDraftBatch): void;
+  findById(id: string): TicketDraftBatch | null;
+}
+
+export interface TicketRepository {
+  insert(ticket: Ticket): void;
+  findById(id: string): Ticket | null;
+  findBySlug(projectId: string, slug: string): Ticket | null;
+  updateCurrentApprovedRevision(
+    ticketId: string,
+    expectedRevisionId: string | null,
+    revisionId: string,
+    title: string,
+    deliveryStatus: Ticket["deliveryStatus"],
+    updatedAt: string
+  ): boolean;
+}
+
+export interface TicketRevisionRepository {
+  insert(
+    revision: TicketRevision,
+    relatedGraphNodeIds: string[],
+    dependencyTicketIds: string[]
+  ): void;
+  findById(id: string): TicketRevision | null;
+  listByTicketId(ticketId: string): TicketRevision[];
+  nextRevisionNumber(ticketId: string): number;
+  approve(revisionId: string, actorId: string, approvedAt: string): void;
+  archiveStaleDrafts(
+    ticketId: string,
+    exceptRevisionId: string,
+    currentApprovedRevisionId: string,
+    archivedAt: string
+  ): string[];
+  listGraphNodeIds(revisionId: string): string[];
+  listDependencyTicketIds(revisionId: string): string[];
+}
+
+export interface ImplementationTargetRepository {
+  insert(target: ImplementationTarget): void;
+  findById(id: string): ImplementationTarget | null;
+  findActiveByTicketAndRepository(
+    ticketId: string,
+    repositoryId: string
+  ): ImplementationTarget | null;
+  listActiveByTicketId(ticketId: string): ImplementationTarget[];
+  archive(targetId: string, archivedAt: string): void;
+}
+
+export interface ImplementationArtifactRepository {
+  archiveActiveForTicketRevision(
+    ticketRevisionId: string,
+    archivedAt: string
+  ): {
+    implementationBriefIds: string[];
+    implementationResultIds: string[];
+  };
+}
+
 export interface AuditLogRepository {
   append(entry: AuditLogEntry): void;
   list(): AuditLogEntry[];
@@ -144,6 +214,12 @@ export type ApplicationPorts = {
   graphRevisions: GraphRevisionRepository;
   graphNodes: GraphNodeRepository;
   graphEdges: GraphEdgeRepository;
+  repositories: RepositoryRepository;
+  ticketDraftBatches: TicketDraftBatchRepository;
+  tickets: TicketRepository;
+  ticketRevisions: TicketRevisionRepository;
+  implementationTargets: ImplementationTargetRepository;
+  implementationArtifacts: ImplementationArtifactRepository;
   auditLog: AuditLogRepository;
   transactions: TransactionRunner;
 };

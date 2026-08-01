@@ -1,5 +1,6 @@
 export type LifecycleStatus = "active" | "archived";
 export type ReviewStatus = "draft" | "approved";
+export type DeliveryStatus = "planned" | "in_progress" | "blocked" | "done";
 
 export type LocalActor = {
   id: string;
@@ -181,6 +182,89 @@ export type GraphEdge = {
   createdInGraphRevisionId: string;
   lastChangedInGraphRevisionId: string;
   metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Repository = {
+  id: string;
+  projectId: string;
+  slug: string;
+  name: string;
+  rootPath: string | null;
+  remoteUrl: string | null;
+  lifecycleStatus: LifecycleStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TicketDraftBatch = {
+  id: string;
+  projectId: string;
+  sourceGraphRevisionId: string;
+  lifecycleStatus: LifecycleStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AcceptanceCriterion = {
+  id: string;
+  text: string;
+};
+
+export type TicketSpecification = {
+  traces_to_ticket_id: string | null;
+  user_story: string;
+  scope: string[];
+  acceptance_criteria: AcceptanceCriterion[];
+  non_goals: string[];
+  related_graph_node_ids: string[];
+  dependencies: string[];
+  implementation_notes: string[];
+};
+
+export type RequiredImplementationTarget = {
+  repository_id: string;
+  scope: string[];
+};
+
+export type Ticket = {
+  id: string;
+  projectId: string;
+  slug: string;
+  title: string;
+  currentApprovedRevisionId: string | null;
+  lifecycleStatus: LifecycleStatus;
+  deliveryStatus: DeliveryStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TicketRevision = {
+  id: string;
+  ticketId: string;
+  projectId: string;
+  ticketDraftBatchId: string | null;
+  revisionNumber: number;
+  baseApprovedRevisionId: string | null;
+  sourceGraphRevisionId: string;
+  title: string;
+  specification: TicketSpecification;
+  requiredTargets: RequiredImplementationTarget[];
+  reviewStatus: ReviewStatus;
+  lifecycleStatus: LifecycleStatus;
+  approvedByActorId: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ImplementationTarget = {
+  id: string;
+  projectId: string;
+  ticketId: string;
+  repositoryId: string;
+  lifecycleStatus: LifecycleStatus;
   createdAt: string;
   updatedAt: string;
 };

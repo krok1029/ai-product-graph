@@ -5,12 +5,17 @@ import type {
   GraphEdge,
   GraphNode,
   GraphRevision,
+  ImplementationTarget,
   Idea,
   Project,
   ProductBrief,
   ProductBriefJson,
   ProductBriefVersion,
-  ProjectCounts
+  ProjectCounts,
+  Repository,
+  Ticket,
+  TicketDraftBatch,
+  TicketRevision
 } from "../../domain/models.js";
 import type { ApplicationPorts } from "../../application/ports.js";
 import type { SqliteDatabase } from "./database.js";
@@ -35,6 +40,18 @@ type IdeaRow = {
   slug: string;
   content: string;
   source: string;
+  lifecycle_status: "active" | "archived";
+  created_at: string;
+  updated_at: string;
+};
+
+type RepositoryRow = {
+  id: string;
+  project_id: string;
+  slug: string;
+  name: string;
+  root_path: string | null;
+  remote_url: string | null;
   lifecycle_status: "active" | "archived";
   created_at: string;
   updated_at: string;
@@ -122,6 +139,56 @@ type GraphEdgeRow = {
   created_in_graph_revision_id: string;
   last_changed_in_graph_revision_id: string;
   metadata_json: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type TicketDraftBatchRow = {
+  id: string;
+  project_id: string;
+  source_graph_revision_id: string;
+  lifecycle_status: "active" | "archived";
+  created_at: string;
+  updated_at: string;
+};
+
+type TicketRow = {
+  id: string;
+  project_id: string;
+  slug: string;
+  title: string;
+  current_approved_revision_id: string | null;
+  lifecycle_status: "active" | "archived";
+  delivery_status: Ticket["deliveryStatus"];
+  created_at: string;
+  updated_at: string;
+};
+
+type TicketRevisionRow = {
+  id: string;
+  ticket_id: string;
+  project_id: string;
+  ticket_draft_batch_id: string | null;
+  revision_number: number;
+  base_approved_revision_id: string | null;
+  source_graph_revision_id: string;
+  title: string;
+  specification_json: string;
+  required_targets_json: string;
+  review_status: "draft" | "approved";
+  lifecycle_status: "active" | "archived";
+  approved_by_actor_id: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type ImplementationTargetRow = {
+  id: string;
+  project_id: string;
+  ticket_id: string;
+  repository_id: string;
+  lifecycle_status: "active" | "archived";
   created_at: string;
   updated_at: string;
 };
@@ -805,6 +872,407 @@ export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
           .run(archivedAt, graphRevisionId, archivedAt, edgeId);
       }
     },
+    repositories: {
+      insert(repository) {
+        database
+          .prepare(
+            `INSERT INTO repositories (
+              id, project_id, slug, name, root_path, remote_url,
+              lifecycle_status, metadata_json, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, '{}', ?, ?)`
+          )
+          .run(
+            repository.id,
+            repository.projectId,
+            repository.slug,
+            repository.name,
+            repository.rootPath,
+            repository.remoteUrl,
+            repository.lifecycleStatus,
+            repository.createdAt,
+            repository.updatedAt
+          );
+      },
+      findById(id) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, slug, name, root_path, remote_url,
+                    lifecycle_status, created_at, updated_at
+             FROM repositories WHERE id = ?`
+          )
+          .get(id) as RepositoryRow | undefined;
+        return row ? mapRepository(row) : null;
+      }
+    },
+    ticketDraftBatches: {
+      insert(batch) {
+        database
+          .prepare(
+            `INSERT INTO ticket_draft_batches (
+              id, project_id, source_graph_revision_id, lifecycle_status,
+              metadata_json, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, '{}', ?, ?)`
+          )
+          .run(
+            batch.id,
+            batch.projectId,
+            batch.sourceGraphRevisionId,
+            batch.lifecycleStatus,
+            batch.createdAt,
+            batch.updatedAt
+          );
+      },
+      findById(id) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, source_graph_revision_id,
+                    lifecycle_status, created_at, updated_at
+             FROM ticket_draft_batches WHERE id = ?`
+          )
+          .get(id) as TicketDraftBatchRow | undefined;
+        return row ? mapTicketDraftBatch(row) : null;
+      }
+    },
+    tickets: {
+      insert(ticket) {
+        database
+          .prepare(
+            `INSERT INTO tickets (
+              id, project_id, slug, title, current_approved_revision_id,
+              lifecycle_status, delivery_status, metadata_json,
+              created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, '{}', ?, ?)`
+          )
+          .run(
+            ticket.id,
+            ticket.projectId,
+            ticket.slug,
+            ticket.title,
+            ticket.currentApprovedRevisionId,
+            ticket.lifecycleStatus,
+            ticket.deliveryStatus,
+            ticket.createdAt,
+            ticket.updatedAt
+          );
+      },
+      findById(id) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, slug, title,
+                    current_approved_revision_id, lifecycle_status,
+                    delivery_status, created_at, updated_at
+             FROM tickets WHERE id = ?`
+          )
+          .get(id) as TicketRow | undefined;
+        return row ? mapTicket(row) : null;
+      },
+      findBySlug(projectId, slug) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, slug, title,
+                    current_approved_revision_id, lifecycle_status,
+                    delivery_status, created_at, updated_at
+             FROM tickets WHERE project_id = ? AND slug = ?`
+          )
+          .get(projectId, slug) as TicketRow | undefined;
+        return row ? mapTicket(row) : null;
+      },
+      updateCurrentApprovedRevision(
+        ticketId,
+        expectedRevisionId,
+        revisionId,
+        title,
+        deliveryStatus,
+        updatedAt
+      ) {
+        const result = database
+          .prepare(
+            `UPDATE tickets
+             SET current_approved_revision_id = ?, title = ?,
+                 delivery_status = ?, updated_at = ?
+             WHERE id = ?
+               AND lifecycle_status = 'active'
+               AND current_approved_revision_id IS ?`
+          )
+          .run(
+            revisionId,
+            title,
+            deliveryStatus,
+            updatedAt,
+            ticketId,
+            expectedRevisionId
+          );
+        return result.changes === 1;
+      }
+    },
+    ticketRevisions: {
+      insert(revision, relatedGraphNodeIds, dependencyTicketIds) {
+        database
+          .prepare(
+            `INSERT INTO ticket_revisions (
+              id, ticket_id, project_id, ticket_draft_batch_id,
+              revision_number, base_approved_revision_id,
+              source_graph_revision_id, title, specification_json,
+              required_targets_json, review_status, lifecycle_status,
+              approved_by_actor_id, approved_at, metadata_json,
+              created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', ?, ?)`
+          )
+          .run(
+            revision.id,
+            revision.ticketId,
+            revision.projectId,
+            revision.ticketDraftBatchId,
+            revision.revisionNumber,
+            revision.baseApprovedRevisionId,
+            revision.sourceGraphRevisionId,
+            revision.title,
+            JSON.stringify(revision.specification),
+            JSON.stringify(revision.requiredTargets),
+            revision.reviewStatus,
+            revision.lifecycleStatus,
+            revision.approvedByActorId,
+            revision.approvedAt,
+            revision.createdAt,
+            revision.updatedAt
+          );
+        const graphNodeStatement = database.prepare(
+          `INSERT INTO ticket_revision_graph_nodes (
+            ticket_revision_id, graph_node_id, relation_type, created_at
+          ) VALUES (?, ?, 'traces_to', ?)`
+        );
+        for (const nodeId of relatedGraphNodeIds) {
+          graphNodeStatement.run(revision.id, nodeId, revision.createdAt);
+        }
+        const dependencyStatement = database.prepare(
+          `INSERT INTO ticket_revision_dependencies (
+            ticket_revision_id, depends_on_ticket_id, created_at
+          ) VALUES (?, ?, ?)`
+        );
+        for (const dependencyId of dependencyTicketIds) {
+          dependencyStatement.run(
+            revision.id,
+            dependencyId,
+            revision.createdAt
+          );
+        }
+      },
+      findById(id) {
+        const row = database
+          .prepare(
+            `SELECT id, ticket_id, project_id, ticket_draft_batch_id,
+                    revision_number, base_approved_revision_id,
+                    source_graph_revision_id, title, specification_json,
+                    required_targets_json, review_status, lifecycle_status,
+                    approved_by_actor_id, approved_at, created_at, updated_at
+             FROM ticket_revisions WHERE id = ?`
+          )
+          .get(id) as TicketRevisionRow | undefined;
+        return row ? mapTicketRevision(row) : null;
+      },
+      listByTicketId(ticketId) {
+        const rows = database
+          .prepare(
+            `SELECT id, ticket_id, project_id, ticket_draft_batch_id,
+                    revision_number, base_approved_revision_id,
+                    source_graph_revision_id, title, specification_json,
+                    required_targets_json, review_status, lifecycle_status,
+                    approved_by_actor_id, approved_at, created_at, updated_at
+             FROM ticket_revisions
+             WHERE ticket_id = ?
+             ORDER BY revision_number, id`
+          )
+          .all(ticketId) as TicketRevisionRow[];
+        return rows.map(mapTicketRevision);
+      },
+      nextRevisionNumber(ticketId) {
+        const row = database
+          .prepare(
+            `SELECT COALESCE(MAX(revision_number), 0) + 1 AS revision_number
+             FROM ticket_revisions WHERE ticket_id = ?`
+          )
+          .get(ticketId) as { revision_number: number };
+        return row.revision_number;
+      },
+      approve(revisionId, actorId, approvedAt) {
+        database
+          .prepare(
+            `UPDATE ticket_revisions
+             SET review_status = 'approved', approved_by_actor_id = ?,
+                 approved_at = ?, updated_at = ?
+             WHERE id = ?`
+          )
+          .run(actorId, approvedAt, approvedAt, revisionId);
+      },
+      archiveStaleDrafts(
+        ticketId,
+        exceptRevisionId,
+        currentApprovedRevisionId,
+        archivedAt
+      ) {
+        const rows = database
+          .prepare(
+            `SELECT id
+             FROM ticket_revisions
+             WHERE ticket_id = ?
+               AND id <> ?
+               AND review_status = 'draft'
+               AND lifecycle_status = 'active'
+               AND base_approved_revision_id IS NOT ?
+             ORDER BY revision_number, id`
+          )
+          .all(
+            ticketId,
+            exceptRevisionId,
+            currentApprovedRevisionId
+          ) as Array<{ id: string }>;
+        if (rows.length > 0) {
+          const placeholders = rows.map(() => "?").join(", ");
+          database
+            .prepare(
+              `UPDATE ticket_revisions
+               SET lifecycle_status = 'archived', archived_at = ?,
+                   updated_at = ?
+               WHERE id IN (${placeholders})`
+            )
+            .run(archivedAt, archivedAt, ...rows.map(row => row.id));
+        }
+        return rows.map(row => row.id);
+      },
+      listGraphNodeIds(revisionId) {
+        const rows = database
+          .prepare(
+            `SELECT graph_node_id
+             FROM ticket_revision_graph_nodes
+             WHERE ticket_revision_id = ?
+             ORDER BY rowid`
+          )
+          .all(revisionId) as Array<{ graph_node_id: string }>;
+        return rows.map(row => row.graph_node_id);
+      },
+      listDependencyTicketIds(revisionId) {
+        const rows = database
+          .prepare(
+            `SELECT depends_on_ticket_id
+             FROM ticket_revision_dependencies
+             WHERE ticket_revision_id = ?
+             ORDER BY rowid`
+          )
+          .all(revisionId) as Array<{ depends_on_ticket_id: string }>;
+        return rows.map(row => row.depends_on_ticket_id);
+      }
+    },
+    implementationTargets: {
+      insert(target) {
+        database
+          .prepare(
+            `INSERT INTO implementation_targets (
+              id, project_id, ticket_id, repository_id, lifecycle_status,
+              created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)`
+          )
+          .run(
+            target.id,
+            target.projectId,
+            target.ticketId,
+            target.repositoryId,
+            target.lifecycleStatus,
+            target.createdAt,
+            target.updatedAt
+          );
+      },
+      findById(id) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, ticket_id, repository_id,
+                    lifecycle_status, created_at, updated_at
+             FROM implementation_targets WHERE id = ?`
+          )
+          .get(id) as ImplementationTargetRow | undefined;
+        return row ? mapImplementationTarget(row) : null;
+      },
+      findActiveByTicketAndRepository(ticketId, repositoryId) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, ticket_id, repository_id,
+                    lifecycle_status, created_at, updated_at
+             FROM implementation_targets
+             WHERE ticket_id = ?
+               AND repository_id = ?
+               AND lifecycle_status = 'active'`
+          )
+          .get(ticketId, repositoryId) as ImplementationTargetRow | undefined;
+        return row ? mapImplementationTarget(row) : null;
+      },
+      listActiveByTicketId(ticketId) {
+        const rows = database
+          .prepare(
+            `SELECT id, project_id, ticket_id, repository_id,
+                    lifecycle_status, created_at, updated_at
+             FROM implementation_targets
+             WHERE ticket_id = ? AND lifecycle_status = 'active'
+             ORDER BY repository_id, id`
+          )
+          .all(ticketId) as ImplementationTargetRow[];
+        return rows.map(mapImplementationTarget);
+      },
+      archive(targetId, archivedAt) {
+        database
+          .prepare(
+            `UPDATE implementation_targets
+             SET lifecycle_status = 'archived', archived_at = ?,
+                 updated_at = ?
+             WHERE id = ?`
+          )
+          .run(archivedAt, archivedAt, targetId);
+      }
+    },
+    implementationArtifacts: {
+      archiveActiveForTicketRevision(ticketRevisionId, archivedAt) {
+        const briefRows = database
+          .prepare(
+            `SELECT id
+             FROM implementation_briefs
+             WHERE ticket_revision_id = ?
+               AND lifecycle_status = 'active'`
+          )
+          .all(ticketRevisionId) as Array<{ id: string }>;
+        const resultRows = database
+          .prepare(
+            `SELECT id
+             FROM implementation_results
+             WHERE ticket_revision_id = ?
+               AND lifecycle_status = 'active'`
+          )
+          .all(ticketRevisionId) as Array<{ id: string }>;
+        if (briefRows.length > 0) {
+          const placeholders = briefRows.map(() => "?").join(", ");
+          database
+            .prepare(
+              `UPDATE implementation_briefs
+               SET lifecycle_status = 'archived', archived_at = ?,
+                   updated_at = ?
+               WHERE id IN (${placeholders})`
+            )
+            .run(archivedAt, archivedAt, ...briefRows.map(row => row.id));
+        }
+        if (resultRows.length > 0) {
+          const placeholders = resultRows.map(() => "?").join(", ");
+          database
+            .prepare(
+              `UPDATE implementation_results
+               SET lifecycle_status = 'archived', archived_at = ?,
+                   updated_at = ?
+               WHERE id IN (${placeholders})`
+            )
+            .run(archivedAt, archivedAt, ...resultRows.map(row => row.id));
+        }
+        return {
+          implementationBriefIds: briefRows.map(row => row.id),
+          implementationResultIds: resultRows.map(row => row.id)
+        };
+      }
+    },
     auditLog: {
       append(entry) {
         database
@@ -975,6 +1443,84 @@ function mapIdea(row: IdeaRow): Idea {
     slug: row.slug,
     content: row.content,
     source: row.source,
+    lifecycleStatus: row.lifecycle_status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapRepository(row: RepositoryRow): Repository {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    slug: row.slug,
+    name: row.name,
+    rootPath: row.root_path,
+    remoteUrl: row.remote_url,
+    lifecycleStatus: row.lifecycle_status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapTicketDraftBatch(row: TicketDraftBatchRow): TicketDraftBatch {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    sourceGraphRevisionId: row.source_graph_revision_id,
+    lifecycleStatus: row.lifecycle_status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapTicket(row: TicketRow): Ticket {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    slug: row.slug,
+    title: row.title,
+    currentApprovedRevisionId: row.current_approved_revision_id,
+    lifecycleStatus: row.lifecycle_status,
+    deliveryStatus: row.delivery_status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapTicketRevision(row: TicketRevisionRow): TicketRevision {
+  return {
+    id: row.id,
+    ticketId: row.ticket_id,
+    projectId: row.project_id,
+    ticketDraftBatchId: row.ticket_draft_batch_id,
+    revisionNumber: row.revision_number,
+    baseApprovedRevisionId: row.base_approved_revision_id,
+    sourceGraphRevisionId: row.source_graph_revision_id,
+    title: row.title,
+    specification: JSON.parse(
+      row.specification_json
+    ) as TicketRevision["specification"],
+    requiredTargets: JSON.parse(
+      row.required_targets_json
+    ) as TicketRevision["requiredTargets"],
+    reviewStatus: row.review_status,
+    lifecycleStatus: row.lifecycle_status,
+    approvedByActorId: row.approved_by_actor_id,
+    approvedAt: row.approved_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapImplementationTarget(
+  row: ImplementationTargetRow
+): ImplementationTarget {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    ticketId: row.ticket_id,
+    repositoryId: row.repository_id,
     lifecycleStatus: row.lifecycle_status,
     createdAt: row.created_at,
     updatedAt: row.updated_at
