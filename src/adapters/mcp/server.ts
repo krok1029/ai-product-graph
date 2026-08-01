@@ -1,3 +1,9 @@
+// MCP server 註冊入口。
+//
+// 註冊 AI Product Graph 的 MCP tools 與 resources。Validation、serialization
+// 與 error envelope 放在鄰近 modules，讓這個檔案專注在把 MCP call routing
+// 到 ProductGraphService。
+
 import {
   McpServer,
   ResourceTemplate
@@ -5,124 +11,36 @@ import {
 import { z } from "zod";
 
 import type { ProductGraphService } from "../../application/product-graph-service.js";
-import { ApplicationError } from "../../domain/errors.js";
-import type {
-  GraphDraftBatch,
-  GraphEdge,
-  GraphNode,
-  GraphRevision,
-  ImplementationBrief,
-  ImplementationTarget,
-  Idea,
-  ProductBrief,
-  ProductBriefVersion,
-  Project,
-  Repository,
-  RepositoryContextSnapshot,
-  Ticket,
-  TicketDraftBatch,
-  TicketRevision
-} from "../../domain/models.js";
-
-const graphNodeTypeSchema = z.enum([
-  "idea",
-  "product_goal",
-  "persona",
-  "pain_point",
-  "workflow",
-  "feature_area",
-  "epic",
-  "ticket",
-  "acceptance_criterion",
-  "decision",
-  "repository",
-  "code_file",
-  "pull_request",
-  "test_case",
-  "release",
-  "feedback",
-  "implementation_target",
-  "external_work_item"
-]);
-
-const productBriefJsonSchema = z
-  .object({
-    product_goal: z.string().min(1),
-    target_users: z.array(
-      z
-        .object({
-          name: z.string(),
-          description: z.string()
-        })
-        .strict()
-    ),
-    pain_points: z.array(
-      z
-        .object({
-          title: z.string(),
-          description: z.string()
-        })
-        .strict()
-    ),
-    core_workflows: z.array(
-      z
-        .object({
-          title: z.string(),
-          steps: z.array(z.string())
-        })
-        .strict()
-    ),
-    mvp_scope: z.array(z.string()),
-    non_goals: z.array(z.string()),
-    success_metrics: z.array(z.string()),
-    risks: z.array(z.string()),
-    open_questions: z.array(z.string())
-  })
-  .strict();
-
-const ticketSpecificationSchema = z
-  .object({
-    title: z.string().min(1),
-    traces_to_ticket_id: z.string().min(1).nullable().optional(),
-    user_story: z.string().min(1),
-    scope: z.array(z.string()),
-    acceptance_criteria: z.array(z.string().min(1)),
-    non_goals: z.array(z.string()),
-    related_graph_node_ids: z.array(z.string().min(1)),
-    dependencies: z.array(z.string().min(1)).optional(),
-    implementation_targets: z.array(
-      z
-        .object({
-          repository_id: z.string().min(1),
-          scope: z.array(z.string())
-        })
-        .strict()
-    ),
-    implementation_notes: z.array(z.string())
-  })
-  .strict();
-
-const repositoryContextSchema = z
-  .object({
-    repository_name: z.string().min(1),
-    summary: z.string().min(1),
-    file_list: z.array(z.string().min(1)),
-    module_notes: z.array(z.string().min(1)),
-    baseline_commit_sha: z.string().min(1).nullable().optional(),
-    has_uncommitted_changes: z.boolean().default(false),
-    dirty_state_fingerprint: z.string().min(1).nullable().optional()
-  })
-  .strict();
-
-const implementationBriefSchema = z
-  .object({
-    implementation_plan: z.array(z.string().min(1)),
-    suggested_files_to_inspect: z.array(z.string().min(1)),
-    test_strategy: z.array(z.string().min(1)),
-    risks: z.array(z.string().min(1)),
-    pr_summary_draft: z.string().min(1)
-  })
-  .strict();
+import {
+  toImplementationBriefInput,
+  toRepositoryContextInput,
+  toTicketSpecInput
+} from "./input-mappers.js";
+import {
+  graphNodeTypeSchema,
+  implementationBriefSchema,
+  productBriefJsonSchema,
+  repositoryContextSchema,
+  ticketSpecificationSchema
+} from "./schemas.js";
+import {
+  serializeGraphDraftBatch,
+  serializeGraphEdge,
+  serializeGraphNode,
+  serializeGraphRevision,
+  serializeIdea,
+  serializeImplementationBrief,
+  serializeImplementationTarget,
+  serializeProductBrief,
+  serializeProductBriefVersion,
+  serializeProject,
+  serializeRepository,
+  serializeRepositoryContextSnapshot,
+  serializeTicket,
+  serializeTicketDraftBatch,
+  serializeTicketRevision
+} from "./serializers.js";
+import { success, toToolResult } from "./tool-envelope.js";
 
 export function createMcpServer(service: ProductGraphService): McpServer {
   const server = new McpServer({
@@ -314,8 +232,8 @@ export function createMcpServer(service: ProductGraphService): McpServer {
           z
             .object({
               change_id: z.string().min(1),
-              operation: z.enum(["add", "update", "archive"]),
-              entity_kind: z.enum(["node", "edge"]),
+              operation: z.enum(["add","update","archive"]),
+              entity_kind: z.enum(["node","edge"]),
               target_id: z.string().min(1).nullable(),
               payload: z.record(z.unknown())
             })
@@ -338,7 +256,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
             source_product_brief_version_id,
           ...(reconciliation_summary === undefined
             ? {}
-            : { reconciliationSummary: reconciliation_summary }),
+            :{ reconciliationSummary: reconciliation_summary }),
           changes: changes.map(change => ({
             changeId: change.change_id,
             operation: change.operation,
@@ -420,7 +338,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
       inputSchema: {
         project_id: z.string().min(1),
         lifecycle_status: z
-          .enum(["active", "archived"])
+          .enum(["active","archived"])
           .default("active"),
         node_types: z.array(graphNodeTypeSchema).optional(),
         max_depth: z.number().int().min(0).max(10).default(2)
@@ -432,7 +350,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
           projectId: project_id,
           lifecycleStatus: lifecycle_status,
           maxDepth: max_depth,
-          ...(node_types === undefined ? {} : { nodeTypes: node_types })
+          ...(node_types === undefined? {}:{ nodeTypes: node_types })
         });
         return success({
           graph_revision_id: result.graphRevisionId,
@@ -778,369 +696,4 @@ export function createMcpServer(service: ProductGraphService): McpServer {
   );
 
   return server;
-}
-
-type ToolEnvelope = {
-  ok: boolean;
-  data?: Record<string, unknown>;
-  error?: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-  audit_log_id?: string;
-};
-
-function success(
-  data: Record<string, unknown>,
-  auditLogId?: string
-): ToolEnvelope {
-  return {
-    ok: true,
-    data,
-    ...(auditLogId ? { audit_log_id: auditLogId } : {})
-  };
-}
-
-function toToolResult(work: () => ToolEnvelope) {
-  try {
-    const envelope = work();
-    return {
-      content: [{ type: "text" as const, text: JSON.stringify(envelope) }],
-      structuredContent: { ...envelope }
-    };
-  } catch (error) {
-    const envelope = errorEnvelope(error);
-    return {
-      content: [{ type: "text" as const, text: JSON.stringify(envelope) }],
-      isError: true
-    };
-  }
-}
-
-function errorEnvelope(error: unknown): ToolEnvelope {
-  if (error instanceof ApplicationError) {
-    return {
-      ok: false,
-      error: {
-        code: error.code,
-        message: error.message,
-        ...(error.details === undefined ? {} : { details: error.details })
-      }
-    };
-  }
-  if (isSqliteError(error)) {
-    return {
-      ok: false,
-      error: {
-        code: "STORAGE_ERROR",
-        message: "SQLite operation failed.",
-        details: { sqlite_code: error.code }
-      }
-    };
-  }
-  return {
-    ok: false,
-    error: {
-      code: "INTERNAL_ERROR",
-      message: error instanceof Error ? error.message : "Unexpected error."
-    }
-  };
-}
-
-function isSqliteError(error: unknown): error is { code: string } {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    typeof error.code === "string" &&
-    error.code.startsWith("SQLITE_")
-  );
-}
-
-function serializeProject(project: Project) {
-  return {
-    id: project.id,
-    slug: project.slug,
-    name: project.name,
-    description: project.description,
-    lifecycle_status: project.lifecycleStatus,
-    current_product_brief_id: project.currentProductBriefId,
-    current_graph_revision_id: project.currentGraphRevisionId,
-    last_reconciled_product_brief_version_id:
-      project.lastReconciledProductBriefVersionId,
-    product_intent_graph_revision_id: project.productIntentGraphRevisionId,
-    created_at: project.createdAt,
-    updated_at: project.updatedAt
-  };
-}
-
-function serializeIdea(idea: Idea) {
-  return {
-    id: idea.id,
-    project_id: idea.projectId,
-    slug: idea.slug,
-    content: idea.content,
-    source: idea.source,
-    lifecycle_status: idea.lifecycleStatus,
-    created_at: idea.createdAt,
-    updated_at: idea.updatedAt
-  };
-}
-
-function serializeProductBrief(productBrief: ProductBrief) {
-  return {
-    id: productBrief.id,
-    project_id: productBrief.projectId,
-    source_idea_id: productBrief.sourceIdeaId,
-    slug: productBrief.slug,
-    current_approved_version_id: productBrief.currentApprovedVersionId,
-    lifecycle_status: productBrief.lifecycleStatus,
-    created_at: productBrief.createdAt,
-    updated_at: productBrief.updatedAt
-  };
-}
-
-function serializeProductBriefVersion(version: ProductBriefVersion) {
-  return {
-    id: version.id,
-    product_brief_id: version.productBriefId,
-    project_id: version.projectId,
-    version_number: version.versionNumber,
-    base_approved_version_id: version.baseApprovedVersionId,
-    brief: version.brief,
-    review_status: version.reviewStatus,
-    lifecycle_status: version.lifecycleStatus,
-    approved_by_actor_id: version.approvedByActorId,
-    approved_at: version.approvedAt,
-    created_at: version.createdAt,
-    updated_at: version.updatedAt
-  };
-}
-
-function serializeGraphDraftBatch(batch: GraphDraftBatch) {
-  return {
-    id: batch.id,
-    project_id: batch.projectId,
-    source_product_brief_version_id:
-      batch.sourceProductBriefVersionId,
-    base_graph_revision_id: batch.baseGraphRevisionId,
-    reconciliation_summary: batch.reconciliationSummary,
-    review_status: batch.reviewStatus,
-    lifecycle_status: batch.lifecycleStatus,
-    approved_by_actor_id: batch.approvedByActorId,
-    approved_at: batch.approvedAt,
-    created_at: batch.createdAt,
-    updated_at: batch.updatedAt
-  };
-}
-
-function serializeGraphRevision(revision: GraphRevision) {
-  return {
-    id: revision.id,
-    project_id: revision.projectId,
-    graph_draft_batch_id: revision.graphDraftBatchId,
-    source_product_brief_version_id:
-      revision.sourceProductBriefVersionId,
-    sequence_number: revision.sequenceNumber,
-    is_noop_reconciliation: revision.isNoopReconciliation,
-    reconciliation_summary: revision.reconciliationSummary,
-    created_at: revision.createdAt
-  };
-}
-
-function serializeGraphNode(node: GraphNode) {
-  return {
-    id: node.id,
-    project_id: node.projectId,
-    slug: node.slug,
-    type: node.type,
-    title: node.title,
-    description: node.description,
-    source: node.source,
-    source_ref_type: node.sourceRefType,
-    source_ref_id: node.sourceRefId,
-    lifecycle_status: node.lifecycleStatus,
-    created_in_graph_revision_id: node.createdInGraphRevisionId,
-    last_changed_in_graph_revision_id:
-      node.lastChangedInGraphRevisionId,
-    metadata: node.metadata,
-    created_at: node.createdAt,
-    updated_at: node.updatedAt
-  };
-}
-
-function serializeGraphEdge(edge: GraphEdge) {
-  return {
-    id: edge.id,
-    project_id: edge.projectId,
-    source_node_id: edge.sourceNodeId,
-    target_node_id: edge.targetNodeId,
-    relation_type: edge.relationType,
-    confidence: edge.confidence,
-    lifecycle_status: edge.lifecycleStatus,
-    created_in_graph_revision_id: edge.createdInGraphRevisionId,
-    last_changed_in_graph_revision_id:
-      edge.lastChangedInGraphRevisionId,
-    metadata: edge.metadata,
-    created_at: edge.createdAt,
-    updated_at: edge.updatedAt
-  };
-}
-
-function serializeTicketDraftBatch(batch: TicketDraftBatch) {
-  return {
-    id: batch.id,
-    project_id: batch.projectId,
-    source_graph_revision_id: batch.sourceGraphRevisionId,
-    lifecycle_status: batch.lifecycleStatus,
-    created_at: batch.createdAt,
-    updated_at: batch.updatedAt
-  };
-}
-
-function serializeTicket(ticket: Ticket) {
-  return {
-    id: ticket.id,
-    project_id: ticket.projectId,
-    slug: ticket.slug,
-    title: ticket.title,
-    current_approved_revision_id: ticket.currentApprovedRevisionId,
-    lifecycle_status: ticket.lifecycleStatus,
-    delivery_status: ticket.deliveryStatus,
-    created_at: ticket.createdAt,
-    updated_at: ticket.updatedAt
-  };
-}
-
-function serializeTicketRevision(revision: TicketRevision) {
-  return {
-    id: revision.id,
-    ticket_id: revision.ticketId,
-    project_id: revision.projectId,
-    ticket_draft_batch_id: revision.ticketDraftBatchId,
-    revision_number: revision.revisionNumber,
-    base_approved_revision_id: revision.baseApprovedRevisionId,
-    source_graph_revision_id: revision.sourceGraphRevisionId,
-    title: revision.title,
-    specification: revision.specification,
-    required_targets: revision.requiredTargets,
-    review_status: revision.reviewStatus,
-    lifecycle_status: revision.lifecycleStatus,
-    approved_by_actor_id: revision.approvedByActorId,
-    approved_at: revision.approvedAt,
-    created_at: revision.createdAt,
-    updated_at: revision.updatedAt
-  };
-}
-
-function serializeImplementationTarget(
-  target: ImplementationTarget & { identityAction?: "created" | "reused" }
-) {
-  return {
-    id: target.id,
-    project_id: target.projectId,
-    ticket_id: target.ticketId,
-    repository_id: target.repositoryId,
-    lifecycle_status: target.lifecycleStatus,
-    identity_action: target.identityAction,
-    created_at: target.createdAt,
-    updated_at: target.updatedAt
-  };
-}
-
-function serializeRepository(repository: Repository) {
-  return {
-    id: repository.id,
-    project_id: repository.projectId,
-    slug: repository.slug,
-    name: repository.name,
-    root_path: repository.rootPath,
-    remote_url: repository.remoteUrl,
-    lifecycle_status: repository.lifecycleStatus,
-    created_at: repository.createdAt,
-    updated_at: repository.updatedAt
-  };
-}
-
-function serializeRepositoryContextSnapshot(
-  snapshot: RepositoryContextSnapshot
-) {
-  return {
-    id: snapshot.id,
-    project_id: snapshot.projectId,
-    repository_id: snapshot.repositoryId,
-    baseline_commit_sha: snapshot.baselineCommitSha,
-    dirty_state_fingerprint: snapshot.dirtyStateFingerprint,
-    context: snapshot.context,
-    is_approvable: snapshot.isApprovable,
-    created_at: snapshot.createdAt
-  };
-}
-
-function serializeImplementationBrief(brief: ImplementationBrief) {
-  return {
-    id: brief.id,
-    project_id: brief.projectId,
-    implementation_target_id: brief.implementationTargetId,
-    ticket_revision_id: brief.ticketRevisionId,
-    product_brief_version_id: brief.productBriefVersionId,
-    repository_context_snapshot_id: brief.repositoryContextSnapshotId,
-    supersedes_implementation_brief_id:
-      brief.supersedesImplementationBriefId,
-    slug: brief.slug,
-    brief: brief.brief,
-    review_status: brief.reviewStatus,
-    lifecycle_status: brief.lifecycleStatus,
-    approved_by_actor_id: brief.approvedByActorId,
-    approved_at: brief.approvedAt,
-    created_at: brief.createdAt,
-    updated_at: brief.updatedAt
-  };
-}
-
-function toTicketSpecInput(
-  input: z.infer<typeof ticketSpecificationSchema>
-) {
-  return {
-    title: input.title,
-    tracesToTicketId: input.traces_to_ticket_id ?? null,
-    userStory: input.user_story,
-    scope: input.scope,
-    acceptanceCriteria: input.acceptance_criteria,
-    nonGoals: input.non_goals,
-    relatedGraphNodeIds: input.related_graph_node_ids,
-    dependencies: input.dependencies ?? [],
-    implementationTargets: input.implementation_targets.map(target => ({
-      repositoryId: target.repository_id,
-      scope: target.scope
-    })),
-    implementationNotes: input.implementation_notes
-  };
-}
-
-function toRepositoryContextInput(
-  input: z.infer<typeof repositoryContextSchema>
-) {
-  return {
-    repositoryName: input.repository_name,
-    summary: input.summary,
-    fileList: input.file_list,
-    moduleNotes: input.module_notes,
-    baselineCommitSha: input.baseline_commit_sha ?? null,
-    hasUncommittedChanges: input.has_uncommitted_changes,
-    dirtyStateFingerprint: input.dirty_state_fingerprint ?? null
-  };
-}
-
-function toImplementationBriefInput(
-  input: z.infer<typeof implementationBriefSchema>
-) {
-  return {
-    implementationPlan: input.implementation_plan,
-    suggestedFilesToInspect: input.suggested_files_to_inspect,
-    testStrategy: input.test_strategy,
-    risks: input.risks,
-    prSummaryDraft: input.pr_summary_draft
-  };
 }

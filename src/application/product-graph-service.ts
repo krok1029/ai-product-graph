@@ -1,3 +1,9 @@
+// Product graph service facade。
+//
+// MCP adapters、smoke tests 與未來 local callers 使用的公開 application
+// facade。它維持 caller-facing methods 穩定，並把 workflow-specific rules
+// 交給專門的 workflow modules。
+
 import { ulid } from "ulid";
 
 import { ApplicationError } from "../domain/errors.js";
@@ -322,8 +328,7 @@ export class ProductGraphService {
         );
       }
       if (
-        version.baseApprovedVersionId !==
-        productBrief.currentApprovedVersionId
+        version.baseApprovedVersionId !== productBrief.currentApprovedVersionId
       ) {
         throw basePointerConflict(
           version.baseApprovedVersionId,

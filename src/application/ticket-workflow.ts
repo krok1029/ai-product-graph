@@ -1,3 +1,9 @@
+// Ticket workflow 主流程。
+//
+// 負責 Ticket identity、不可變 Ticket Revision drafts、approval，以及
+// implementation target reconciliation。Ticket Revision 是 product graph
+// intent 轉成 repository-scoped implementation work 的橋接點。
+
 import { ApplicationError } from "../domain/errors.js";
 import type {
   AuditLogEntry,
@@ -11,10 +17,19 @@ import type {
   TicketSpecification
 } from "../domain/models.js";
 import type { ApplicationPorts } from "./ports.js";
+import {
+  isRecord,
+  normalizeRequiredString,
+  normalizeStringArray,
+  renderTicketMarkdown,
+  slugify,
+  ticketBaseConflict,
+  validationError
+} from "./ticket-workflow-helpers.js";
 
-export type TicketSpecInput = {
+export type TicketSpecInput= {
   title: string;
-  tracesToTicketId?: string | null;
+  tracesToTicketId?: string|null;
   userStory: string;
   scope: string[];
   acceptanceCriteria: string[];
@@ -28,7 +43,7 @@ export type TicketSpecInput = {
   implementationNotes: string[];
 };
 
-type TicketWorkflowOptions = {
+type TicketWorkflowOptions= {
   idFactory: () => string;
   clock: () => Date;
   actor: {
@@ -37,8 +52,8 @@ type TicketWorkflowOptions = {
   };
 };
 
-type ProposedImplementationTarget = {
-  implementationTargetId: string | null;
+type ProposedImplementationTarget= {
+  implementationTargetId: string|null;
   repositoryId: string;
   scope: string[];
   identityAction: "reuse" | "create_on_approval";
@@ -48,7 +63,7 @@ export class TicketWorkflow {
   constructor(
     private readonly ports: ApplicationPorts,
     private readonly options: TicketWorkflowOptions
-  ) {}
+  ) { }
 
   createDraftBatch(input: {
     projectId: string;
@@ -66,11 +81,11 @@ export class TicketWorkflow {
         "source_node_ids"
       );
       this.requireActiveGraphNodes(project.id, sourceNodeIds);
-      if (!Array.isArray(input.tickets) || input.tickets.length === 0) {
+      if (!Array.isArray(input.tickets)||input.tickets.length === 0) {
         throw validationError("Ticket Draft Batch requires at least one ticket.");
       }
 
-      const batch: TicketDraftBatch = {
+      const batch: TicketDraftBatch= {
         id: this.options.idFactory(),
         projectId: project.id,
         sourceGraphRevisionId: input.sourceGraphRevisionId,
@@ -87,13 +102,13 @@ export class TicketWorkflow {
           ticketInput
         );
         const ticketId = this.options.idFactory();
-        const ticket: Ticket = {
+        const ticket: Ticket= {
           id: ticketId,
           projectId: project.id,
           slug: this.uniqueTicketSlug(
             project.id,
-            slugify(normalized.title) ||
-              `ticket-${ticketId.slice(-8).toLowerCase()}`,
+            slugify(normalized.title)||
+            `ticket-${ticketId.slice(-8).toLowerCase()}`,
             ticketId
           ),
           title: normalized.title,
@@ -279,8 +294,7 @@ export class TicketWorkflow {
         );
       if (!pointerUpdated) {
         const current =
-          this.ports.tickets.findById(ticket.id)?.currentApprovedRevisionId ??
-          null;
+          this.ports.tickets.findById(ticket.id)?.currentApprovedRevisionId ?? null;
         throw ticketBaseConflict(revision.baseApprovedRevisionId, current);
       }
       this.ports.ticketRevisions.approve(
@@ -297,22 +311,22 @@ export class TicketWorkflow {
         );
       const archivedArtifacts = previousApprovedRevisionId
         ? this.ports.implementationArtifacts.archiveActiveForTicketRevision(
-            previousApprovedRevisionId,
-            now
-          )
-        : {
-            implementationBriefIds: [] as string[],
-            implementationResultIds: [] as string[]
-          };
+          previousApprovedRevisionId,
+          now
+        )
+        :{
+          implementationBriefIds: [] as string[],
+          implementationResultIds: [] as string[]
+        };
 
-      const approvedRevision: TicketRevision = {
+      const approvedRevision: TicketRevision= {
         ...revision,
         reviewStatus: "approved",
         approvedByActorId: this.options.actor.id,
         approvedAt: now,
         updatedAt: now
       };
-      const updatedTicket: Ticket = {
+      const updatedTicket: Ticket= {
         ...ticket,
         title: revision.title,
         currentApprovedRevisionId: revision.id,
@@ -382,10 +396,10 @@ export class TicketWorkflow {
       .filter((node): node is GraphNode => node !== null);
     const relatedNodeSet = new Set(relatedNodes.map(node => node.id));
     const relatedEdges = this.ports.graphEdges
-      .list(ticket.projectId, "active")
+      .list(ticket.projectId,"active")
       .filter(
         edge =>
-          relatedNodeSet.has(edge.sourceNodeId) &&
+          relatedNodeSet.has(edge.sourceNodeId)&&
           relatedNodeSet.has(edge.targetNodeId)
       );
     return {
@@ -395,7 +409,7 @@ export class TicketWorkflow {
       relatedEdges,
       markdown: input.includeMarkdown
         ? renderTicketMarkdown(ticket, revision, relatedNodes, relatedEdges)
-        : null
+        :null
     };
   }
 
@@ -404,10 +418,10 @@ export class TicketWorkflow {
     sourceGraphRevisionId: string,
     input: TicketSpecInput
   ) {
-    const title = normalizeRequiredString(input.title, "title");
-    const userStory = normalizeRequiredString(input.userStory, "user_story");
-    const scope = normalizeStringArray(input.scope, "scope");
-    const nonGoals = normalizeStringArray(input.nonGoals, "non_goals");
+    const title = normalizeRequiredString(input.title,"title");
+    const userStory = normalizeRequiredString(input.userStory,"user_story");
+    const scope = normalizeStringArray(input.scope,"scope");
+    const nonGoals = normalizeStringArray(input.nonGoals,"non_goals");
     const implementationNotes = normalizeStringArray(
       input.implementationNotes,
       "implementation_notes"
@@ -433,7 +447,7 @@ export class TicketWorkflow {
     );
     for (const dependencyId of dependencies) {
       const dependency = this.ports.tickets.findById(dependencyId);
-      if (!dependency || dependency.projectId !== projectId) {
+      if (!dependency||dependency.projectId !== projectId) {
         throw new ApplicationError(
           "NOT_FOUND",
           "Ticket dependency was not found in the Project.",
@@ -441,13 +455,13 @@ export class TicketWorkflow {
         );
       }
     }
-    const tracesToTicketId = input.tracesToTicketId?.trim() || null;
+    const tracesToTicketId = input.tracesToTicketId?.trim()||null;
     if (tracesToTicketId) {
       const traced = this.ports.tickets.findById(tracesToTicketId);
       if (
-        !traced ||
-        traced.projectId !== projectId ||
-        !["active", "archived"].includes(traced.lifecycleStatus)
+        !traced||
+        traced.projectId !== projectId||
+        !["active","archived"].includes(traced.lifecycleStatus)
       ) {
         throw new ApplicationError(
           "NOT_FOUND",
@@ -479,7 +493,7 @@ export class TicketWorkflow {
     projectId: string,
     targets: TicketSpecInput["implementationTargets"]
   ) {
-    if (!Array.isArray(targets) || targets.length === 0) {
+    if (!Array.isArray(targets)||targets.length === 0) {
       throw validationError("Ticket implementation_targets requires at least one item.");
     }
     const seen = new Set<string>();
@@ -510,9 +524,9 @@ export class TicketWorkflow {
 
   private buildRevision(input: {
     ticket: Ticket;
-    batchId: string | null;
+    batchId: string|null;
     sourceGraphRevisionId: string;
-    baseApprovedRevisionId: string | null;
+    baseApprovedRevisionId: string|null;
     revisionNumber: number;
     normalized: ReturnType<TicketWorkflow["normalizeTicketSpecInput"]>;
     now: string;
@@ -532,7 +546,7 @@ export class TicketWorkflow {
         scope: input.normalized.scope,
         acceptance_criteria: input.normalized.acceptanceCriteria.map(
           (criterion, index) => ({
-            id: `${input.ticket.id}:r${input.revisionNumber}:ac${index + 1}`,
+            id: `${input.ticket.id}:r${input.revisionNumber}:ac${index+1}`,
             text: criterion
           })
         ),
@@ -562,16 +576,16 @@ export class TicketWorkflow {
       revision.requiredTargets.map(target => target.repository_id)
     );
     const targets: Array<
-      ImplementationTarget & { identityAction: "created" | "reused" }
-    > = [];
-    const archivedTargetIds: string[] = [];
+      ImplementationTarget&{ identityAction: "created" | "reused" }
+    >=[];
+    const archivedTargetIds: string[]= [];
 
     for (const required of revision.requiredTargets) {
       const existing = activeByRepository.get(required.repository_id);
       if (existing) {
         targets.push({ ...existing, identityAction: "reused" });
       } else {
-        const target: ImplementationTarget = {
+        const target: ImplementationTarget= {
           id: this.options.idFactory(),
           projectId: revision.projectId,
           ticketId: revision.ticketId,
@@ -609,7 +623,7 @@ export class TicketWorkflow {
         implementationTargetId: existing?.id ?? null,
         repositoryId: target.repository_id,
         scope: target.scope,
-        identityAction: existing ? "reuse" : "create_on_approval"
+        identityAction: existing? "reuse":"create_on_approval"
       };
     });
   }
@@ -618,8 +632,8 @@ export class TicketWorkflow {
     for (const nodeId of revision.specification.related_graph_node_ids) {
       const node = this.ports.graphNodes.findById(nodeId);
       if (
-        !node ||
-        node.projectId !== revision.projectId ||
+        !node||
+        node.projectId !== revision.projectId||
         node.lifecycleStatus !== "active"
       ) {
         throw new ApplicationError(
@@ -635,8 +649,8 @@ export class TicketWorkflow {
     for (const dependencyId of revision.specification.dependencies) {
       const dependency = this.ports.tickets.findById(dependencyId);
       if (
-        !dependency ||
-        dependency.projectId !== revision.projectId ||
+        !dependency||
+        dependency.projectId !== revision.projectId||
         dependency.lifecycleStatus !== "active" ||
         !dependency.currentApprovedRevisionId
       ) {
@@ -653,7 +667,7 @@ export class TicketWorkflow {
     const nodes = revision.specification.related_graph_node_ids
       .map(nodeId => this.ports.graphNodes.findById(nodeId))
       .filter((node): node is GraphNode => node !== null);
-    if (!nodes.some(node => node.type === "product_goal" || node.type === "pain_point")) {
+    if (!nodes.some(node => node.type === "product_goal" ||node.type === "pain_point")) {
       throw new ApplicationError(
         "CONFLICT",
         "Approved Ticket Revision must trace to at least one product goal or pain point.",
@@ -665,12 +679,12 @@ export class TicketWorkflow {
   private requireActiveProject(projectId: string) {
     const project = this.ports.projects.findById(projectId);
     if (!project) {
-      throw new ApplicationError("NOT_FOUND", "Project was not found.", {
+      throw new ApplicationError("NOT_FOUND","Project was not found.", {
         projectId
       });
     }
     if (project.lifecycleStatus !== "active") {
-      throw new ApplicationError("CONFLICT", "Project is archived.", {
+      throw new ApplicationError("CONFLICT","Project is archived.", {
         projectId
       });
     }
@@ -680,12 +694,12 @@ export class TicketWorkflow {
   private requireActiveTicket(ticketId: string) {
     const ticket = this.ports.tickets.findById(ticketId);
     if (!ticket) {
-      throw new ApplicationError("NOT_FOUND", "Ticket was not found.", {
+      throw new ApplicationError("NOT_FOUND","Ticket was not found.", {
         ticketId
       });
     }
     if (ticket.lifecycleStatus !== "active") {
-      throw new ApplicationError("CONFLICT", "Ticket is archived.", {
+      throw new ApplicationError("CONFLICT","Ticket is archived.", {
         ticketId
       });
     }
@@ -713,8 +727,8 @@ export class TicketWorkflow {
     for (const nodeId of nodeIds) {
       const node = this.ports.graphNodes.findById(nodeId);
       if (
-        !node ||
-        node.projectId !== projectId ||
+        !node||
+        node.projectId !== projectId||
         node.lifecycleStatus !== "active"
       ) {
         throw new ApplicationError(
@@ -732,8 +746,8 @@ export class TicketWorkflow {
   ): Repository {
     const repository = this.ports.repositories.findById(repositoryId);
     if (
-      !repository ||
-      repository.projectId !== projectId ||
+      !repository||
+      repository.projectId !== projectId||
       repository.lifecycleStatus !== "active"
     ) {
       throw new ApplicationError(
@@ -779,86 +793,4 @@ export class TicketWorkflow {
       createdAt: input.createdAt
     };
   }
-}
-
-function renderTicketMarkdown(
-  ticket: Ticket,
-  revision: TicketRevision,
-  relatedNodes: GraphNode[],
-  relatedEdges: GraphEdge[]
-) {
-  const lines = [
-    `# ${revision.title}`,
-    "",
-    `Ticket: ${ticket.id}`,
-    `Revision: ${revision.id}`,
-    `Delivery Status: ${ticket.deliveryStatus}`,
-    "",
-    "## User Story",
-    revision.specification.user_story,
-    "",
-    "## Scope",
-    ...bulletList(revision.specification.scope),
-    "",
-    "## Acceptance Criteria",
-    ...revision.specification.acceptance_criteria.map(
-      criterion => `- [${criterion.id}] ${criterion.text}`
-    ),
-    "",
-    "## Related Graph Nodes",
-    ...relatedNodes.map(node => `- ${node.type}: ${node.title} (${node.id})`),
-    "",
-    "## Related Graph Edges",
-    ...relatedEdges.map(
-      edge =>
-        `- ${edge.sourceNodeId} ${edge.relationType} ${edge.targetNodeId}`
-    )
-  ];
-  return `${lines.join("\n")}\n`;
-}
-
-function bulletList(items: string[]) {
-  return items.length > 0 ? items.map(item => `- ${item}`) : ["- None"];
-}
-
-function normalizeRequiredString(value: unknown, field: string) {
-  if (typeof value !== "string" || !value.trim()) {
-    throw validationError(`Ticket ${field} is required.`);
-  }
-  return value.trim();
-}
-
-function normalizeStringArray(value: unknown, field: string) {
-  if (!Array.isArray(value)) {
-    throw validationError(`Ticket ${field} must be an array.`);
-  }
-  return [...new Set(value.map(item => normalizeRequiredString(item, field)))];
-}
-
-function ticketBaseConflict(
-  expectedBaseRevisionId: string | null,
-  currentApprovedRevisionId: string | null
-) {
-  return new ApplicationError(
-    "CONFLICT",
-    "Ticket Revision base is no longer current.",
-    { expectedBaseRevisionId, currentApprovedRevisionId }
-  );
-}
-
-function validationError(message: string) {
-  return new ApplicationError("VALIDATION_ERROR", message);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function slugify(value: string): string {
-  return value
-    .normalize("NFKD")
-    .toLowerCase()
-    .replace(/[^\p{Letter}\p{Number}]+/gu, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
 }

@@ -1,3 +1,9 @@
+// Implementation workflow 主流程。
+//
+// 負責 Implementation Brief drafts、approval 與 handoff freshness checks。
+// 這是 coding work 開始前的最後一道 gate，因此會一起驗證 ticket、graph、
+// dependency 與 repository snapshot freshness。
+
 import { ApplicationError } from "../domain/errors.js";
 import type {
   AuditLogEntry,
@@ -13,18 +19,28 @@ import type {
   TicketRevision
 } from "../domain/models.js";
 import type { ApplicationPorts } from "./ports.js";
+import {
+  isRepositoryContextApprovable,
+  normalizeBrief,
+  normalizeOptionalText,
+  normalizeRepositoryContext,
+  normalizeRequiredString,
+  nowSlug,
+  staleHandoff,
+  validationError
+} from "./implementation-workflow-helpers.js";
 
-export type RepositoryContextInput = {
+export type RepositoryContextInput= {
   repositoryName: string;
   summary: string;
   fileList: string[];
   moduleNotes: string[];
-  baselineCommitSha?: string | null;
+  baselineCommitSha?: string|null;
   hasUncommittedChanges?: boolean;
-  dirtyStateFingerprint?: string | null;
+  dirtyStateFingerprint?: string|null;
 };
 
-export type ImplementationBriefInput = {
+export type ImplementationBriefInput= {
   implementationPlan: string[];
   suggestedFilesToInspect: string[];
   testStrategy: string[];
@@ -32,7 +48,7 @@ export type ImplementationBriefInput = {
   prSummaryDraft: string;
 };
 
-type ImplementationWorkflowOptions = {
+type ImplementationWorkflowOptions= {
   idFactory: () => string;
   clock: () => Date;
   actor: {
@@ -45,11 +61,11 @@ export class ImplementationWorkflow {
   constructor(
     private readonly ports: ApplicationPorts,
     private readonly options: ImplementationWorkflowOptions
-  ) {}
+  ) { }
 
   createBriefDraft(input: {
     implementationTargetId: string;
-    supersedesImplementationBriefId?: string | null;
+    supersedesImplementationBriefId?: string|null;
     repoContext: RepositoryContextInput;
     brief: ImplementationBriefInput;
   }) {
@@ -79,7 +95,7 @@ export class ImplementationWorkflow {
         );
       }
 
-      const snapshot: RepositoryContextSnapshot = {
+      const snapshot: RepositoryContextSnapshot= {
         id: this.options.idFactory(),
         projectId: source.target.projectId,
         repositoryId: repository.id,
@@ -97,7 +113,7 @@ export class ImplementationWorkflow {
         ),
         createdAt: now
       };
-      const brief: ImplementationBrief = {
+      const brief: ImplementationBrief= {
         id: this.options.idFactory(),
         projectId: source.target.projectId,
         implementationTargetId: source.target.id,
@@ -150,7 +166,7 @@ export class ImplementationWorkflow {
       const snapshot = this.requireSnapshot(
         brief.repositoryContextSnapshotId
       );
-      if (!snapshot.isApprovable || !snapshot.baselineCommitSha) {
+      if (!snapshot.isApprovable||!snapshot.baselineCommitSha) {
         throw new ApplicationError(
           "CONFLICT",
           "Implementation Brief requires a verifiable repository baseline before approval.",
@@ -174,7 +190,7 @@ export class ImplementationWorkflow {
           brief.implementationTargetId
         );
       if (
-        activeApproved &&
+        activeApproved&&
         activeApproved.id !== brief.supersedesImplementationBriefId
       ) {
         throw new ApplicationError(
@@ -192,7 +208,7 @@ export class ImplementationWorkflow {
             brief.implementationTargetId
           );
         if (
-          brief.supersedesImplementationBriefId &&
+          brief.supersedesImplementationBriefId&&
           brief.supersedesImplementationBriefId !== latestArchivedApproved?.id
         ) {
           throw new ApplicationError(
@@ -217,7 +233,7 @@ export class ImplementationWorkflow {
         this.options.actor.id,
         now
       );
-      const approved: ImplementationBrief = {
+      const approved: ImplementationBrief= {
         ...brief,
         reviewStatus: "approved",
         approvedByActorId: this.options.actor.id,
@@ -250,7 +266,7 @@ export class ImplementationWorkflow {
     implementationBriefId: string;
     currentRepositoryState: {
       commitSha: string;
-      dirtyStateFingerprint?: string | null;
+      dirtyStateFingerprint?: string|null;
     };
   }) {
     const brief = this.ports.implementationBriefs.findById(
@@ -305,7 +321,7 @@ export class ImplementationWorkflow {
     const revision = this.ports.ticketRevisions.findById(
       brief.ticketRevisionId
     );
-    if (!revision || revision.projectId !== brief.projectId) {
+    if (!revision||revision.projectId !== brief.projectId) {
       throw staleHandoff("ticket_revision_not_found", {
         implementationBriefId: brief.id,
         ticketRevisionId: brief.ticketRevisionId
@@ -358,7 +374,7 @@ export class ImplementationWorkflow {
     const graphRevision = this.ports.graphRevisions.findById(
       revision.sourceGraphRevisionId
     );
-    if (!graphRevision || graphRevision.projectId !== revision.projectId) {
+    if (!graphRevision||graphRevision.projectId !== revision.projectId) {
       throw new ApplicationError(
         "CONFLICT",
         "Ticket Revision source Graph Revision was not found.",
@@ -378,18 +394,17 @@ export class ImplementationWorkflow {
     snapshot: RepositoryContextSnapshot,
     currentRepositoryState: {
       commitSha: string;
-      dirtyStateFingerprint?: string | null;
+      dirtyStateFingerprint?: string|null;
     }
-  ): { reason: string; details: Record<string, unknown> } | null {
+  ): { reason: string; details: Record<string, unknown> }|null {
     const project = this.ports.projects.findById(ticket.projectId);
     const productBrief = this.ports.productBriefs.findByProjectId(
       ticket.projectId
     );
     if (
-      !project ||
-      !productBrief ||
-      project.lastReconciledProductBriefVersionId !==
-        productBrief.currentApprovedVersionId
+      !project||
+      !productBrief||
+      project.lastReconciledProductBriefVersionId !== productBrief.currentApprovedVersionId
     ) {
       return {
         reason: "product_intent_unreconciled",
@@ -456,14 +471,14 @@ export class ImplementationWorkflow {
   private findTicketSourceProblem(
     ticket: Ticket,
     revision: TicketRevision,
-    visitedTicketIds = new Set<string>()
-  ): { reason: string; details: Record<string, unknown> } | null {
+    visitedTicketIds= new Set<string>()
+  ): { reason: string; details: Record<string, unknown> }|null {
     if (visitedTicketIds.has(ticket.id)) {
       return null;
     }
     visitedTicketIds.add(ticket.id);
     if (
-      revision.ticketId !== ticket.id ||
+      revision.ticketId !== ticket.id||
       revision.reviewStatus !== "approved" ||
       revision.lifecycleStatus !== "active"
     ) {
@@ -481,7 +496,7 @@ export class ImplementationWorkflow {
       revision.id
     )) {
       const node = this.ports.graphNodes.findById(nodeId);
-      if (!node || node.projectId !== revision.projectId) {
+      if (!node||node.projectId !== revision.projectId) {
         return {
           reason: "graph_node_not_found",
           details: { ticketRevisionId: revision.id, graphNodeId: nodeId }
@@ -525,8 +540,8 @@ export class ImplementationWorkflow {
     )) {
       const dependency = this.ports.tickets.findById(dependencyId);
       if (
-        !dependency ||
-        dependency.projectId !== ticket.projectId ||
+        !dependency||
+        dependency.projectId !== ticket.projectId||
         dependency.lifecycleStatus !== "active" ||
         !dependency.currentApprovedRevisionId
       ) {
@@ -573,10 +588,10 @@ export class ImplementationWorkflow {
   private isGraphRevisionAfter(candidateId: string, baseId: string) {
     const candidate = this.ports.graphRevisions.findById(candidateId);
     const base = this.ports.graphRevisions.findById(baseId);
-    if (!candidate || !base || candidate.projectId !== base.projectId) {
+    if (!candidate||!base||candidate.projectId !== base.projectId) {
       return null;
     }
-    return candidate.sequenceNumber > base.sequenceNumber;
+    return candidate.sequenceNumber>base.sequenceNumber;
   }
 
   private requireSupersededBrief(
@@ -586,7 +601,7 @@ export class ImplementationWorkflow {
     const brief = this.ports.implementationBriefs.findById(
       implementationBriefId
     );
-    if (!brief || brief.implementationTargetId !== implementationTargetId) {
+    if (!brief||brief.implementationTargetId !== implementationTargetId) {
       throw new ApplicationError(
         "NOT_FOUND",
         "Superseded Implementation Brief was not found for the same Implementation Target.",
@@ -602,7 +617,7 @@ export class ImplementationWorkflow {
     const target = this.ports.implementationTargets.findById(
       implementationTargetId
     );
-    if (!target || target.lifecycleStatus !== "active") {
+    if (!target||target.lifecycleStatus !== "active") {
       throw new ApplicationError(
         "NOT_FOUND",
         "Implementation Target was not found.",
@@ -614,8 +629,8 @@ export class ImplementationWorkflow {
 
   private requireActiveTicket(ticketId: string): Ticket {
     const ticket = this.ports.tickets.findById(ticketId);
-    if (!ticket || ticket.lifecycleStatus !== "active") {
-      throw new ApplicationError("NOT_FOUND", "Ticket was not found.", {
+    if (!ticket||ticket.lifecycleStatus !== "active") {
+      throw new ApplicationError("NOT_FOUND","Ticket was not found.", {
         ticketId
       });
     }
@@ -628,8 +643,8 @@ export class ImplementationWorkflow {
   ): Repository {
     const repository = this.ports.repositories.findById(repositoryId);
     if (
-      !repository ||
-      repository.projectId !== projectId ||
+      !repository||
+      repository.projectId !== projectId||
       repository.lifecycleStatus !== "active"
     ) {
       throw new ApplicationError(
@@ -649,8 +664,8 @@ export class ImplementationWorkflow {
       productBriefVersionId
     );
     if (
-      !version ||
-      version.projectId !== projectId ||
+      !version||
+      version.projectId !== projectId||
       version.lifecycleStatus !== "active" ||
       version.reviewStatus !== "approved"
     ) {
@@ -667,7 +682,7 @@ export class ImplementationWorkflow {
     const brief = this.ports.implementationBriefs.findById(
       implementationBriefId
     );
-    if (!brief || brief.lifecycleStatus !== "active") {
+    if (!brief||brief.lifecycleStatus !== "active") {
       throw new ApplicationError(
         "NOT_FOUND",
         "Implementation Brief was not found.",
@@ -712,91 +727,4 @@ export class ImplementationWorkflow {
       createdAt: input.createdAt
     };
   }
-}
-
-function normalizeRepositoryContext(
-  input: RepositoryContextInput
-): RepositoryContextJson {
-  return {
-    repository_name: normalizeRequiredString(
-      input.repositoryName,
-      "repo_context.repository_name"
-    ),
-    summary: normalizeRequiredString(input.summary, "repo_context.summary"),
-    file_list: normalizeStringArray(input.fileList, "repo_context.file_list"),
-    module_notes: normalizeStringArray(
-      input.moduleNotes,
-      "repo_context.module_notes"
-    ),
-    has_uncommitted_changes: input.hasUncommittedChanges === true
-  };
-}
-
-function normalizeBrief(input: ImplementationBriefInput): ImplementationBriefJson {
-  return {
-    implementation_plan: normalizeStringArray(
-      input.implementationPlan,
-      "brief.implementation_plan"
-    ),
-    suggested_files_to_inspect: normalizeStringArray(
-      input.suggestedFilesToInspect,
-      "brief.suggested_files_to_inspect"
-    ),
-    test_strategy: normalizeStringArray(
-      input.testStrategy,
-      "brief.test_strategy"
-    ),
-    risks: normalizeStringArray(input.risks, "brief.risks"),
-    pr_summary_draft: normalizeRequiredString(
-      input.prSummaryDraft,
-      "brief.pr_summary_draft"
-    )
-  };
-}
-
-function normalizeRequiredString(value: unknown, field: string) {
-  if (typeof value !== "string" || !value.trim()) {
-    throw validationError(`${field} is required.`);
-  }
-  return value.trim();
-}
-
-function normalizeOptionalText(value: unknown) {
-  return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-function normalizeStringArray(value: unknown, field: string) {
-  if (!Array.isArray(value)) {
-    throw validationError(`${field} must be an array.`);
-  }
-  return [...new Set(value.map(item => normalizeRequiredString(item, field)))];
-}
-
-function validationError(message: string) {
-  return new ApplicationError("VALIDATION_ERROR", message);
-}
-
-function isRepositoryContextApprovable(
-  baselineCommitSha: unknown,
-  hasUncommittedChanges: unknown,
-  dirtyStateFingerprint: unknown
-) {
-  const hasBaseline = Boolean(normalizeOptionalText(baselineCommitSha));
-  const requiresDirtyFingerprint = hasUncommittedChanges === true;
-  return (
-    hasBaseline &&
-    (!requiresDirtyFingerprint ||
-      Boolean(normalizeOptionalText(dirtyStateFingerprint)))
-  );
-}
-
-function staleHandoff(reason: string, details: Record<string, unknown>) {
-  return new ApplicationError("STALE_HANDOFF", "Implementation handoff is stale.", {
-    reason,
-    ...details
-  });
-}
-
-function nowSlug(value: string) {
-  return value.replace(/[^0-9a-z]/gi, "").toLowerCase();
 }

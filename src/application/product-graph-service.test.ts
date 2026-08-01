@@ -504,6 +504,66 @@ describe("ProductGraphService", () => {
     ).toBe("approved");
   });
 
+  it("creates an Implementation Brief draft for an approved replacement revision with a reused target", () => {
+    const { service, ports } = createTestService();
+    const graph = createApprovedGraphWithGoal(service);
+    const repository = seedRepository(ports, graph.projectId);
+    const draft = service.createTicketDraftBatch({
+      projectId: graph.projectId,
+      sourceGraphRevisionId: graph.graphRevisionId,
+      sourceNodeIds: [graph.goalNodeId],
+      tickets: [sampleTicketInput(graph.goalNodeId, repository.id)]
+    });
+    const firstApproval = service.approveTicketRevision(
+      draft.tickets[0]?.revision.id ?? ""
+    );
+    const implementationTargetId =
+      firstApproval.implementationTargets.targets[0]?.id;
+    if (!implementationTargetId) {
+      throw new Error("Expected first approval to create an Implementation Target.");
+    }
+
+    const replacement = service.createTicketRevisionDraft({
+      ticketId: firstApproval.ticket.id,
+      baseApprovedRevisionId: firstApproval.revision.id,
+      sourceGraphRevisionId: graph.graphRevisionId,
+      specification: {
+        ...sampleTicketInput(graph.goalNodeId, repository.id),
+        title: "Build fast preset timer controls"
+      }
+    });
+    const approval = service.approveTicketRevision(replacement.revision.id);
+
+    const briefDraft = service.createImplementationBriefDraft({
+      implementationTargetId,
+      repoContext: sampleRepositoryContext(),
+      brief: sampleImplementationBrief()
+    });
+
+    expect(replacement.revision.revisionNumber).toBe(2);
+    expect(approval.ticket.id).toBe(firstApproval.ticket.id);
+    expect(approval.ticket.currentApprovedRevisionId).toBe(
+      replacement.revision.id
+    );
+    expect(approval.revision.reviewStatus).toBe("approved");
+    expect(approval.implementationTargets.targets[0]?.id).toBe(
+      implementationTargetId
+    );
+    expect(approval.implementationTargets.targets[0]?.identityAction).toBe(
+      "reused"
+    );
+    expect(briefDraft.implementationBrief.implementationTargetId).toBe(
+      implementationTargetId
+    );
+    expect(briefDraft.implementationBrief.ticketRevisionId).toBe(
+      replacement.revision.id
+    );
+    expect(briefDraft.implementationBrief.reviewStatus).toBe("draft");
+    expect(
+      briefDraft.repositoryContextSnapshot.context.repository_name
+    ).toBe(repository.name);
+  });
+
   it("creates, approves, and reads a current Implementation Brief handoff", () => {
     const { service, ports } = createTestService();
     const setup = createApprovedTicketTarget(service, ports);
