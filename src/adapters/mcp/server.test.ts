@@ -36,7 +36,10 @@ it("runs the Graph reconciliation workflow through MCP", async () => {
         "get_graph_context",
         "create_ticket_draft_batch",
         "approve_ticket_revision",
-        "get_ticket_context"
+        "get_ticket_context",
+        "create_implementation_brief_draft",
+        "approve_implementation_brief",
+        "get_implementation_handoff"
       ])
     );
 
@@ -200,6 +203,58 @@ it("runs the Graph reconciliation workflow through MCP", async () => {
       .toBe("approved");
     expect(ticketContext.related_nodes).toHaveLength(1);
     expect(ticketContext.markdown).toContain("## Acceptance Criteria");
+
+    const implementationTargetId = (
+      (ticketApproval.implementation_targets as Array<{ id: string }>)[0] as {
+        id: string;
+      }
+    ).id;
+    const implementationBriefDraft = toolData(
+      await client.callTool({
+        name: "create_implementation_brief_draft",
+        arguments: {
+          implementation_target_id: implementationTargetId,
+          supersedes_implementation_brief_id: null,
+          repo_context: {
+            repository_name: repository.name,
+            summary: "MCP test repository context.",
+            file_list: ["src/App.tsx"],
+            module_notes: ["Timer controls live in the app shell."],
+            baseline_commit_sha: "abc123",
+            has_uncommitted_changes: false,
+            dirty_state_fingerprint: null
+          },
+          brief: {
+            implementation_plan: ["Add preset buttons"],
+            suggested_files_to_inspect: ["src/App.tsx"],
+            test_strategy: ["Run timer UI tests"],
+            risks: ["Mobile layout may need adjustment"],
+            pr_summary_draft: "Add preset countdown controls."
+          }
+        }
+      })
+    ).implementation_brief as { id: string };
+    const briefApproval = toolData(
+      await client.callTool({
+        name: "approve_implementation_brief",
+        arguments: { implementation_brief_id: implementationBriefDraft.id }
+      })
+    ).implementation_brief as { id: string; review_status: string };
+    const handoff = toolData(
+      await client.callTool({
+        name: "get_implementation_handoff",
+        arguments: {
+          implementation_brief_id: briefApproval.id,
+          current_repository_state: {
+            commit_sha: "abc123",
+            dirty_state_fingerprint: null
+          }
+        }
+      })
+    );
+
+    expect(briefApproval.review_status).toBe("approved");
+    expect((handoff as { freshness: string }).freshness).toBe("current");
   } finally {
     await Promise.allSettled([client.close(), server.close()]);
     database.close();

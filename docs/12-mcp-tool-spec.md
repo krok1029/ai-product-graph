@@ -730,7 +730,10 @@ Input：
     "repository_name": "",
     "summary": "",
     "file_list": [],
-    "module_notes": []
+    "module_notes": [],
+    "baseline_commit_sha": "abc123...",
+    "has_uncommitted_changes": false,
+    "dirty_state_fingerprint": null
   },
   "brief": {
     "implementation_plan": [],

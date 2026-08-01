@@ -5,6 +5,8 @@ import type {
   GraphEdge,
   GraphNode,
   GraphRevision,
+  ImplementationBrief,
+  ImplementationBriefJson,
   ImplementationTarget,
   Idea,
   Project,
@@ -13,6 +15,8 @@ import type {
   ProductBriefVersion,
   ProjectCounts,
   Repository,
+  RepositoryContextJson,
+  RepositoryContextSnapshot,
   Ticket,
   TicketDraftBatch,
   TicketRevision
@@ -110,6 +114,17 @@ type GraphDraftBatchChangeRow = {
   created_at: string;
 };
 
+type GraphRevisionRow = {
+  id: string;
+  project_id: string;
+  graph_draft_batch_id: string;
+  source_product_brief_version_id: string;
+  sequence_number: number;
+  is_noop_reconciliation: number;
+  reconciliation_summary: string | null;
+  created_at: string;
+};
+
 type GraphNodeRow = {
   id: string;
   project_id: string;
@@ -189,6 +204,35 @@ type ImplementationTargetRow = {
   ticket_id: string;
   repository_id: string;
   lifecycle_status: "active" | "archived";
+  created_at: string;
+  updated_at: string;
+};
+
+type RepositoryContextSnapshotRow = {
+  id: string;
+  project_id: string;
+  repository_id: string;
+  baseline_commit_sha: string | null;
+  dirty_state_fingerprint: string | null;
+  context_json: string;
+  is_approvable: number;
+  created_at: string;
+};
+
+type ImplementationBriefRow = {
+  id: string;
+  project_id: string;
+  implementation_target_id: string;
+  ticket_revision_id: string;
+  product_brief_version_id: string;
+  repository_context_snapshot_id: string;
+  supersedes_implementation_brief_id: string | null;
+  slug: string;
+  brief_json: string;
+  review_status: "draft" | "approved";
+  lifecycle_status: "active" | "archived";
+  approved_by_actor_id: string | null;
+  approved_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -651,6 +695,17 @@ export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
             revision.reconciliationSummary,
             revision.createdAt
           );
+      },
+      findById(id) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, graph_draft_batch_id,
+                    source_product_brief_version_id, sequence_number,
+                    is_noop_reconciliation, reconciliation_summary, created_at
+             FROM graph_revisions WHERE id = ?`
+          )
+          .get(id) as GraphRevisionRow | undefined;
+        return row ? mapGraphRevision(row) : null;
       },
       nextSequenceNumber(projectId) {
         const row = database
@@ -1227,6 +1282,139 @@ export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
           .run(archivedAt, archivedAt, targetId);
       }
     },
+    repositoryContextSnapshots: {
+      insert(snapshot) {
+        database
+          .prepare(
+            `INSERT INTO repository_context_snapshots (
+              id, project_id, repository_id, baseline_commit_sha,
+              dirty_state_fingerprint, context_json, is_approvable, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+          )
+          .run(
+            snapshot.id,
+            snapshot.projectId,
+            snapshot.repositoryId,
+            snapshot.baselineCommitSha,
+            snapshot.dirtyStateFingerprint,
+            JSON.stringify(snapshot.context),
+            snapshot.isApprovable ? 1 : 0,
+            snapshot.createdAt
+          );
+      },
+      findById(id) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, repository_id, baseline_commit_sha,
+                    dirty_state_fingerprint, context_json, is_approvable,
+                    created_at
+             FROM repository_context_snapshots WHERE id = ?`
+          )
+          .get(id) as RepositoryContextSnapshotRow | undefined;
+        return row ? mapRepositoryContextSnapshot(row) : null;
+      }
+    },
+    implementationBriefs: {
+      insert(brief) {
+        database
+          .prepare(
+            `INSERT INTO implementation_briefs (
+              id, project_id, implementation_target_id, ticket_revision_id,
+              product_brief_version_id, repository_context_snapshot_id,
+              supersedes_implementation_brief_id, slug, brief_json,
+              review_status, lifecycle_status, approved_by_actor_id,
+              approved_at, metadata_json, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', ?, ?)`
+          )
+          .run(
+            brief.id,
+            brief.projectId,
+            brief.implementationTargetId,
+            brief.ticketRevisionId,
+            brief.productBriefVersionId,
+            brief.repositoryContextSnapshotId,
+            brief.supersedesImplementationBriefId,
+            brief.slug,
+            JSON.stringify(brief.brief),
+            brief.reviewStatus,
+            brief.lifecycleStatus,
+            brief.approvedByActorId,
+            brief.approvedAt,
+            brief.createdAt,
+            brief.updatedAt
+          );
+      },
+      findById(id) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, implementation_target_id,
+                    ticket_revision_id, product_brief_version_id,
+                    repository_context_snapshot_id,
+                    supersedes_implementation_brief_id, slug, brief_json,
+                    review_status, lifecycle_status, approved_by_actor_id,
+                    approved_at, created_at, updated_at
+             FROM implementation_briefs WHERE id = ?`
+          )
+          .get(id) as ImplementationBriefRow | undefined;
+        return row ? mapImplementationBrief(row) : null;
+      },
+      findActiveApprovedByTargetId(implementationTargetId) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, implementation_target_id,
+                    ticket_revision_id, product_brief_version_id,
+                    repository_context_snapshot_id,
+                    supersedes_implementation_brief_id, slug, brief_json,
+                    review_status, lifecycle_status, approved_by_actor_id,
+                    approved_at, created_at, updated_at
+             FROM implementation_briefs
+             WHERE implementation_target_id = ?
+               AND review_status = 'approved'
+               AND lifecycle_status = 'active'`
+          )
+          .get(implementationTargetId) as ImplementationBriefRow | undefined;
+        return row ? mapImplementationBrief(row) : null;
+      },
+      findLatestArchivedApprovedByTargetId(implementationTargetId) {
+        const row = database
+          .prepare(
+            `SELECT id, project_id, implementation_target_id,
+                    ticket_revision_id, product_brief_version_id,
+                    repository_context_snapshot_id,
+                    supersedes_implementation_brief_id, slug, brief_json,
+                    review_status, lifecycle_status, approved_by_actor_id,
+                    approved_at, created_at, updated_at
+             FROM implementation_briefs
+             WHERE implementation_target_id = ?
+               AND review_status = 'approved'
+               AND lifecycle_status = 'archived'
+             ORDER BY updated_at DESC, id DESC
+             LIMIT 1`
+          )
+          .get(implementationTargetId) as ImplementationBriefRow | undefined;
+        return row ? mapImplementationBrief(row) : null;
+      },
+      approve(implementationBriefId, actorId, approvedAt) {
+        database
+          .prepare(
+            `UPDATE implementation_briefs
+             SET review_status = 'approved', approved_by_actor_id = ?,
+                 approved_at = ?, updated_at = ?
+             WHERE id = ?`
+          )
+          .run(actorId, approvedAt, approvedAt, implementationBriefId);
+      },
+      archive(implementationBriefId, archivedAt) {
+        database
+          .prepare(
+            `UPDATE implementation_briefs
+             SET lifecycle_status = 'archived', archived_at = ?,
+                 updated_at = ?
+             WHERE id = ?`
+          )
+          .run(archivedAt, archivedAt, implementationBriefId);
+      }
+    },
     implementationArtifacts: {
       archiveActiveForTicketRevision(ticketRevisionId, archivedAt) {
         const briefRows = database
@@ -1399,6 +1587,19 @@ function mapGraphDraftBatchChange(
   };
 }
 
+function mapGraphRevision(row: GraphRevisionRow): GraphRevision {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    graphDraftBatchId: row.graph_draft_batch_id,
+    sourceProductBriefVersionId: row.source_product_brief_version_id,
+    sequenceNumber: row.sequence_number,
+    isNoopReconciliation: row.is_noop_reconciliation === 1,
+    reconciliationSummary: row.reconciliation_summary,
+    createdAt: row.created_at
+  };
+}
+
 function mapGraphNode(row: GraphNodeRow): GraphNode {
   return {
     id: row.id,
@@ -1522,6 +1723,42 @@ function mapImplementationTarget(
     ticketId: row.ticket_id,
     repositoryId: row.repository_id,
     lifecycleStatus: row.lifecycle_status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapRepositoryContextSnapshot(
+  row: RepositoryContextSnapshotRow
+): RepositoryContextSnapshot {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    repositoryId: row.repository_id,
+    baselineCommitSha: row.baseline_commit_sha,
+    dirtyStateFingerprint: row.dirty_state_fingerprint,
+    context: JSON.parse(row.context_json) as RepositoryContextJson,
+    isApprovable: row.is_approvable === 1,
+    createdAt: row.created_at
+  };
+}
+
+function mapImplementationBrief(row: ImplementationBriefRow): ImplementationBrief {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    implementationTargetId: row.implementation_target_id,
+    ticketRevisionId: row.ticket_revision_id,
+    productBriefVersionId: row.product_brief_version_id,
+    repositoryContextSnapshotId: row.repository_context_snapshot_id,
+    supersedesImplementationBriefId:
+      row.supersedes_implementation_brief_id,
+    slug: row.slug,
+    brief: JSON.parse(row.brief_json) as ImplementationBriefJson,
+    reviewStatus: row.review_status,
+    lifecycleStatus: row.lifecycle_status,
+    approvedByActorId: row.approved_by_actor_id,
+    approvedAt: row.approved_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

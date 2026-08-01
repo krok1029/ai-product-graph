@@ -269,6 +269,51 @@ export type ImplementationTarget = {
   updatedAt: string;
 };
 
+export type RepositoryContextJson = {
+  repository_name: string;
+  summary: string;
+  file_list: string[];
+  module_notes: string[];
+  has_uncommitted_changes: boolean;
+};
+
+export type RepositoryContextSnapshot = {
+  id: string;
+  projectId: string;
+  repositoryId: string;
+  baselineCommitSha: string | null;
+  dirtyStateFingerprint: string | null;
+  context: RepositoryContextJson;
+  isApprovable: boolean;
+  createdAt: string;
+};
+
+export type ImplementationBriefJson = {
+  implementation_plan: string[];
+  suggested_files_to_inspect: string[];
+  test_strategy: string[];
+  risks: string[];
+  pr_summary_draft: string;
+};
+
+export type ImplementationBrief = {
+  id: string;
+  projectId: string;
+  implementationTargetId: string;
+  ticketRevisionId: string;
+  productBriefVersionId: string;
+  repositoryContextSnapshotId: string;
+  supersedesImplementationBriefId: string | null;
+  slug: string;
+  brief: ImplementationBriefJson;
+  reviewStatus: ReviewStatus;
+  lifecycleStatus: LifecycleStatus;
+  approvedByActorId: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AuditLogEntry = {
   id: string;
   projectId: string | null;

@@ -15,6 +15,11 @@ import {
   GraphWorkflow,
   type GraphChangeInput
 } from "./graph-workflow.js";
+import {
+  ImplementationWorkflow,
+  type ImplementationBriefInput,
+  type RepositoryContextInput
+} from "./implementation-workflow.js";
 import type { ApplicationPorts } from "./ports.js";
 import {
   TicketWorkflow,
@@ -36,6 +41,7 @@ export class ProductGraphService {
   private readonly actor: NonNullable<ServiceOptions["actor"]>;
   private readonly graphWorkflow: GraphWorkflow;
   private readonly ticketWorkflow: TicketWorkflow;
+  private readonly implementationWorkflow: ImplementationWorkflow;
 
   constructor(
     private readonly ports: ApplicationPorts,
@@ -53,6 +59,11 @@ export class ProductGraphService {
       actor: this.actor
     });
     this.ticketWorkflow = new TicketWorkflow(ports, {
+      idFactory: this.idFactory,
+      clock: this.clock,
+      actor: this.actor
+    });
+    this.implementationWorkflow = new ImplementationWorkflow(ports, {
       idFactory: this.idFactory,
       clock: this.clock,
       actor: this.actor
@@ -460,6 +471,29 @@ export class ProductGraphService {
     includeMarkdown?: boolean;
   }) {
     return this.ticketWorkflow.getContext(input);
+  }
+
+  createImplementationBriefDraft(input: {
+    implementationTargetId: string;
+    supersedesImplementationBriefId?: string | null;
+    repoContext: RepositoryContextInput;
+    brief: ImplementationBriefInput;
+  }) {
+    return this.implementationWorkflow.createBriefDraft(input);
+  }
+
+  approveImplementationBrief(implementationBriefId: string) {
+    return this.implementationWorkflow.approveBrief(implementationBriefId);
+  }
+
+  getImplementationHandoff(input: {
+    implementationBriefId: string;
+    currentRepositoryState: {
+      commitSha: string;
+      dirtyStateFingerprint?: string | null;
+    };
+  }) {
+    return this.implementationWorkflow.getHandoff(input);
   }
 
   private requireProject(projectId: string): Project {

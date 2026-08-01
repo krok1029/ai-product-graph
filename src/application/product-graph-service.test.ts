@@ -503,6 +503,118 @@ describe("ProductGraphService", () => {
       ports.ticketRevisions.findById(firstApproval.revision.id)?.reviewStatus
     ).toBe("approved");
   });
+
+  it("creates, approves, and reads a current Implementation Brief handoff", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedTicketTarget(service, ports);
+
+    const draft = service.createImplementationBriefDraft({
+      implementationTargetId: setup.implementationTargetId,
+      repoContext: sampleRepositoryContext(),
+      brief: sampleImplementationBrief()
+    });
+    const approval = service.approveImplementationBrief(
+      draft.implementationBrief.id
+    );
+    const handoff = service.getImplementationHandoff({
+      implementationBriefId: approval.implementationBrief.id,
+      currentRepositoryState: {
+        commitSha: "abc123",
+        dirtyStateFingerprint: null
+      }
+    });
+
+    expect(draft.implementationBrief.reviewStatus).toBe("draft");
+    expect(draft.repositoryContextSnapshot.isApprovable).toBe(true);
+    expect(approval.implementationBrief.reviewStatus).toBe("approved");
+    expect(approval.archivedImplementationBriefId).toBeNull();
+    expect(handoff.freshness).toBe("current");
+    expect(handoff.implementationTarget.id).toBe(setup.implementationTargetId);
+    expect(handoff.ticketRevision.id).toBe(setup.ticketRevisionId);
+    expect(handoff.repositoryContextSnapshot.baselineCommitSha).toBe("abc123");
+  });
+
+  it("requires replacement Implementation Brief approval to supersede the active approved brief", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedTicketTarget(service, ports);
+    const first = service.createImplementationBriefDraft({
+      implementationTargetId: setup.implementationTargetId,
+      repoContext: sampleRepositoryContext(),
+      brief: sampleImplementationBrief()
+    });
+    const firstApproval = service.approveImplementationBrief(
+      first.implementationBrief.id
+    );
+    const replacement = service.createImplementationBriefDraft({
+      implementationTargetId: setup.implementationTargetId,
+      supersedesImplementationBriefId: firstApproval.implementationBrief.id,
+      repoContext: {
+        ...sampleRepositoryContext(),
+        baselineCommitSha: "def456"
+      },
+      brief: {
+        ...sampleImplementationBrief(),
+        implementationPlan: ["Refine preset button layout"]
+      }
+    });
+
+    const approval = service.approveImplementationBrief(
+      replacement.implementationBrief.id
+    );
+
+    expect(approval.archivedImplementationBriefId).toBe(
+      firstApproval.implementationBrief.id
+    );
+    expect(
+      ports.implementationBriefs.findById(firstApproval.implementationBrief.id)
+        ?.lifecycleStatus
+    ).toBe("archived");
+    expect(approval.implementationBrief.supersedesImplementationBriefId).toBe(
+      firstApproval.implementationBrief.id
+    );
+  });
+
+  it("blocks stale Implementation Handoff when repository baseline changed", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedTicketTarget(service, ports);
+    const draft = service.createImplementationBriefDraft({
+      implementationTargetId: setup.implementationTargetId,
+      repoContext: sampleRepositoryContext(),
+      brief: sampleImplementationBrief()
+    });
+    const approval = service.approveImplementationBrief(
+      draft.implementationBrief.id
+    );
+
+    expect(() =>
+      service.getImplementationHandoff({
+        implementationBriefId: approval.implementationBrief.id,
+        currentRepositoryState: {
+          commitSha: "changed",
+          dirtyStateFingerprint: null
+        }
+      })
+    ).toThrowError(ApplicationError);
+  });
+
+  it("rejects Implementation Brief approval for dirty repository context without a fingerprint", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedTicketTarget(service, ports);
+    const draft = service.createImplementationBriefDraft({
+      implementationTargetId: setup.implementationTargetId,
+      repoContext: {
+        ...sampleRepositoryContext(),
+        hasUncommittedChanges: true,
+        dirtyStateFingerprint: null
+      },
+      brief: sampleImplementationBrief()
+    });
+
+    expect(draft.repositoryContextSnapshot.isApprovable).toBe(false);
+    expect(() =>
+      service.approveImplementationBrief(draft.implementationBrief.id)
+    ).toThrowError(ApplicationError);
+  });
 });
 
 const TEST_ACTOR_ID = "00000000000000000000000002";
@@ -600,6 +712,37 @@ function seedRepository(
   return repository;
 }
 
+function createApprovedTicketTarget(
+  service: ProductGraphService,
+  ports: ReturnType<typeof createSqlitePorts>
+) {
+  const graph = createApprovedGraphWithGoal(service);
+  const repository = seedRepository(ports, graph.projectId);
+  const draft = service.createTicketDraftBatch({
+    projectId: graph.projectId,
+    sourceGraphRevisionId: graph.graphRevisionId,
+    sourceNodeIds: [graph.goalNodeId],
+    tickets: [sampleTicketInput(graph.goalNodeId, repository.id)]
+  });
+  const approval = service.approveTicketRevision(
+    draft.tickets[0]?.revision.id ?? ""
+  );
+  const implementationTargetId =
+    approval.implementationTargets.targets[0]?.id;
+  if (!implementationTargetId) {
+    throw new Error("Expected approved ticket to create an Implementation Target.");
+  }
+  return {
+    projectId: graph.projectId,
+    graphRevisionId: graph.graphRevisionId,
+    goalNodeId: graph.goalNodeId,
+    repositoryId: repository.id,
+    ticketId: approval.ticket.id,
+    ticketRevisionId: approval.revision.id,
+    implementationTargetId
+  };
+}
+
 function sampleTicketInput(goalNodeId: string, repositoryId: string) {
   return {
     title: "Build preset countdown controls",
@@ -619,6 +762,28 @@ function sampleTicketInput(goalNodeId: string, repositoryId: string) {
       }
     ],
     implementationNotes: ["Keep controls usable on mobile."]
+  };
+}
+
+function sampleRepositoryContext() {
+  return {
+    repositoryName: "App Repository",
+    summary: "Small TypeScript timer app.",
+    fileList: ["src/App.tsx", "src/timer.ts"],
+    moduleNotes: ["Timer state is local to the UI module."],
+    baselineCommitSha: "abc123",
+    hasUncommittedChanges: false,
+    dirtyStateFingerprint: null
+  };
+}
+
+function sampleImplementationBrief() {
+  return {
+    implementationPlan: ["Add preset buttons", "Wire countdown state"],
+    suggestedFilesToInspect: ["src/App.tsx", "src/timer.ts"],
+    testStrategy: ["Run unit tests for timer state"],
+    risks: ["Button layout may need mobile tuning"],
+    prSummaryDraft: "Add preset countdown controls."
   };
 }
 

@@ -11,11 +11,14 @@ import type {
   GraphEdge,
   GraphNode,
   GraphRevision,
+  ImplementationBrief,
   ImplementationTarget,
   Idea,
   ProductBrief,
   ProductBriefVersion,
   Project,
+  Repository,
+  RepositoryContextSnapshot,
   Ticket,
   TicketDraftBatch,
   TicketRevision
@@ -96,6 +99,28 @@ const ticketSpecificationSchema = z
         .strict()
     ),
     implementation_notes: z.array(z.string())
+  })
+  .strict();
+
+const repositoryContextSchema = z
+  .object({
+    repository_name: z.string().min(1),
+    summary: z.string().min(1),
+    file_list: z.array(z.string().min(1)),
+    module_notes: z.array(z.string().min(1)),
+    baseline_commit_sha: z.string().min(1).nullable().optional(),
+    has_uncommitted_changes: z.boolean().default(false),
+    dirty_state_fingerprint: z.string().min(1).nullable().optional()
+  })
+  .strict();
+
+const implementationBriefSchema = z
+  .object({
+    implementation_plan: z.array(z.string().min(1)),
+    suggested_files_to_inspect: z.array(z.string().min(1)),
+    test_strategy: z.array(z.string().min(1)),
+    risks: z.array(z.string().min(1)),
+    pr_summary_draft: z.string().min(1)
   })
   .strict();
 
@@ -573,6 +598,124 @@ export function createMcpServer(service: ProductGraphService): McpServer {
       })
   );
 
+  server.registerTool(
+    "create_implementation_brief_draft",
+    {
+      title: "Create Implementation Brief Draft",
+      description:
+        "Create an immutable draft Implementation Brief with client-supplied repository context.",
+      inputSchema: {
+        implementation_target_id: z.string().min(1),
+        supersedes_implementation_brief_id:
+          z.string().min(1).nullable().optional(),
+        repo_context: repositoryContextSchema,
+        brief: implementationBriefSchema
+      }
+    },
+    async ({
+      implementation_target_id,
+      supersedes_implementation_brief_id,
+      repo_context,
+      brief
+    }) =>
+      toToolResult(() => {
+        const result = service.createImplementationBriefDraft({
+          implementationTargetId: implementation_target_id,
+          supersedesImplementationBriefId:
+            supersedes_implementation_brief_id ?? null,
+          repoContext: toRepositoryContextInput(repo_context),
+          brief: toImplementationBriefInput(brief)
+        });
+        return success(
+          {
+            implementation_brief: serializeImplementationBrief(
+              result.implementationBrief
+            ),
+            repository_context_snapshot:
+              serializeRepositoryContextSnapshot(
+                result.repositoryContextSnapshot
+              )
+          },
+          result.auditLogId
+        );
+      })
+  );
+
+  server.registerTool(
+    "approve_implementation_brief",
+    {
+      title: "Approve Implementation Brief",
+      description: "Approve one Implementation Brief.",
+      inputSchema: {
+        implementation_brief_id: z.string().min(1)
+      }
+    },
+    async ({ implementation_brief_id }) =>
+      toToolResult(() => {
+        const result = service.approveImplementationBrief(
+          implementation_brief_id
+        );
+        return success(
+          {
+            implementation_brief: serializeImplementationBrief(
+              result.implementationBrief
+            ),
+            archived_implementation_brief_id:
+              result.archivedImplementationBriefId
+          },
+          result.auditLogId
+        );
+      })
+  );
+
+  server.registerTool(
+    "get_implementation_handoff",
+    {
+      title: "Get Implementation Handoff",
+      description:
+        "Validate Implementation Brief freshness and return handoff context.",
+      inputSchema: {
+        implementation_brief_id: z.string().min(1),
+        current_repository_state: z
+          .object({
+            commit_sha: z.string().min(1),
+            dirty_state_fingerprint:
+              z.string().min(1).nullable().optional()
+          })
+          .strict()
+      }
+    },
+    async ({ implementation_brief_id, current_repository_state }) =>
+      toToolResult(() => {
+        const result = service.getImplementationHandoff({
+          implementationBriefId: implementation_brief_id,
+          currentRepositoryState: {
+            commitSha: current_repository_state.commit_sha,
+            dirtyStateFingerprint:
+              current_repository_state.dirty_state_fingerprint ?? null
+          }
+        });
+        return success({
+          freshness: result.freshness,
+          implementation_brief: serializeImplementationBrief(
+            result.implementationBrief
+          ),
+          implementation_target: serializeImplementationTarget(
+            result.implementationTarget
+          ),
+          ticket: serializeTicket(result.ticket),
+          ticket_revision: serializeTicketRevision(result.ticketRevision),
+          product_brief_version: serializeProductBriefVersion(
+            result.productBriefVersion
+          ),
+          repository: serializeRepository(result.repository),
+          repository_context_snapshot: serializeRepositoryContextSnapshot(
+            result.repositoryContextSnapshot
+          )
+        });
+      })
+  );
+
   server.registerResource(
     "projects",
     "product-graph://projects",
@@ -906,6 +1049,56 @@ function serializeImplementationTarget(
   };
 }
 
+function serializeRepository(repository: Repository) {
+  return {
+    id: repository.id,
+    project_id: repository.projectId,
+    slug: repository.slug,
+    name: repository.name,
+    root_path: repository.rootPath,
+    remote_url: repository.remoteUrl,
+    lifecycle_status: repository.lifecycleStatus,
+    created_at: repository.createdAt,
+    updated_at: repository.updatedAt
+  };
+}
+
+function serializeRepositoryContextSnapshot(
+  snapshot: RepositoryContextSnapshot
+) {
+  return {
+    id: snapshot.id,
+    project_id: snapshot.projectId,
+    repository_id: snapshot.repositoryId,
+    baseline_commit_sha: snapshot.baselineCommitSha,
+    dirty_state_fingerprint: snapshot.dirtyStateFingerprint,
+    context: snapshot.context,
+    is_approvable: snapshot.isApprovable,
+    created_at: snapshot.createdAt
+  };
+}
+
+function serializeImplementationBrief(brief: ImplementationBrief) {
+  return {
+    id: brief.id,
+    project_id: brief.projectId,
+    implementation_target_id: brief.implementationTargetId,
+    ticket_revision_id: brief.ticketRevisionId,
+    product_brief_version_id: brief.productBriefVersionId,
+    repository_context_snapshot_id: brief.repositoryContextSnapshotId,
+    supersedes_implementation_brief_id:
+      brief.supersedesImplementationBriefId,
+    slug: brief.slug,
+    brief: brief.brief,
+    review_status: brief.reviewStatus,
+    lifecycle_status: brief.lifecycleStatus,
+    approved_by_actor_id: brief.approvedByActorId,
+    approved_at: brief.approvedAt,
+    created_at: brief.createdAt,
+    updated_at: brief.updatedAt
+  };
+}
+
 function toTicketSpecInput(
   input: z.infer<typeof ticketSpecificationSchema>
 ) {
@@ -923,5 +1116,31 @@ function toTicketSpecInput(
       scope: target.scope
     })),
     implementationNotes: input.implementation_notes
+  };
+}
+
+function toRepositoryContextInput(
+  input: z.infer<typeof repositoryContextSchema>
+) {
+  return {
+    repositoryName: input.repository_name,
+    summary: input.summary,
+    fileList: input.file_list,
+    moduleNotes: input.module_notes,
+    baselineCommitSha: input.baseline_commit_sha ?? null,
+    hasUncommittedChanges: input.has_uncommitted_changes,
+    dirtyStateFingerprint: input.dirty_state_fingerprint ?? null
+  };
+}
+
+function toImplementationBriefInput(
+  input: z.infer<typeof implementationBriefSchema>
+) {
+  return {
+    implementationPlan: input.implementation_plan,
+    suggestedFilesToInspect: input.suggested_files_to_inspect,
+    testStrategy: input.test_strategy,
+    risks: input.risks,
+    prSummaryDraft: input.pr_summary_draft
   };
 }

@@ -15,7 +15,7 @@ ADR 是決策歷史，不是日常操作手冊。一般使用時不需要逐篇�
 
 ## 目前可用程度
 
-Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project、Idea、Product Brief Version approval、Graph Draft Batch／Graph Revision reconciliation、Ticket Revision approval 與 audit log workflows。Build、兩套 typecheck、tests、application smoke 與 MCP client end-to-end 驗證均已通過。
+Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project、Idea、Product Brief Version approval、Graph Draft Batch／Graph Revision reconciliation、Ticket Revision approval、Implementation Brief approval／handoff 與 audit log workflows。Build、兩套 typecheck、tests、application smoke 與 MCP client end-to-end 驗證均已通過。
 
 目前已實作的 tools：
 
@@ -33,6 +33,9 @@ Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite sche
 - `create_ticket_revision_draft`
 - `approve_ticket_revision`
 - `get_ticket_context`
+- `create_implementation_brief_draft`
+- `approve_implementation_brief`
+- `get_implementation_handoff`
 
 其餘章節描述的是已定案但尚未完整實作的操作契約。
 

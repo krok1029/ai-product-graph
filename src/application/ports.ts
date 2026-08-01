@@ -5,6 +5,7 @@ import type {
   GraphEdge,
   GraphNode,
   GraphRevision,
+  ImplementationBrief,
   ImplementationTarget,
   Idea,
   LifecycleStatus,
@@ -14,6 +15,7 @@ import type {
   ProductBriefVersion,
   ProjectCounts,
   Repository,
+  RepositoryContextSnapshot,
   Ticket,
   TicketDraftBatch,
   TicketRevision
@@ -91,6 +93,7 @@ export interface GraphDraftBatchRepository {
 
 export interface GraphRevisionRepository {
   insert(revision: GraphRevision): void;
+  findById(id: string): GraphRevision | null;
   nextSequenceNumber(projectId: string): number;
 }
 
@@ -185,6 +188,28 @@ export interface ImplementationTargetRepository {
   archive(targetId: string, archivedAt: string): void;
 }
 
+export interface RepositoryContextSnapshotRepository {
+  insert(snapshot: RepositoryContextSnapshot): void;
+  findById(id: string): RepositoryContextSnapshot | null;
+}
+
+export interface ImplementationBriefRepository {
+  insert(brief: ImplementationBrief): void;
+  findById(id: string): ImplementationBrief | null;
+  findActiveApprovedByTargetId(
+    implementationTargetId: string
+  ): ImplementationBrief | null;
+  findLatestArchivedApprovedByTargetId(
+    implementationTargetId: string
+  ): ImplementationBrief | null;
+  approve(
+    implementationBriefId: string,
+    actorId: string,
+    approvedAt: string
+  ): void;
+  archive(implementationBriefId: string, archivedAt: string): void;
+}
+
 export interface ImplementationArtifactRepository {
   archiveActiveForTicketRevision(
     ticketRevisionId: string,
@@ -219,6 +244,8 @@ export type ApplicationPorts = {
   tickets: TicketRepository;
   ticketRevisions: TicketRevisionRepository;
   implementationTargets: ImplementationTargetRepository;
+  repositoryContextSnapshots: RepositoryContextSnapshotRepository;
+  implementationBriefs: ImplementationBriefRepository;
   implementationArtifacts: ImplementationArtifactRepository;
   auditLog: AuditLogRepository;
   transactions: TransactionRunner;

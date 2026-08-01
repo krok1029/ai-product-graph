@@ -117,6 +117,44 @@ try {
       ticketId: ticketApproval.ticket.id,
       includeMarkdown: true
     });
+    const implementationTargetId =
+      ticketApproval.implementationTargets.targets[0]?.id;
+    assert(
+      implementationTargetId !== undefined,
+      "Expected one Implementation Target."
+    );
+    const implementationBriefDraft =
+      app.service.createImplementationBriefDraft({
+        implementationTargetId,
+        repoContext: {
+          repositoryName: repository.name,
+          summary: "Smoke test repository context.",
+          fileList: ["src/smoke.ts"],
+          moduleNotes: ["Smoke path exercises the vertical slice."],
+          baselineCommitSha: "abc123",
+          hasUncommittedChanges: false,
+          dirtyStateFingerprint: null
+        },
+        brief: {
+          implementationPlan: ["Keep the smoke path green."],
+          suggestedFilesToInspect: ["src/smoke.ts"],
+          testStrategy: ["Run the compiled smoke script."],
+          risks: ["Fixture drift can hide workflow regressions."],
+          prSummaryDraft: "Exercise implementation handoff workflow."
+        }
+      });
+    const implementationBriefApproval =
+      app.service.approveImplementationBrief(
+        implementationBriefDraft.implementationBrief.id
+      );
+    const handoff = app.service.getImplementationHandoff({
+      implementationBriefId:
+        implementationBriefApproval.implementationBrief.id,
+      currentRepositoryState: {
+        commitSha: "abc123",
+        dirtyStateFingerprint: null
+      }
+    });
     const auditLog = createSqlitePorts(app.database).auditLog.list();
 
     assert(projects.projects.length === 1, "Expected one project.");
@@ -145,7 +183,16 @@ try {
       ticketContext.relatedNodes.length === 1,
       "Ticket context should include related graph context."
     );
-    assert(auditLog.length === 8, "Expected eight audit entries.");
+    assert(
+      implementationBriefApproval.implementationBrief.reviewStatus ===
+        "approved",
+      "Implementation Brief should be approved."
+    );
+    assert(
+      handoff.freshness === "current",
+      "Implementation handoff should be current."
+    );
+    assert(auditLog.length === 10, "Expected ten audit entries.");
 
     console.log(
       JSON.stringify({
@@ -156,6 +203,8 @@ try {
         productBriefVersionId: productBriefApproval.version.id,
         graphRevisionId: graphApproval.graphRevision.id,
         ticketRevisionId: ticketApproval.revision.id,
+        implementationBriefId:
+          implementationBriefApproval.implementationBrief.id,
         auditLogEntries: auditLog.length
       })
     );
