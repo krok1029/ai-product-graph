@@ -7,11 +7,36 @@ import { z } from "zod";
 import type { ProductGraphService } from "../../application/product-graph-service.js";
 import { ApplicationError } from "../../domain/errors.js";
 import type {
+  GraphDraftBatch,
+  GraphEdge,
+  GraphNode,
+  GraphRevision,
   Idea,
   ProductBrief,
   ProductBriefVersion,
   Project
 } from "../../domain/models.js";
+
+const graphNodeTypeSchema = z.enum([
+  "idea",
+  "product_goal",
+  "persona",
+  "pain_point",
+  "workflow",
+  "feature_area",
+  "epic",
+  "ticket",
+  "acceptance_criterion",
+  "decision",
+  "repository",
+  "code_file",
+  "pull_request",
+  "test_case",
+  "release",
+  "feedback",
+  "implementation_target",
+  "external_work_item"
+]);
 
 const productBriefJsonSchema = z
   .object({
@@ -223,6 +248,149 @@ export function createMcpServer(service: ProductGraphService): McpServer {
       })
   );
 
+  server.registerTool(
+    "create_graph_draft_batch",
+    {
+      title: "Create Graph Draft Batch",
+      description:
+        "Create an atomic draft batch of scoped product-intent graph changes.",
+      inputSchema: {
+        project_id: z.string().min(1),
+        base_graph_revision_id: z.string().min(1).nullable(),
+        source_product_brief_version_id: z.string().min(1),
+        reconciliation_summary: z.string().optional(),
+        changes: z.array(
+          z
+            .object({
+              change_id: z.string().min(1),
+              operation: z.enum(["add", "update", "archive"]),
+              entity_kind: z.enum(["node", "edge"]),
+              target_id: z.string().min(1).nullable(),
+              payload: z.record(z.unknown())
+            })
+            .strict()
+        )
+      }
+    },
+    async ({
+      project_id,
+      base_graph_revision_id,
+      source_product_brief_version_id,
+      reconciliation_summary,
+      changes
+    }) =>
+      toToolResult(() => {
+        const result = service.createGraphDraftBatch({
+          projectId: project_id,
+          baseGraphRevisionId: base_graph_revision_id,
+          sourceProductBriefVersionId:
+            source_product_brief_version_id,
+          ...(reconciliation_summary === undefined
+            ? {}
+            : { reconciliationSummary: reconciliation_summary }),
+          changes: changes.map(change => ({
+            changeId: change.change_id,
+            operation: change.operation,
+            entityKind: change.entity_kind,
+            targetId: change.target_id,
+            payload: change.payload
+          }))
+        });
+        return success(
+          {
+            graph_draft_batch: {
+              ...serializeGraphDraftBatch(result.graphDraftBatch),
+              change_count: result.changeCount,
+              is_noop_reconciliation: result.isNoopReconciliation
+            },
+            validation: result.validation
+          },
+          result.auditLogId
+        );
+      })
+  );
+
+  server.registerTool(
+    "approve_graph_draft_batch",
+    {
+      title: "Approve Graph Draft Batch",
+      description:
+        "Atomically apply a Graph Draft Batch and create a Graph Revision.",
+      inputSchema: {
+        graph_draft_batch_id: z.string().min(1)
+      }
+    },
+    async ({ graph_draft_batch_id }) =>
+      toToolResult(() => {
+        const result = service.approveGraphDraftBatch(
+          graph_draft_batch_id
+        );
+        return success(
+          {
+            graph_draft_batch: serializeGraphDraftBatch(
+              result.graphDraftBatch
+            ),
+            graph_revision: serializeGraphRevision(
+              result.graphRevision
+            ),
+            applied: {
+              added_ids: result.applied.addedIds,
+              updated_ids: result.applied.updatedIds,
+              archived_ids: result.applied.archivedIds,
+              is_noop_reconciliation:
+                result.applied.isNoopReconciliation,
+              reconciliation_summary:
+                result.applied.reconciliationSummary
+            },
+            archived_stale_batch_ids: result.archivedStaleBatchIds,
+            product_intent_reconciliation: {
+              status: result.productIntentReconciliation.status,
+              current_product_brief_version_id:
+                result.productIntentReconciliation
+                  .currentProductBriefVersionId,
+              last_reconciled_product_brief_version_id:
+                result.productIntentReconciliation
+                  .lastReconciledProductBriefVersionId,
+              product_intent_graph_revision_id:
+                result.productIntentReconciliation
+                  .productIntentGraphRevisionId
+            }
+          },
+          result.auditLogId
+        );
+      })
+  );
+
+  server.registerTool(
+    "get_graph_context",
+    {
+      title: "Get Graph Context",
+      description: "Read canonical graph nodes and edges for a Project.",
+      inputSchema: {
+        project_id: z.string().min(1),
+        lifecycle_status: z
+          .enum(["active", "archived"])
+          .default("active"),
+        node_types: z.array(graphNodeTypeSchema).optional(),
+        max_depth: z.number().int().min(0).max(10).default(2)
+      }
+    },
+    async ({ project_id, lifecycle_status, node_types, max_depth }) =>
+      toToolResult(() => {
+        const result = service.getGraphContext({
+          projectId: project_id,
+          lifecycleStatus: lifecycle_status,
+          maxDepth: max_depth,
+          ...(node_types === undefined ? {} : { nodeTypes: node_types })
+        });
+        return success({
+          graph_revision_id: result.graphRevisionId,
+          nodes: result.nodes.map(serializeGraphNode),
+          edges: result.edges.map(serializeGraphEdge)
+        });
+      })
+  );
+
   server.registerResource(
     "projects",
     "product-graph://projects",
@@ -422,5 +590,75 @@ function serializeProductBriefVersion(version: ProductBriefVersion) {
     approved_at: version.approvedAt,
     created_at: version.createdAt,
     updated_at: version.updatedAt
+  };
+}
+
+function serializeGraphDraftBatch(batch: GraphDraftBatch) {
+  return {
+    id: batch.id,
+    project_id: batch.projectId,
+    source_product_brief_version_id:
+      batch.sourceProductBriefVersionId,
+    base_graph_revision_id: batch.baseGraphRevisionId,
+    reconciliation_summary: batch.reconciliationSummary,
+    review_status: batch.reviewStatus,
+    lifecycle_status: batch.lifecycleStatus,
+    approved_by_actor_id: batch.approvedByActorId,
+    approved_at: batch.approvedAt,
+    created_at: batch.createdAt,
+    updated_at: batch.updatedAt
+  };
+}
+
+function serializeGraphRevision(revision: GraphRevision) {
+  return {
+    id: revision.id,
+    project_id: revision.projectId,
+    graph_draft_batch_id: revision.graphDraftBatchId,
+    source_product_brief_version_id:
+      revision.sourceProductBriefVersionId,
+    sequence_number: revision.sequenceNumber,
+    is_noop_reconciliation: revision.isNoopReconciliation,
+    reconciliation_summary: revision.reconciliationSummary,
+    created_at: revision.createdAt
+  };
+}
+
+function serializeGraphNode(node: GraphNode) {
+  return {
+    id: node.id,
+    project_id: node.projectId,
+    slug: node.slug,
+    type: node.type,
+    title: node.title,
+    description: node.description,
+    source: node.source,
+    source_ref_type: node.sourceRefType,
+    source_ref_id: node.sourceRefId,
+    lifecycle_status: node.lifecycleStatus,
+    created_in_graph_revision_id: node.createdInGraphRevisionId,
+    last_changed_in_graph_revision_id:
+      node.lastChangedInGraphRevisionId,
+    metadata: node.metadata,
+    created_at: node.createdAt,
+    updated_at: node.updatedAt
+  };
+}
+
+function serializeGraphEdge(edge: GraphEdge) {
+  return {
+    id: edge.id,
+    project_id: edge.projectId,
+    source_node_id: edge.sourceNodeId,
+    target_node_id: edge.targetNodeId,
+    relation_type: edge.relationType,
+    confidence: edge.confidence,
+    lifecycle_status: edge.lifecycleStatus,
+    created_in_graph_revision_id: edge.createdInGraphRevisionId,
+    last_changed_in_graph_revision_id:
+      edge.lastChangedInGraphRevisionId,
+    metadata: edge.metadata,
+    created_at: edge.createdAt,
+    updated_at: edge.updatedAt
   };
 }

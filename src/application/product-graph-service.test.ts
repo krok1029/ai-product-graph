@@ -156,6 +156,274 @@ describe("ProductGraphService", () => {
       ports.productBriefVersions.findById(first.version.id)?.reviewStatus
     ).toBe("approved");
   });
+
+  it("approves a no-op Graph Draft Batch and reconciles product intent", () => {
+    const { service, ports } = createTestService();
+    const { projectId, approvedVersionId } =
+      createApprovedProductBrief(service);
+
+    const draft = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: null,
+      sourceProductBriefVersionId: approvedVersionId,
+      reconciliationSummary: "Compared product intent; no changes required.",
+      changes: []
+    });
+    const approval = service.approveGraphDraftBatch(
+      draft.graphDraftBatch.id
+    );
+
+    expect(draft.isNoopReconciliation).toBe(true);
+    expect(approval.graphRevision.sequenceNumber).toBe(1);
+    expect(approval.graphRevision.isNoopReconciliation).toBe(true);
+    expect(approval.productIntentReconciliation.status).toBe("current");
+    expect(
+      ports.projects.findById(projectId)?.currentGraphRevisionId
+    ).toBe(approval.graphRevision.id);
+    expect(service.getGraphContext({ projectId }).nodes).toEqual([]);
+  });
+
+  it("atomically adds GraphNodes and a GraphEdge using change references", () => {
+    const { service } = createTestService();
+    const { projectId, approvedVersionId } =
+      createApprovedProductBrief(service);
+    const draft = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: null,
+      sourceProductBriefVersionId: approvedVersionId,
+      changes: [
+        {
+          changeId: "goal",
+          operation: "add",
+          entityKind: "node",
+          targetId: null,
+          payload: {
+            type: "product_goal",
+            title: "Trace product intent",
+            description: "Keep decisions connected to delivery.",
+            metadata: {}
+          }
+        },
+        {
+          changeId: "pain",
+          operation: "add",
+          entityKind: "node",
+          targetId: null,
+          payload: {
+            type: "pain_point",
+            title: "Context gets lost",
+            metadata: {}
+          }
+        },
+        {
+          changeId: "edge",
+          operation: "add",
+          entityKind: "edge",
+          targetId: null,
+          payload: {
+            source_change_id: "goal",
+            target_change_id: "pain",
+            relation_type: "solves",
+            confidence: 0.9,
+            metadata: {}
+          }
+        }
+      ]
+    });
+
+    const approval = service.approveGraphDraftBatch(
+      draft.graphDraftBatch.id
+    );
+    const context = service.getGraphContext({ projectId });
+    const seedOnly = service.getGraphContext({
+      projectId,
+      nodeTypes: ["product_goal"],
+      maxDepth: 0
+    });
+    const expanded = service.getGraphContext({
+      projectId,
+      nodeTypes: ["product_goal"],
+      maxDepth: 1
+    });
+
+    expect(draft.validation.conflicts).toEqual([]);
+    expect(approval.applied.addedIds).toHaveLength(3);
+    expect(context.nodes).toHaveLength(2);
+    expect(context.edges).toHaveLength(1);
+    expect(context.edges[0]?.relationType).toBe("solves");
+    expect(seedOnly.nodes).toHaveLength(1);
+    expect(seedOnly.edges).toHaveLength(0);
+    expect(expanded.nodes).toHaveLength(2);
+    expect(expanded.edges).toHaveLength(1);
+    expect(service.getProject(projectId).counts.graphNodes).toBe(2);
+  });
+
+  it("tracks GraphNode updates and archives with monotonic revisions", () => {
+    const { service } = createTestService();
+    const { projectId, approvedVersionId } =
+      createApprovedProductBrief(service);
+    const initial = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: null,
+      sourceProductBriefVersionId: approvedVersionId,
+      changes: [
+        {
+          changeId: "goal",
+          operation: "add",
+          entityKind: "node",
+          targetId: null,
+          payload: {
+            type: "product_goal",
+            title: "Initial goal"
+          }
+        }
+      ]
+    });
+    const firstApproval = service.approveGraphDraftBatch(
+      initial.graphDraftBatch.id
+    );
+    const nodeId = firstApproval.applied.addedIds[0] as string;
+    const update = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: firstApproval.graphRevision.id,
+      sourceProductBriefVersionId: approvedVersionId,
+      changes: [
+        {
+          changeId: "update-goal",
+          operation: "update",
+          entityKind: "node",
+          targetId: nodeId,
+          payload: { title: "Updated goal" }
+        }
+      ]
+    });
+    const secondApproval = service.approveGraphDraftBatch(
+      update.graphDraftBatch.id
+    );
+    const archive = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: secondApproval.graphRevision.id,
+      sourceProductBriefVersionId: approvedVersionId,
+      changes: [
+        {
+          changeId: "archive-goal",
+          operation: "archive",
+          entityKind: "node",
+          targetId: nodeId,
+          payload: {}
+        }
+      ]
+    });
+    const thirdApproval = service.approveGraphDraftBatch(
+      archive.graphDraftBatch.id
+    );
+
+    expect(secondApproval.graphRevision.sequenceNumber).toBe(2);
+    expect(thirdApproval.graphRevision.sequenceNumber).toBe(3);
+    expect(
+      service.getGraphContext({
+        projectId,
+        lifecycleStatus: "archived"
+      }).nodes[0]?.title
+    ).toBe("Updated goal");
+  });
+
+  it("archives stale sibling Graph Draft Batches after approval", () => {
+    const { service, ports } = createTestService();
+    const { projectId, approvedVersionId } =
+      createApprovedProductBrief(service);
+    const first = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: null,
+      sourceProductBriefVersionId: approvedVersionId,
+      reconciliationSummary: "First comparison.",
+      changes: []
+    });
+    const sibling = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: null,
+      sourceProductBriefVersionId: approvedVersionId,
+      reconciliationSummary: "Parallel comparison.",
+      changes: []
+    });
+
+    const approval = service.approveGraphDraftBatch(
+      first.graphDraftBatch.id
+    );
+
+    expect(approval.archivedStaleBatchIds).toEqual([
+      sibling.graphDraftBatch.id
+    ]);
+    expect(
+      ports.graphDraftBatches.findById(sibling.graphDraftBatch.id)
+        ?.lifecycleStatus
+    ).toBe("archived");
+    expect(() =>
+      service.approveGraphDraftBatch(sibling.graphDraftBatch.id)
+    ).toThrowError(ApplicationError);
+  });
+
+  it("blocks Graph Draft Batch approval when node identity is ambiguous", () => {
+    const { service } = createTestService();
+    const { projectId, approvedVersionId } =
+      createApprovedProductBrief(service);
+    const draft = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: null,
+      sourceProductBriefVersionId: approvedVersionId,
+      changes: [
+        {
+          changeId: "goal-1",
+          operation: "add",
+          entityKind: "node",
+          targetId: null,
+          payload: { type: "product_goal", title: "Same identity" }
+        },
+        {
+          changeId: "goal-2",
+          operation: "add",
+          entityKind: "node",
+          targetId: null,
+          payload: { type: "product_goal", title: "Same identity" }
+        }
+      ]
+    });
+
+    expect(draft.validation.conflicts).toHaveLength(1);
+    expect(() =>
+      service.approveGraphDraftBatch(draft.graphDraftBatch.id)
+    ).toThrowError(ApplicationError);
+    expect(service.getProject(projectId).project.currentGraphRevisionId).toBe(
+      null
+    );
+  });
+
+  it("rejects a Graph Draft Batch after its Product Brief source is superseded", () => {
+    const { service, ports } = createTestService();
+    const { projectId, ideaId, approvedVersionId } =
+      createApprovedProductBrief(service);
+    const graphDraft = service.createGraphDraftBatch({
+      projectId,
+      baseGraphRevisionId: null,
+      sourceProductBriefVersionId: approvedVersionId,
+      reconciliationSummary: "Compared the original version.",
+      changes: []
+    });
+    const replacement = service.createProductBriefDraft({
+      projectId,
+      sourceIdeaId: ideaId,
+      baseApprovedVersionId: approvedVersionId,
+      brief: sampleBrief("Superseding direction")
+    });
+    service.approveProductBriefVersion(replacement.version.id);
+
+    expect(() =>
+      service.approveGraphDraftBatch(graphDraft.graphDraftBatch.id)
+    ).toThrowError(ApplicationError);
+    expect(ports.projects.findById(projectId)?.currentGraphRevisionId).toBe(
+      null
+    );
+  });
 });
 
 const TEST_ACTOR_ID = "00000000000000000000000002";
@@ -185,6 +453,22 @@ function createProjectWithIdea(service: ProductGraphService) {
   return {
     projectId: project.project.id,
     ideaId: idea.idea.id
+  };
+}
+
+function createApprovedProductBrief(service: ProductGraphService) {
+  const { projectId, ideaId } = createProjectWithIdea(service);
+  const draft = service.createProductBriefDraft({
+    projectId,
+    sourceIdeaId: ideaId,
+    baseApprovedVersionId: null,
+    brief: sampleBrief()
+  });
+  const approval = service.approveProductBriefVersion(draft.version.id);
+  return {
+    projectId,
+    ideaId,
+    approvedVersionId: approval.version.id
   };
 }
 

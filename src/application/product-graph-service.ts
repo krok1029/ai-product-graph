@@ -3,12 +3,18 @@ import { ulid } from "ulid";
 import { ApplicationError } from "../domain/errors.js";
 import type {
   AuditLogEntry,
+  GraphNodeType,
   Idea,
+  LifecycleStatus,
   Project,
   ProductBrief,
   ProductBriefJson,
   ProductBriefVersion
 } from "../domain/models.js";
+import {
+  GraphWorkflow,
+  type GraphChangeInput
+} from "./graph-workflow.js";
 import type { ApplicationPorts } from "./ports.js";
 
 type ServiceOptions = {
@@ -23,7 +29,8 @@ type ServiceOptions = {
 export class ProductGraphService {
   private readonly idFactory: () => string;
   private readonly clock: () => Date;
-  private readonly actor: ServiceOptions["actor"];
+  private readonly actor: NonNullable<ServiceOptions["actor"]>;
+  private readonly graphWorkflow: GraphWorkflow;
 
   constructor(
     private readonly ports: ApplicationPorts,
@@ -31,7 +38,15 @@ export class ProductGraphService {
   ) {
     this.idFactory = options.idFactory ?? ulid;
     this.clock = options.clock ?? (() => new Date());
-    this.actor = options.actor;
+    this.actor = options.actor ?? {
+      id: "00000000000000000000000001",
+      displayName: "Local User"
+    };
+    this.graphWorkflow = new GraphWorkflow(ports, {
+      idFactory: this.idFactory,
+      clock: this.clock,
+      actor: this.actor
+    });
   }
 
   createProject(input: { name: string; description?: string }) {
@@ -261,7 +276,7 @@ export class ProductGraphService {
   }
 
   approveProductBriefVersion(productBriefVersionId: string) {
-    const actor = this.requireActor();
+    const actor = this.actor;
     const now = this.clock().toISOString();
 
     return this.ports.transactions.run(() => {
@@ -385,6 +400,29 @@ export class ProductGraphService {
     });
   }
 
+  createGraphDraftBatch(input: {
+    projectId: string;
+    baseGraphRevisionId: string | null;
+    sourceProductBriefVersionId: string;
+    reconciliationSummary?: string;
+    changes: GraphChangeInput[];
+  }) {
+    return this.graphWorkflow.createDraft(input);
+  }
+
+  approveGraphDraftBatch(graphDraftBatchId: string) {
+    return this.graphWorkflow.approve(graphDraftBatchId);
+  }
+
+  getGraphContext(input: {
+    projectId: string;
+    lifecycleStatus?: LifecycleStatus;
+    nodeTypes?: GraphNodeType[];
+    maxDepth?: number;
+  }) {
+    return this.graphWorkflow.getContext(input);
+  }
+
   private requireProject(projectId: string): Project {
     const project = this.ports.projects.findById(projectId);
     if (!project) {
@@ -393,16 +431,6 @@ export class ProductGraphService {
       });
     }
     return project;
-  }
-
-  private requireActor(): NonNullable<ServiceOptions["actor"]> {
-    if (!this.actor) {
-      throw new ApplicationError(
-        "INTERNAL_ERROR",
-        "A Local Actor is required for approval."
-      );
-    }
-    return this.actor;
   }
 
   private uniqueProjectSlug(baseSlug: string, id: string): string {

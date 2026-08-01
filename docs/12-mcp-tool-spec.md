@@ -367,6 +367,12 @@ Validation：
 - Edge endpoints 必須指向同一 batch 的 proposed node 或既有 active GraphNode。
 - Changes 必須位於 Product Brief extraction 的 ownership scope。
 - Identity 無法確定時必須回傳 conflict，且 batch 不可核准。
+- Product Brief extraction 可修改的 node types 只包含 `product_goal`、`persona`、`pain_point`、`workflow`、`feature_area`。其他 node types 與連到非 ownership-scope nodes 的 edges 不可由此 workflow 修改。
+- Node `add` 的 `target_id` 必須是 `null`；payload 必須包含 `type`、`title`，可包含 `description`、`metadata`。
+- Edge `add` 的 `target_id` 必須是 `null`；payload 必須包含 `relation_type`，每個 endpoint 必須在既有 `source_node_id`／`target_node_id` 與同批 node-add `source_change_id`／`target_change_id` 之間恰選一種表示。
+- Node `update` 只可修改 `title`、`description`、`metadata`；Edge `update` 只可修改 `relation_type`、`confidence`、`metadata`。Update 不可改變 stable identity 或 edge endpoints。
+- `archive` 必須使用非空 `target_id` 與空 payload。Node 還有 active edges 時，同一 batch 必須明確 archive 這些 edges，否則產生 conflict。
+- `change_id` 在 batch 內必須唯一。相同 generated node slug、重複 edge、inactive target、ownership violation 或無法解析的 endpoint 都必須保存為 validation conflict 並阻止 approval。
 
 ### approve_graph_draft_batch
 
@@ -452,6 +458,8 @@ Notes：
 
 - Canonical GraphNode 與 GraphEdge 沒有 `review_status`。
 - `lifecycle_status` 預設為 `active`。
+- 指定 `node_types` 時，符合類型的 nodes 是 traversal seeds，沿符合 lifecycle filter 的 edges 最多擴張 `max_depth`；`max_depth = 0` 只回傳 seed nodes 與 seeds 彼此間的 edges。
+- 未指定或傳入空 `node_types` 時，回傳 Project 中符合 lifecycle filter 的完整 graph，`max_depth` 不限制結果。
 
 ### get_node_trace
 

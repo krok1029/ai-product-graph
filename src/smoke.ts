@@ -45,6 +45,29 @@ try {
     const productBriefApproval = app.service.approveProductBriefVersion(
       productBriefDraft.version.id
     );
+    const graphDraft = app.service.createGraphDraftBatch({
+      projectId: project.project.id,
+      baseGraphRevisionId: null,
+      sourceProductBriefVersionId: productBriefApproval.version.id,
+      changes: [
+        {
+          changeId: "goal",
+          operation: "add",
+          entityKind: "node",
+          targetId: null,
+          payload: {
+            type: "product_goal",
+            title: "Validate the Graph workflow."
+          }
+        }
+      ]
+    });
+    const graphApproval = app.service.approveGraphDraftBatch(
+      graphDraft.graphDraftBatch.id
+    );
+    const graphContext = app.service.getGraphContext({
+      projectId: project.project.id
+    });
     const auditLog = createSqlitePorts(app.database).auditLog.list();
 
     assert(projects.projects.length === 1, "Expected one project.");
@@ -60,7 +83,12 @@ try {
       productBriefApproval.productIntentReconciliation.status === "pending",
       "Product intent reconciliation should be pending."
     );
-    assert(auditLog.length === 4, "Expected four audit entries.");
+    assert(
+      graphApproval.productIntentReconciliation.status === "current",
+      "Product intent reconciliation should be current."
+    );
+    assert(graphContext.nodes.length === 1, "Expected one GraphNode.");
+    assert(auditLog.length === 6, "Expected six audit entries.");
 
     console.log(
       JSON.stringify({
@@ -69,6 +97,7 @@ try {
         projectId: project.project.id,
         ideaId: idea.idea.id,
         productBriefVersionId: productBriefApproval.version.id,
+        graphRevisionId: graphApproval.graphRevision.id,
         auditLogEntries: auditLog.length
       })
     );

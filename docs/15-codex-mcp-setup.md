@@ -6,7 +6,7 @@
 
 目前狀態：
 
-- Phase 1A scaffold、完整 SQLite migrations、Project／Idea tools 與 Product Brief draft／approval workflow 已建立。
+- Phase 1A scaffold、完整 SQLite migrations、Project／Idea、Product Brief draft／approval 與 Graph reconciliation workflows 已建立。
 - Dependencies 已安裝；build、兩套 typecheck、Vitest 與 smoke test 已通過。
 
 ## Build Server
@@ -107,6 +107,9 @@ Approval actor 由 server environment 決定，不接受 MCP client 傳入。`AI
 - `get_idea`
 - `create_product_brief_draft`
 - `approve_product_brief_version`
+- `create_graph_draft_batch`
+- `approve_graph_draft_batch`
+- `get_graph_context`
 
 ## Troubleshooting
 

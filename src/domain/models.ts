@@ -80,6 +80,111 @@ export type ProductBriefVersion = {
   updatedAt: string;
 };
 
+export type GraphNodeType =
+  | "idea"
+  | "product_goal"
+  | "persona"
+  | "pain_point"
+  | "workflow"
+  | "feature_area"
+  | "epic"
+  | "ticket"
+  | "acceptance_criterion"
+  | "decision"
+  | "repository"
+  | "code_file"
+  | "pull_request"
+  | "test_case"
+  | "release"
+  | "feedback"
+  | "implementation_target"
+  | "external_work_item";
+
+export type GraphRelationType =
+  | "clarifies"
+  | "supports"
+  | "solves"
+  | "belongs_to"
+  | "depends_on"
+  | "implements"
+  | "validated_by"
+  | "changed_by"
+  | "traces_to"
+  | "blocked_by"
+  | "supersedes"
+  | "waives";
+
+export type GraphDraftBatch = {
+  id: string;
+  projectId: string;
+  sourceProductBriefVersionId: string;
+  baseGraphRevisionId: string | null;
+  reconciliationSummary: string | null;
+  reviewStatus: ReviewStatus;
+  lifecycleStatus: LifecycleStatus;
+  approvedByActorId: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GraphDraftBatchChange = {
+  id: string;
+  graphDraftBatchId: string;
+  projectId: string;
+  changeId: string;
+  operation: "add" | "update" | "archive";
+  entityKind: "node" | "edge";
+  targetId: string | null;
+  payload: Record<string, unknown>;
+  conflict: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+export type GraphRevision = {
+  id: string;
+  projectId: string;
+  graphDraftBatchId: string;
+  sourceProductBriefVersionId: string;
+  sequenceNumber: number;
+  isNoopReconciliation: boolean;
+  reconciliationSummary: string | null;
+  createdAt: string;
+};
+
+export type GraphNode = {
+  id: string;
+  projectId: string;
+  slug: string;
+  type: GraphNodeType;
+  title: string;
+  description: string | null;
+  source: string;
+  sourceRefType: string | null;
+  sourceRefId: string | null;
+  lifecycleStatus: LifecycleStatus;
+  createdInGraphRevisionId: string;
+  lastChangedInGraphRevisionId: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GraphEdge = {
+  id: string;
+  projectId: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  relationType: GraphRelationType;
+  confidence: number | null;
+  lifecycleStatus: LifecycleStatus;
+  createdInGraphRevisionId: string;
+  lastChangedInGraphRevisionId: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AuditLogEntry = {
   id: string;
   projectId: string | null;

@@ -1,6 +1,12 @@
 import type {
   AuditLogEntry,
+  GraphDraftBatch,
+  GraphDraftBatchChange,
+  GraphEdge,
+  GraphNode,
+  GraphRevision,
   Idea,
+  LifecycleStatus,
   LocalActor,
   Project,
   ProductBrief,
@@ -23,6 +29,13 @@ export interface ProjectRepository {
     productBriefId: string,
     updatedAt: string
   ): void;
+  advanceGraphRevision(
+    projectId: string,
+    expectedGraphRevisionId: string | null,
+    graphRevisionId: string,
+    sourceProductBriefVersionId: string,
+    updatedAt: string
+  ): boolean;
 }
 
 export interface IdeaRepository {
@@ -58,6 +71,60 @@ export interface ProductBriefVersionRepository {
   ): string[];
 }
 
+export interface GraphDraftBatchRepository {
+  insert(batch: GraphDraftBatch, changes: GraphDraftBatchChange[]): void;
+  findById(id: string): GraphDraftBatch | null;
+  listChanges(batchId: string): GraphDraftBatchChange[];
+  approve(batchId: string, actorId: string, approvedAt: string): void;
+  archiveStaleDrafts(
+    projectId: string,
+    exceptBatchId: string,
+    currentGraphRevisionId: string,
+    archivedAt: string
+  ): string[];
+}
+
+export interface GraphRevisionRepository {
+  insert(revision: GraphRevision): void;
+  nextSequenceNumber(projectId: string): number;
+}
+
+export interface GraphNodeRepository {
+  insert(node: GraphNode): void;
+  findById(id: string): GraphNode | null;
+  findBySlug(projectId: string, slug: string): GraphNode | null;
+  list(projectId: string, lifecycleStatus?: LifecycleStatus): GraphNode[];
+  update(
+    nodeId: string,
+    input: {
+      title?: string;
+      description?: string | null;
+      metadata?: Record<string, unknown>;
+      sourceRefId: string;
+      graphRevisionId: string;
+      updatedAt: string;
+    }
+  ): void;
+  archive(nodeId: string, graphRevisionId: string, archivedAt: string): void;
+}
+
+export interface GraphEdgeRepository {
+  insert(edge: GraphEdge): void;
+  findById(id: string): GraphEdge | null;
+  list(projectId: string, lifecycleStatus?: LifecycleStatus): GraphEdge[];
+  update(
+    edgeId: string,
+    input: {
+      relationType?: GraphEdge["relationType"];
+      confidence?: number | null;
+      metadata?: Record<string, unknown>;
+      graphRevisionId: string;
+      updatedAt: string;
+    }
+  ): void;
+  archive(edgeId: string, graphRevisionId: string, archivedAt: string): void;
+}
+
 export interface AuditLogRepository {
   append(entry: AuditLogEntry): void;
   list(): AuditLogEntry[];
@@ -73,6 +140,10 @@ export type ApplicationPorts = {
   ideas: IdeaRepository;
   productBriefs: ProductBriefRepository;
   productBriefVersions: ProductBriefVersionRepository;
+  graphDraftBatches: GraphDraftBatchRepository;
+  graphRevisions: GraphRevisionRepository;
+  graphNodes: GraphNodeRepository;
+  graphEdges: GraphEdgeRepository;
   auditLog: AuditLogRepository;
   transactions: TransactionRunner;
 };
