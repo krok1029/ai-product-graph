@@ -242,6 +242,11 @@ Project
 
 只有 `freshness = current` 時才能把 handoff 交給 coding agent。
 
+每次成功或既有 Brief 因 stale 被阻擋，都會保存一筆 handoff audit，包含 Project、Brief、server LocalActor、時間及 stale 原因。這只新增觀測紀錄，不改寫 approved artifacts 或 Ticket 交付狀態；重複嘗試各自記錄。未知 Brief 不建立 audit。Audit 不保存原始 client repository context 或 dirty-state fingerprint。
+
+如果 audit 無法保存，tool 回傳 `STORAGE_ERROR`，不會回報成功；修復 storage 後才重新嘗試。
+
+
 收到 `STALE_HANDOFF` 時：
 
 - `product_intent_unreconciled`：先完成 Graph reconciliation。
