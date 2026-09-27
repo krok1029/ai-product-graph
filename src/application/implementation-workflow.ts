@@ -22,6 +22,7 @@ import {
   evaluateTicketSourceFreshness
 } from "./implementation-freshness.js";
 import type { ApplicationPorts } from "./ports.js";
+import { requireHandoffSource } from "./handoff-source-validation.js";
 import {
   isRepositoryContextApprovable,
   normalizeBrief,
@@ -58,14 +59,6 @@ type ImplementationWorkflowOptions= {
     id: string;
     displayName: string;
   };
-};
-
-type BriefSource= {
-  target: ImplementationTarget;
-  ticket: Ticket;
-  revision: TicketRevision;
-  repository: Repository;
-  productBriefVersion: ProductBriefVersion;
 };
 
 export class ImplementationWorkflow {
@@ -306,8 +299,8 @@ export class ImplementationWorkflow {
         implementationBriefId: brief.id
       });
     }
-    const source = this.requireBriefSource(brief);
-    const snapshot = this.requireSnapshot(brief.repositoryContextSnapshotId);
+    const source = requireHandoffSource(this.ports, brief);
+    const snapshot = source.snapshot;
     const staleReason = evaluateImplementationFreshness(
       this.ports,
       source.ticket,
@@ -329,31 +322,6 @@ export class ImplementationWorkflow {
       repository: source.repository,
       repositoryContextSnapshot: snapshot
     };
-  }
-
-  private requireBriefSource(brief: ImplementationBrief): BriefSource {
-    const target = this.requireActiveImplementationTarget(
-      brief.implementationTargetId
-    );
-    const ticket = this.requireActiveTicket(target.ticketId);
-    const revision = this.ports.ticketRevisions.findById(
-      brief.ticketRevisionId
-    );
-    if (!revision||revision.projectId !== brief.projectId) {
-      throw staleHandoff("ticket_revision_not_found", {
-        implementationBriefId: brief.id,
-        ticketRevisionId: brief.ticketRevisionId
-      });
-    }
-    const repository = this.requireActiveRepository(
-      target.projectId,
-      target.repositoryId
-    );
-    const productBriefVersion = this.requireProductBriefVersion(
-      brief.productBriefVersionId,
-      brief.projectId
-    );
-    return { target, ticket, revision, repository, productBriefVersion };
   }
 
   private requireCurrentTargetSource(implementationTargetId: string) {
