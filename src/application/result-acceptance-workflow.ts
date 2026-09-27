@@ -1,3 +1,4 @@
+import { PlaneMappingEnrollment } from "./plane-mapping-enrollment.js";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { ApplicationError } from "../domain/errors.js";
@@ -109,6 +110,8 @@ export class ResultAcceptanceWorkflow {
         entityType: "result_acceptance", entityId: acceptance.id,
         beforeSummary: { deliveryStatus: source.ticket.deliveryStatus }, afterSummary: data,
         metadata: {}, createdAt: now });
+      new PlaneMappingEnrollment(this.ports, this.options.idFactory)
+        .onDeliveryChanged(source.ticket, deliveryStatus, auditLogId, now);
       const responseJson = canonicalizeJson(data);
       this.ports.operationReceipts.insert({ id: this.options.idFactory(), projectId: result.projectId,
         localActorId: acceptance.actorId, operationName: "accept_implementation_result", idempotencyKey: command.idempotencyKey,

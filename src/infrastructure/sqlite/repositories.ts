@@ -1,4 +1,5 @@
 import { createExternalWorkItemWriteRepository } from "./external-work-item-write-repository.js";
+import { createPlaneEnrollmentRepository } from "./plane-enrollment-repository.js";
 import { createSyncAttemptClaimRepository } from "./sync-attempt-claim-repository.js";
 import { createExternalWorkItemRepository } from "./external-work-item-repository.js";
 import { createSyncIntentRepositories } from "./sync-intent-repositories.js";
@@ -22,6 +23,7 @@ import { createTicketRepositories } from "./ticket-repositories.js";
 export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
   return {
     externalWorkItemWrites: createExternalWorkItemWriteRepository(database),
+    planeEnrollment: createPlaneEnrollmentRepository(database),
     syncClaims: createSyncAttemptClaimRepository(database),
     externalWorkItems: createExternalWorkItemRepository(database),
     externalContainers: createExternalContainerRepository(database),

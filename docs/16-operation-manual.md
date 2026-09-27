@@ -506,7 +506,7 @@ Integrity check 失敗時不可自動刪除或修復資料。
 
 取得 approved Ticket revision 與上述 container ID 後，呼叫 `request_plane_ticket_export({ticket_id, source_ticket_revision_id, external_container_id, idempotency_key})`。請保存此操作的 client key；網路中斷或 server 重啟時，以同 key／同 IDs 重送可取得原 intent 與 audit ID。此操作只排入本機 durable request，不代表 Plane work item 已建立。
 
-使用 `get_sync_intent({sync_intent_id})` 讀取 pinned payload、request state 與 attempt history；`list_ticket_export_requests({ticket_id})` 列出該 Ticket 的歷史需求。現階段沒有 provider processor，正常新增需求會維持 `pending`、attempts 為空。不要用新 key 繞過 pending 或 failed request：同 Ticket／container 的 outstanding create 會被拒絕。後續 provider execution、mapping enrollment 與雙向同步尚未交付。
+使用 `get_sync_intent({sync_intent_id})` 讀取 pinned payload、request state 與 attempt history；`list_ticket_export_requests({ticket_id})` 列出該 Ticket 的歷史需求。正式 stdio 不會自動啟動 provider processor，正常新增需求會維持 `pending`、attempts 為空。不要用新 key 繞過 pending 或 failed request：同 Ticket／container 的 outstanding create 會被拒絕。開發用首次 create execution 與 mapping enrollment 已可驗證，live Plane 與 update/status processor、雙向同步尚未交付。
 
 ### 查詢已保存的 Plane work item 歷史
 
@@ -514,12 +514,24 @@ Integrity check 失敗時不可自動刪除或修復資料。
 
 取得 item 的內部 `id` 後，使用 `get_external_work_item({external_work_item_id})` 讀取該 item 的全部有效 mappings，以及跨 mappings 依時間排序的 snapshot history。請使用此穩定 id，不要傳顯示名稱、外部 URL 或外部系統的 item id。Ticket 已 archive 仍可讀歷史；沒有 mapping 的已知 Ticket 回空列表，無有效 mapping 的 Plane item 不會帶入無 owner scope 的 snapshots。
 
-Snapshot 是當時保存的外部內容，包含 external status 與 concurrency token，並非目前 Ticket specification 或 live provider 狀態。讀取工具不連線 Plane、不建立 request／attempt／audit，也不改變內部 Ticket completion。此階段沒有 live Plane processor；排入 request 後只有 pending 需求而沒有 External Work Item 是正常結果。Mapping 與 snapshot 查詢已能獨立驗證，實際 provider execution 與自動 enrollment 另行交付。
+Snapshot 是當時保存的外部內容，包含 external status 與 concurrency token，並非目前 Ticket specification 或 live provider 狀態。讀取工具不連線 Plane、不建立 request／attempt／audit，也不改變內部 Ticket completion。此階段沒有 live Plane processor；排入 request 後只有 pending 需求而沒有 External Work Item 是正常結果。Mapping 與 snapshot 查詢、開發用首次 create execution 及自動 durable enrollment 已能獨立驗證；正式 live provider 仍未啟用。
 
 ### 首次匯出執行核心（development API）
 
-`PlaneCreateProcessor` 透過注入的 provider port、durable claims 與 enrollment callback 處理已存在的 request；正式 stdio entrypoint 不會自行啟動它，尚無 live Plane REST adapter 或 credentials 設定。每次 process 最多呼叫一次 create 或 reconciliation，每次皆有 durable attempt。
+開發呼叫端使用 `createPlaneCreateProcessor(ports, provider, options?)`；factory 必定組合 `PlaneMappingEnrollment`，透過注入的 provider port 與 durable claims 處理已存在的 request；正式 stdio entrypoint 不會自行啟動它，尚無 live Plane REST adapter 或 credentials 設定。每次 process 最多呼叫一次 create 或 reconciliation，每次皆有 durable attempt。
 
 若 create 已可能送出，或外部成功後本機 commit 失敗，下一次必須先 reconciliation。`found` 可原子保存成功；`unknown` 保留 failure，不能盲目重建；只有 provider 能保證不存在且舊請求不會晚到的 `definitely_absent`，才允許後續另一個 attempt create。一般 404 不具備這項保證。Lease fencing 只保護本機 outcome commit，不能提供跨系統 exactly-once。
 
-成功會同時保存 item、mapping、snapshot、graph trace、attempt outcome 與 audit，並在同一 transaction 呼叫 enrollment port 補上目前 desired state。Enrolled update／lifecycle intents 以及 live activation 仍須完成後續交付，不能把單次 create 成功視為整個 Phase 3 完成。
+成功會同時保存 item、mapping、snapshot、graph trace、attempt outcome 與 audit，並在同一 transaction 呼叫 enrollment port 補上目前 desired state。Enrolled update／close／reopen intents 已持久化，但仍為 pending；尚未實作處理這些 intents 的 processor 或 live activation，不能把 active mapping 或單次 create 成功視為目前內容已同步，也不能視為整個 Phase 3 完成。
+
+
+### Active mapping 的後續 outbox
+
+只有已存在 active Plane Ticket mapping 才會自動 enrollment；註冊 container 或核准尚未 export 的 Ticket 都不會自行建立第一個 work item。
+
+- 核准新版 Ticket Revision 時，每個 active mapping 在同一 domain transaction 保存 pinned `update`。`approve_ticket_revision` 的 `created_sync_intent_ids` 可用於 `get_sync_intent` 查詢；draft 與失敗 approval 不產生 intents。
+- Result Acceptance 真正使 Ticket 進入 `done` 時保存 `close`；Revocation 真正離開 `done` 時保存 `reopen`。相同 receipt key 重送只回放原結果，不重複排入。Partial target acceptance/revocation 未跨越 done 邊界時不新增 lifecycle intent。
+- Replacement revision approval 會把 done 重設為 planned，因此依序保存 update、reopen；先前的 close 保留。每個 mapping 使用獨立 key 與單調 sequence，所有 content/lifecycle intents 都保留，目前不做 coalescing。
+- 首次 create 的 provider 呼叫期間，若已核准新版或 Ticket 已完成，mapping 成功 transaction 會固定當前 revision 補入 update／close。外部成功而本機 outbox 失敗時，mapping/outcome 一起 rollback；重啟後必須 reconciliation，再補入當時的 desired state。
+
+開發驗證可執行 `pnpm exec vitest run src/application/plane-mapping-enrollment.test.ts src/application/plane-enrollment-catch-up.test.ts`。測試使用獨立 SQLite provider fixture，不需 credentials；正式 stdio 仍只提供本機 request 與 reads，沒有可偽造 provider success 的 mutation。
