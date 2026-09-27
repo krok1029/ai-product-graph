@@ -1,3 +1,4 @@
+import { TicketSyncHealthReads } from "./ticket-sync-health-reads.js";
 import { MappingSyncHealthReads } from "./mapping-sync-health-reads.js";
 import { MappingSyncReads } from "./mapping-sync-reads.js";
 import { ExternalWorkItemReads } from "./external-work-item-reads.js";
@@ -142,6 +143,10 @@ export class ProductGraphService {
 
   getSyncIntent(syncIntentId: string) {
     return new SyncIntentReads(this.ports).get(syncIntentId);
+  }
+
+  getTicketSyncHealth(ticketId: string) {
+    return new TicketSyncHealthReads(this.ports).get(ticketId);
   }
 
   getMappingSyncHealth(mappingId: string) {
@@ -592,7 +597,11 @@ export class ProductGraphService {
   }
 
   approveTicketRevision(ticketRevisionId: string) {
-    return this.ticketWorkflow.approveRevision(ticketRevisionId);
+    const result = this.ticketWorkflow.approveRevision(ticketRevisionId);
+    // Approval 已提交；暫時無法觀測 health 時不能把成功 domain decision 改報失敗。
+    let syncHealth: "current" | "pending" | "failed" = "pending";
+    try { syncHealth = this.getTicketSyncHealth(result.ticket.id).syncHealth; } catch { /* 保留 pending，讀取工具可重新確認。 */ }
+    return { ...result, syncHealth };
   }
 
   getTicketContext(input: {

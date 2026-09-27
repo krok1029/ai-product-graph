@@ -21,6 +21,27 @@ function mapIntent({ payloadJson, ...row }: IntentRow): SyncIntent {
 export function createSyncIntentRepositories(database: SqliteDatabase): Pick<ApplicationPorts, "syncIntents"> {
   return {
     syncIntents: {
+      hasInvalidTicketExportRequests(ticketId) {
+        // Source revision 或 payload owner 指向本 Ticket 的 active request 都不能靜默消失。
+        const rows = database.prepare(`SELECT ${intentColumns} FROM sync_intents i
+          LEFT JOIN ticket_revisions r ON r.id = i.source_ticket_revision_id
+          WHERE i.source_event_type = 'plane_ticket_export_requested'
+            AND i.lifecycle_status = 'active' AND (r.ticket_id = ? OR json_extract(i.payload_json, '$.owner.id') = ?)`)
+          .all(ticketId, ticketId) as IntentRow[];
+        const ticket = database.prepare("SELECT project_id AS projectId FROM tickets WHERE id = ?").get(ticketId) as { projectId: string } | undefined;
+        return rows.some(row => {
+          try {
+            const intent = mapIntent(row);
+            const revision = database.prepare("SELECT ticket_id AS ticketId, project_id AS projectId FROM ticket_revisions WHERE id = ?")
+              .get(intent.sourceTicketRevisionId) as { ticketId: string; projectId: string } | undefined;
+            const owner = intent.payload.owner;
+            return intent.operation !== "create" || !ticket || !revision || revision.ticketId !== ticketId || revision.projectId !== ticket.projectId ||
+              intent.projectId !== ticket.projectId || !owner || typeof owner !== "object" || Array.isArray(owner) ||
+              !("type" in owner) || owner.type !== "ticket" || !("id" in owner) || owner.id !== ticketId ||
+              intent.payload.source_ticket_revision_id !== intent.sourceTicketRevisionId;
+          } catch { return true; }
+        });
+      },
       findById(id) {
         const row = database.prepare(`SELECT ${intentColumns} FROM sync_intents i WHERE i.id = ?`).get(id) as IntentRow | undefined;
         return row ? mapIntent(row) : null;

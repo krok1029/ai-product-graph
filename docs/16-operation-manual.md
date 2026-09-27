@@ -554,3 +554,19 @@ Plane Cloud API origin 依 [官方 create API](https://developers.plane.so/api-r
 已成功的 intent 再執行不會建立第二個 work item。若程序在外部建立後中斷，請等待原 lease 過期後用相同 intent ID 再執行；它會以穩定 markers 查找既有項目。只有唯一、身分相符的結果才補寫本機成功。404、空結果、查詢不完整或多筆結果仍是 unknown，不能證明先前 create 未發生，因此不會自動再 POST。即使前次是認證錯誤，修復 key 後若查無結果也保留此保守限制；目前沒有強制重送、假成功或 manual absence override。
 
 此命令只交付首次 create／reconciliation。Mapping 的後續 update／close／reopen 會保存為 pending，CLI 不執行它們；stdout 的 create 成功不代表目前 revision 或 delivery status 已與 Plane 完全同步。一般 MCP server 啟動、Ticket approval 及 container 註冊都不會自動發送第一個外部 create。交付驗證使用 loopback HTTP，尚未對使用者的真實 Plane workspace 執行匯出。
+
+### 讀取同步歷史與 Sync Health
+
+`list_mapping_sync_intents({mapping_id})` 會回傳 mapping、經驗證的首次 create request，以及依 mapping sequence 排列的 update／close／reopen intents；每個 intent 都包含完整 attempt history。Archived history 保留。若 sequence 或來源證據不完整，歷史工具回傳明確錯誤，不把缺漏當成成功。
+
+`get_mapping_sync_health({mapping_id})` 可查看單一 mapping 的衍生 health、必要 intent IDs、忽略的舊 content IDs 與原因。`get_ticket_sync_health({ticket_id})` 聚合全部 active Plane mappings，以及尚未建立 mapping 的 manual exports；相同內容亦可讀取 `product-graph://tickets/{ticketId}/sync-health`。既有 Ticket 與 Ticket-context resources 加入頂層 `sync_health` 摘要。
+
+- `failed`：仍必要的義務，其最新 attempt 已失敗，且沒有成功 retry。任何 mapping 的必要 failure 都使 Ticket 為 failed。
+- `pending`：沒有必要 failure，但有未完成、執行中或來源不完整的義務。失敗後正在 retry 時呈現 pending；查詢本身不回收 lease，也不執行 retry。
+- `current`：目前所有必要義務已有成功結果。若完全沒有 enrollment 或 outstanding export，會同時顯示 `active_mapping_count: 0`、`outstanding_export_count: 0` 與 `not_enrolled`；這表示沒有既有同步義務，並不代表已匯出。
+
+Active mapping 即使其 external item 已 archived，仍必須納入；只有 archived mapping 才排除。舊未開始的 content intent 沒有有效 supersession 關係時仍計入 pending；舊 terminal-failed content 可由新版完整內容取代 retry requirement。執行中的旧 update 必須等待 terminal，create／close／reopen 則不能被新版內容略過。來源缺漏只會產生保守診斷，不會由 read tool 補建 intents 或修正資料。
+
+`approve_ticket_revision` 的成功資料現在附 `sync_health`，既有 `created_sync_intent_ids` 保留。其他 mapping 的未解決 lifecycle failure 不會撤銷已完成 approval；成功 approval 可以同時回傳 failed health。若 approval 提交後的 health 讀取暫時不可用，回傳 pending，使用讀取工具重新確認。
+
+Acceptance／Revocation 的 immutable receipt response 維持原樣；重試會回放當時資料，請另呼叫 health tool 查看最新狀態。Health 不儲存為可手動設定的 Ticket 欄位，也不修改 Review／Lifecycle／Delivery Status。它只觀測目前 durable 義務，沒有呼叫 Plane 或檢查尚未觀測的外部內容 drift；update/status execution 與雙向同步仍未交付。

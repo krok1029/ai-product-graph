@@ -31,7 +31,7 @@ afterEach(async () => {
 it("returns explicit null lineage in both context interfaces for an ordinary Ticket", async () => {
   const { tool, resource } = await contexts(connection.client, f.ticket.id);
   expect(tool).toMatchObject({ traced_ticket: null, trace_edge: null });
-  expect(resource).toEqual(tool);
+  expect(resource).toEqual({ ...tool, sync_health: "current" });
 });
 
 it.each(["active", "archived"] as const)("reads %s original history without broadening active-only trace", async lifecycle => {
@@ -52,7 +52,7 @@ it.each(["active", "archived"] as const)("reads %s original history without broa
   );
 
   // 驗證：歷史 context 可見 archived original，BFS 則維持原本過濾契約。
-  expect(resource).toEqual(tool);
+  expect(resource).toEqual({ ...tool, sync_health: "current" });
   expect(tool.traced_ticket).toMatchObject({ id: f.ticket.id, lifecycle_status: lifecycle });
   expect(tool.trace_edge).toMatchObject({ source_node_id: followup.ticket.id, target_node_id: f.ticket.id });
   expect(node.node).toMatchObject({ id: f.ticket.id, lifecycle_status: lifecycle });
@@ -85,7 +85,7 @@ it("keeps draft replacement proposals out of canonical context until approval", 
   const changed = await contexts(connection.client, followup.ticket.id);
   expect(changed.tool.traced_ticket?.id).toBe(alternate.ticket.id);
   expect(changed.tool.trace_edge?.id).not.toBe(first.trace_edge?.id);
-  expect(changed.resource).toEqual(changed.tool);
+  expect(changed.resource).toEqual({ ...changed.tool, sync_health: "current" });
 
   const removal = f.service.createTicketRevisionDraft({
     ticketId: followup.ticket.id, baseApprovedRevisionId: draft.revision.id,
@@ -95,7 +95,7 @@ it("keeps draft replacement proposals out of canonical context until approval", 
   f.service.approveTicketRevision(removal.revision.id);
   const removed = await contexts(connection.client, followup.ticket.id);
   expect(removed.tool).toMatchObject({ traced_ticket: null, trace_edge: null });
-  expect(removed.resource).toEqual(removed.tool);
+  expect(removed.resource).toEqual({ ...removed.tool, sync_health: "current" });
 });
 
 it("returns identical historical lineage after reopening persisted storage", async () => {

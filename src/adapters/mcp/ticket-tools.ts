@@ -139,7 +139,8 @@ export function registerTicketTools(server: McpServer, service: ProductGraphServ
               result.archivedImplementationResultIds,
             archived_stale_revision_ids:
               result.archivedStaleRevisionIds,
-            created_sync_intent_ids: result.createdSyncIntentIds
+            created_sync_intent_ids: result.createdSyncIntentIds,
+            sync_health: result.syncHealth
           },
           result.auditLogId
         );

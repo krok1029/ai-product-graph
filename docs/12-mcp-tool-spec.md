@@ -1701,3 +1701,15 @@ Strict input：`{ mapping_id: string }`，trim 後必須非空；不接受額外
 回傳 `{ sync_health, included, required_intent_ids, ignored_content_intent_ids, reasons }`；reason 為 `{ code, intent_id? }`。在同一 SQLite read transaction 計算 Ticket 的 current desired content/status 與 mapping 的 durable obligations，無 provider call 或寫入。優先順序 failed > pending > current；已成功 create 不代表新版 revision 或 close 已同步。
 
 Archived mapping 明確回傳 `included: false`。Active mapping 的 archived intents 與 archived external item 仍計入；缺失或損壞的 history 回 pending 診斷，真正不存在的 mapping 回 `NOT_FOUND`。完整語意及 reason codes 見 [Mapping Sync Health](19-sync-health.md)。
+
+### `get_ticket_sync_health`
+
+Strict input：`{ ticket_id: string }`，trim 後必須非空；不接受額外欄位。Unknown Ticket 回 `NOT_FOUND`。
+
+Output data 為 `{ ticket_id, sync_health, active_mapping_count, outstanding_export_count, mappings, outstanding_exports, reasons }`。每筆 mapping 含 `mapping_id`、`external_work_item_id` 及 `get_mapping_sync_health` 的完整欄位；每筆 outstanding export 含 `sync_intent_id`、`sync_health`、`request_state`。Owner reasons 為 `{ code, mapping_id?, intent_id? }`。
+
+在同一 read transaction 聚合所有 active mappings 與尚未完成的 active manual create requests，failed > pending > current。成功且已連結 mapping 的 create 不重複計數；archived mapping 不計入，但 active mapping 的 archived external item 仍計入。僅連接 container 不產生義務，完全未 enroll 的 Ticket 回 current 與 `not_enrolled`。無法驗證的 scope/history 回 pending 診斷，不將被歷史 API 隱藏的壞資料誤報為 current。
+
+`product-graph://tickets/{ticketId}/sync-health` 提供相同完整結果。既有 Ticket 與 Ticket-context resources 增加頂層 `sync_health`。`approve_ticket_revision` 成功結果增加頂層 `sync_health`，由 post-enrollment 狀態計算，原 `created_sync_intent_ids` 不變；其他 mapping 的 failed obligation 不撤銷 approval。若提交後的 health read 暫時無法完成，approval 仍成功並保守回 pending，可透過 read tool 重查。
+
+Acceptance／Revocation 的 Operation Receipt 不新增 health 或改寫歷史 response；操作後透過此工具查目前健康度。所有 health reads 不呼叫 provider、不寫入 audit、attempt 或其他 durable data。

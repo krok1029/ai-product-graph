@@ -57,7 +57,7 @@ Exit criteria：
 
 ## Phase 3：Plane Integration
 
-目前已交付首次匯出 preparation（Spec #45）：container 註冊、durable manual create request、intent／attempt 查詢及 stdio 重啟驗證。另已提供可注入 provider port 的首次 create 執行核心；已提供明確單次 Plane HTTP create／reconciliation CLI，stdio 啟動仍不自動連線 provider；active Plane Ticket mapping 已自動保存後續 approved content 與 done crossing 的 outbox，首次 create 成功也會補上執行期間的新 desired state；update/status execution／雙向同步仍未完成，因此本 Phase 尚未完成。
+目前已交付首次匯出 preparation（Spec #45）：container 註冊、durable manual create request、intent／attempt 查詢及 stdio 重啟驗證。另已提供可注入 provider port 的首次 create 執行核心；已提供明確單次 Plane HTTP create／reconciliation CLI，stdio 啟動仍不自動連線 provider；active Plane Ticket mapping 已自動保存後續 approved content 與 done crossing 的 outbox，首次 create 成功也會補上執行期間的新 desired state；已提供 mapping 歷史與衍生 Ticket／mapping Sync Health；update/status execution／雙向同步仍未完成，因此本 Phase 尚未完成。
 
 Goal：
 
