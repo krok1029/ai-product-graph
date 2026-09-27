@@ -11,7 +11,7 @@ export type ResultAcceptance = {
 export type Decision = {
   id: string;
   projectId: string;
-  decisionType: "acceptance_criterion_waiver" | "result_acceptance_revocation";
+  decisionType: "acceptance_criterion_waiver" | "result_acceptance_revocation" | "sync_mapping_termination";
   summary: string;
   actorId: string;
   createdAt: string;

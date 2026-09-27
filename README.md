@@ -115,3 +115,5 @@ Hosted MCP server、Postgres 和 UI 都延後，等本機 MCP workflow 被證明
 已排入的 Plane create Sync Intent 可透過 `pnpm plane:export -- <sync-intent-id>` 明確執行。連線參數、重試限制及 built command 見 [操作手冊](docs/16-operation-manual.md#單次-plane-首次匯出-cli)。一般 stdio 啟動不會自動匯出；後續 update／close／reopen execution 與雙向同步仍待完成。
 
 同步義務可透過 `list_mapping_sync_intents` 查閱完整歷史，並以 `get_mapping_sync_health`／`get_ticket_sync_health` 取得衍生 health。沒有 enrollment 的 `current` 會明確標記 `not_enrolled`；health 不修改 approval 或 completion，詳見操作手冊。
+
+`terminate_sync_mapping({ mapping_id, reason })` 可明確停止某個 Plane mapping 的後續同步。操作原子保存 Decision 與未完成 obligations、archive mapping，並保留所有原始失敗及歷史；不修改遠端 item 或 Ticket canonical status。完整語意見 [操作手冊](docs/16-operation-manual.md)。

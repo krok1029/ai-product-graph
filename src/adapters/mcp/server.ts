@@ -1,3 +1,4 @@
+import { registerMappingTerminationCommand } from "./mapping-termination-command.js";
 import { registerTicketSyncHealthTools } from "./ticket-sync-health-tools.js";
 import { registerSyncHealthTools } from "./sync-health-tools.js";
 import { registerMappingSyncTools } from "./mapping-sync-tools.js";
@@ -46,6 +47,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
     version: "0.1.0"
   });
 
+  registerMappingTerminationCommand(server, service);
   registerMappingSyncTools(server, service);
   registerSyncHealthTools(server, service);
   registerTicketSyncHealthTools(server, service);
