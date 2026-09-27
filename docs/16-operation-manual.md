@@ -576,3 +576,11 @@ Acceptance／Revocation 的 immutable receipt response 維持原樣；重試會�
 不再需要同步某個 Plane item 時，可呼叫 `terminate_sync_mapping({ mapping_id, reason })`。Server 保存使用者 Decision、理由、時間與尚未完成的 mapped intents 清單，並在同一 transaction archive mapping。健康的 mapping 也可終止；failed／started outcomes 不會被改成成功，所有歷史與 errors 保留。
 
 終止只停止後續 enrollment／排程，不修改遠端 item 或 Ticket Delivery Status，也不代表已送出的外部請求被取消。其他 mappings 照常納入 Sync Health。之後可用 NEW key 明確要求首次 export；重送舊 key 仍取得原本 request，不會建立第二個 mapping。這與先建立 replacement 再原子切換的流程不同。
+
+### 查詢 mapping 終止歷史
+
+`get_mapping_termination({mapping_id})` 與 `product-graph://external-work-item-mappings/{mappingId}/termination` 回傳同一份唯讀 snapshot。有效 mapping 尚未終止時 `termination` 為 `null`；未知 mapping 回 `NOT_FOUND`，identity、Decision 或停止 membership 的 scope 不一致回 `CONFLICT`。輸入只接受 trim 後非空的 `mapping_id`。
+
+結果包含 `mapping_id` 與 `termination`。後者包含 `record`（`id`、`project_id`、`mapping_id`、`decision_id`、`stopped_sync_intent_ids`）、`decision`（`id`、`project_id`、`decision_type`、`summary`、`actor_id`、`created_at`），以及依 mapping sequence 排序的 `stopped_intents`。各 intent 沿用 `sync_intent`、`attempts`、`request_state` 格式；failed errors、started attempts 與 archived intents 原樣保留。成功 intents 與原始 manual create 不列入停止 membership；原始 create 可用既有 mapping sync history 查詢。
+
+Archived mapping 的 health `current`／`included:false` 代表它已退出目前同步義務。此歷史查詢說明使用者何時、為何終止，而不把失敗宣稱成同步成功。查詢不呼叫 provider、不改寫 audit／actor／receipt，也不需要完整 create proof 才能讀取合法的 termination 紀錄。Started attempt 仍可能有未確認的外部結果；停止未來排程不等於撤回已送出的請求。
