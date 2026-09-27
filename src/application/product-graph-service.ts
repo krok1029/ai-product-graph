@@ -1,3 +1,4 @@
+import { ExternalWorkItemReads } from "./external-work-item-reads.js";
 import { validateProductBrief } from "./product-brief-validation.js";
 import { PlaneExportWorkflow } from "./plane-export-workflow.js";
 import type { PlaneExportCommand } from "./plane-export-payload.js";
@@ -127,6 +128,14 @@ export class ProductGraphService {
     return new PlaneExportWorkflow(this.ports, {
       idFactory: this.idFactory, clock: this.clock, actor: this.actor
     }).request(input);
+  }
+
+  getExternalWorkItem(itemId: string) {
+    return new ExternalWorkItemReads(this.ports).get(itemId);
+  }
+
+  listTicketExternalWorkItems(ticketId: string) {
+    return new ExternalWorkItemReads(this.ports).listTicket(ticketId);
   }
 
   getSyncIntent(syncIntentId: string) {
