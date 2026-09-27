@@ -1,3 +1,4 @@
+import { registerPlaneObservationReadTools } from "./plane-observation-read-tools.js";
 import { registerMappingSyncPlanTools } from "./mapping-sync-plan-tools.js";
 import { registerMappingTerminationReadTools } from "./mapping-termination-read-tools.js";
 import { registerMappingTerminationCommand } from "./mapping-termination-command.js";
@@ -49,6 +50,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
     version: "0.1.0"
   });
 
+  registerPlaneObservationReadTools(server, service);
   registerMappingTerminationCommand(server, service);
   registerMappingTerminationReadTools(server, service);
   registerMappingSyncPlanTools(server, service);

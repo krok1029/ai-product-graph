@@ -1,3 +1,4 @@
+import { PlaneObservationReads } from "./plane-observation-reads.js";
 import { MappingSyncPlanReads } from "./mapping-sync-plan-reads.js";
 import { MappingTerminationReads } from "./mapping-termination-reads.js";
 import { SyncMappingTerminationWorkflow, type TerminateSyncMappingInput } from "./sync-mapping-termination-workflow.js";
@@ -152,6 +153,10 @@ export class ProductGraphService {
 
   getSyncIntent(syncIntentId: string) {
     return new SyncIntentReads(this.ports).get(syncIntentId);
+  }
+
+  getMappingContentDriftHistory(mappingId: string) {
+    return new PlaneObservationReads(this.ports).get(mappingId);
   }
 
   getMappingTermination(mappingId: string) {
