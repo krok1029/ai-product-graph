@@ -1,3 +1,4 @@
+import { ResultRevocationWorkflow, type RevokeResultAcceptanceInput } from "./result-revocation-workflow.js";
 import { ResultAcceptanceWorkflow, type AcceptImplementationResultInput } from "./result-acceptance-workflow.js";
 // Product graph service facade。
 //
@@ -56,6 +57,7 @@ type ServiceOptions = {
 };
 
 export class ProductGraphService {
+  private readonly resultRevocationWorkflow: ResultRevocationWorkflow;
   private readonly resultAcceptanceWorkflow: ResultAcceptanceWorkflow;
   private readonly idFactory: () => string;
   private readonly clock: () => Date;
@@ -76,6 +78,9 @@ export class ProductGraphService {
       id: "00000000000000000000000001",
       displayName: "Local User"
     };
+    this.resultRevocationWorkflow = new ResultRevocationWorkflow(ports, {
+      idFactory: this.idFactory, clock: this.clock, actor: this.actor
+    });
     this.resultAcceptanceWorkflow = new ResultAcceptanceWorkflow(ports, {
       idFactory: this.idFactory, clock: this.clock, actor: this.actor
     });
@@ -102,6 +107,10 @@ export class ProductGraphService {
       idFactory: this.idFactory,
       clock: this.clock
     });
+  }
+
+  revokeResultAcceptance(input: RevokeResultAcceptanceInput) {
+    return this.resultRevocationWorkflow.revoke(input);
   }
 
   acceptImplementationResult(input: AcceptImplementationResultInput) {

@@ -13,6 +13,22 @@ import {
 import { success, toToolResult } from "./tool-envelope.js";
 
 export function registerResultTools(server: McpServer, service: ProductGraphService) {
+  server.registerTool("revoke_result_acceptance", {
+    title: "Revoke Result Acceptance",
+    description: "Revoke an acceptance that was invalid when made, archive its Result, and preserve immutable evidence and decision history.",
+    inputSchema: z.object({
+      idempotency_key: z.string().trim().min(1),
+      result_acceptance_id: z.string().trim().min(1),
+      reason: z.string().trim().min(1),
+      next_delivery_status: z.enum(["in_progress", "blocked"]).optional()
+    }).strict()
+  }, async input => toToolResult(() => {
+    const result = service.revokeResultAcceptance({
+      idempotencyKey: input.idempotency_key, resultAcceptanceId: input.result_acceptance_id,
+      reason: input.reason, nextDeliveryStatus: input.next_delivery_status
+    });
+    return success(result.data, result.auditLogId);
+  }));
   server.registerTool("accept_implementation_result", {
     title: "Accept Implementation Result",
     description: "Accept a current draft Result with explicit criterion waivers and complete the Ticket when every required target is accepted.",

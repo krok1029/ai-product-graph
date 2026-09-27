@@ -1,4 +1,4 @@
-import type { Decision, OperationReceipt, ResultAcceptance, ResultAcceptanceCriterionOutcome } from "../domain/result-acceptance.js";
+import type { Decision, OperationReceipt, ResultRevocation, ResultAcceptance, ResultAcceptanceCriterionOutcome } from "../domain/result-acceptance.js";
 import type {
   AuditLogEntry,
   GraphDraftBatch,
@@ -270,6 +270,11 @@ export interface ResultAcceptanceRepository {
   insertOutcome(outcome: ResultAcceptanceCriterionOutcome): void;
 }
 
+export interface ResultRevocationRepository {
+  insert(revocation: ResultRevocation): void;
+  findByAcceptanceId(acceptanceId: string): ResultRevocation | null;
+}
+
 export interface DecisionRepository {
   insert(decision: Decision): void;
   findById(id: string): Decision | null;
@@ -282,6 +287,7 @@ export interface OperationReceiptRepository {
 
 export type ApplicationPorts = {
   resultAcceptances: ResultAcceptanceRepository;
+  resultRevocations: ResultRevocationRepository;
   decisions: DecisionRepository;
   operationReceipts: OperationReceiptRepository;
   localActors: LocalActorRepository;

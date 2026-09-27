@@ -1,3 +1,5 @@
+import type { DeliveryStatus } from "./models.js";
+
 export type ResultAcceptance = {
   id: string;
   projectId: string;
@@ -38,4 +40,13 @@ export type OperationReceipt = {
   resultAcceptanceId: string | null;
   resultRevocationId: string | null;
   createdAt: string;
+};
+
+export type ResultRevocation = {
+  id: string;
+  projectId: string;
+  resultAcceptanceId: string;
+  decisionId: string;
+  previousDeliveryStatus: DeliveryStatus;
+  resultingDeliveryStatus: DeliveryStatus;
 };
