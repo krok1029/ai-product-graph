@@ -15,6 +15,7 @@ import type {
   TicketRevision,
   TicketSpecification
 } from "../domain/models.js";
+import { TicketLineage } from "./ticket-lineage.js";
 import { PRODUCT_INTENT_NODE_TYPES } from "./graph-workflow-helpers.js";
 import type { ApplicationPorts } from "./ports.js";
 import {
@@ -59,10 +60,14 @@ type ProposedImplementationTarget= {
 };
 
 export class TicketWorkflow {
+  private readonly lineage: TicketLineage;
+
   constructor(
     private readonly ports: ApplicationPorts,
     private readonly options: TicketWorkflowOptions
-  ) { }
+  ) {
+    this.lineage = new TicketLineage(ports, options.idFactory);
+  }
 
   createDraftBatch(input: {
     projectId: string;
@@ -132,9 +137,11 @@ export class TicketWorkflow {
           normalized.relatedGraphNodeIds,
           normalized.dependencies
         );
+        const lineage = this.lineage.reconcile(revision, now);
         return {
           ticket,
           revision,
+          lineage,
           proposedImplementationTargets:
             revision.requiredTargets.map(target => ({
               implementationTargetId: null,
@@ -152,7 +159,8 @@ export class TicketWorkflow {
         entityId: batch.id,
         afterSummary: {
           batch,
-          ticketRevisionIds: created.map(item => item.revision.id)
+          ticketRevisionIds: created.map(item => item.revision.id),
+          lineage: created.map(item => item.lineage)
         },
         createdAt: now
       });
@@ -190,8 +198,11 @@ export class TicketWorkflow {
       const normalized = this.normalizeTicketSpecInput(
         ticket.projectId,
         input.sourceGraphRevisionId,
-        input.specification
+        { ...input.specification, tracesToTicketId: input.specification.tracesToTicketId === undefined
+          ? this.lineage.current(ticket.projectId, ticket.id)?.targetNodeId ?? null
+          : input.specification.tracesToTicketId }
       );
+      this.lineage.validate(ticket.projectId, ticket.id, normalized.tracesToTicketId);
       const proposedImplementationTargets =
         this.proposeImplementationTargets(ticket.id, normalized.requiredTargets);
       const revision = this.buildRevision({
@@ -318,6 +329,7 @@ export class TicketWorkflow {
           implementationResultIds: [] as string[]
         };
 
+      const lineage = this.lineage.reconcile(revision, now);
       const approvedRevision: TicketRevision= {
         ...revision,
         reviewStatus: "approved",
@@ -339,6 +351,7 @@ export class TicketWorkflow {
         entityType: "ticket_revision",
         entityId: revision.id,
         afterSummary: {
+          lineage,
           ticket: updatedTicket,
           revision: approvedRevision,
           implementationTargets,
@@ -412,20 +425,7 @@ export class TicketWorkflow {
       }
     }
     const tracesToTicketId = input.tracesToTicketId?.trim()||null;
-    if (tracesToTicketId) {
-      const traced = this.ports.tickets.findById(tracesToTicketId);
-      if (
-        !traced||
-        traced.projectId !== projectId||
-        !["active","archived"].includes(traced.lifecycleStatus)
-      ) {
-        throw new ApplicationError(
-          "NOT_FOUND",
-          "Traced Ticket was not found in the Project.",
-          { tracesToTicketId, projectId }
-        );
-      }
-    }
+    this.lineage.validate(projectId, null, tracesToTicketId);
     const requiredTargets = this.normalizeRequiredTargets(
       projectId,
       input.implementationTargets

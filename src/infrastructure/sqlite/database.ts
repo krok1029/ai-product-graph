@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { ApplicationError } from "../../domain/errors.js";
+import { backfillTicketLineage } from "./ticket-lineage-backfill.js";
 
 export type SqliteDatabase = Database.Database;
 
@@ -88,6 +89,7 @@ function runMigrations(
     try {
       database.transaction(() => {
         database.exec(sql);
+        if (file === "004_ticket_lineage.sql") backfillTicketLineage(database);
         assertReferentialIntegrity(database);
         database
           .prepare(

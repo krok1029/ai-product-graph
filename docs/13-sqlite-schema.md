@@ -1394,3 +1394,11 @@ src/infrastructure/migrations/002_initial_indexes.sql
 `003_ticket_graph_projection.sql` 是 forward migration：重建 graph tables 以允許 Ticket ownership 的 null provenance，完整複製既有欄位並重建 indexes。Ticket node 的 source identity 與 provenance 由 CHECK 約束；null-provenance edge 由 INSERT／UPDATE triggers 限制為同 Project 的 Ticket endpoints。Ticket INSERT 與 title／lifecycle UPDATE triggers 維護 node 投影，並 backfill 既有 active／archived Tickets；不建立 Graph Revision。
 
 SQLite 的 referenced-table rebuild 在 transaction 外暫停 foreign-key enforcement，在同一 migration transaction 內執行 `foreign_key_check`，只有無 violations 才記錄 migration version 並 commit；失敗則 rollback。Finally 恢復並驗證 `foreign_keys = ON`，啟動後仍執行 integrity check。舊 migration 檔案不修改。
+
+## Follow-up Ticket lineage storage
+
+`004_ticket_lineage.sql` 與同 transaction 的 migration hook，會把既有 Ticket Revision JSON 的 `traces_to_ticket_id` 投影成 canonical `traces_to` GraphEdge。Source／target node IDs 直接使用 Follow-up／original Ticket IDs；edge 使用 ULID，兩個 Graph Revision provenance 欄位為 null，metadata 保存 `owner_ticket_id` 與 `established_by_ticket_revision_id`。Owner 每次最多一個 active lineage；改 target 或移除關係時 archive 舊 edge，不重綁其 identity、endpoints 或 provenance。
+
+新 Ticket 第一版 draft 即建立 lineage；replacement draft 僅保存提案，approval 才切換 edge。省略 `traces_to_ticket_id` 繼承目前 lineage，明確 null 表示 approval 時移除。同 target 沿用原 edge 與 establishing revision，變更 audit 另記本次 approved revision 及原／新 edge、Ticket、node IDs。Original Ticket 可為 active 或 archived，其 delivery/completion 不受影響。
+
+Backfill 優先採 current approved revision，沒有 current approved pointer 才採最初 revision，忽略 pending replacements。Hook 在 SQLite migration transaction 內用既有 ULID library 產生 IDs，並用相同儲存約束驗證 same-Project endpoints、self-reference 與 establishing revision。無效舊資料會回滾整個 migration，包含 schema migration marker；重新啟動不重複建立 edges。Backfill 不偽造產品意圖 GraphRevision 或使用者 approval。

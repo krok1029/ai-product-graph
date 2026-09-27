@@ -17,7 +17,7 @@ export function toTicketSpecInput(
 ) {
   return {
     title: input.title,
-    tracesToTicketId: input.traces_to_ticket_id ?? null,
+    tracesToTicketId: input.traces_to_ticket_id,
     userStory: input.user_story,
     scope: input.scope,
     acceptanceCriteria: input.acceptance_criteria,
