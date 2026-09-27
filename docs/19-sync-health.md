@@ -14,7 +14,7 @@
 
 ## 必要義務
 
-原始 create proof 與所有已記錄的 create、close、reopen 都必須履行。失敗的 close 不會因新版內容或成功 reopen 而消失。此階段尚無 termination decision 可以解除 active mapping 的 lifecycle barrier。
+原始 create proof 與所有已記錄的 create、close、reopen 都必須履行。失敗的 close 不會因新版內容或成功 reopen 而消失。明確 termination decision 會 archive mapping；active mapping 的 lifecycle barrier 仍不得略過。
 
 Desired content 使用目前 approved Ticket Revision 的最高 sequence 有效 full-content update；只有原始 create 的 pinned revision 仍等於 current approved revision 時，create 才能提供內容 baseline。Close/reopen 搭載目前 revision ID 不能證明內容已同步。找不到目前 revision 的內容 intent 時，回傳 `missing_current_content_intent`。
 
@@ -24,9 +24,9 @@ Done Ticket 必須有最後一筆 close；create 本身不代表 close。非 don
 
 - 已成功者已履行。
 - Terminal-failed update 可由較新的有效 desired full-content update 取代 retry requirement，即使沒有 supersedes pointer。
-- 從未開始的 update 必須有從 desired update 回溯的有效 `supersedes_sync_intent_id` chain 才能排除。現有 enrollment 的 null pointer 不會被讀取端自行補上。
+- 從未開始的 update 必須有完整 history 中有效的 `supersedes_sync_intent_id` edge 才能排除。歷史 edge 不因 source 開始、完成或被新的 desired content 取代而消失；null pointer 不會被讀取端自行補上。
 - Latest attempt 仍 started 的 update 保留 pending，直到它成為 terminal。
-- Chain 必須同 mapping、sequence 向後、兩端皆 update，且不能跨 create/close/reopen。無效、循環或反向 chain 不解除 pending 義務。
+- Chain 必須同 mapping、sequence 向後、兩端皆 update，且不能跨 create/close/reopen。無效、缺失、foreign、循環或反向 chain 不解除 pending 義務；受影響 chain 全部保守保留，獨立有效 chain 的歷史取代關係仍保留。Target 已有任何 attempt 時不可用 edge 略過，須依實際 outcome 與 terminal-failed 規則判斷。
 
 ## Reason codes
 
@@ -54,3 +54,10 @@ Done Ticket 必須有最後一筆 close；create 本身不代表 close。非 don
 回傳每筆 mapping health、outstanding export request state、兩類計數及附 `mapping_id`／`intent_id` 的 reasons。Owner 額外 reason codes 為 `not_enrolled`（尚未建立任何同步義務）、`outstanding_export`（未完成首次匯出）、`invalid_obligation`（無效 request）與 `incomplete_history`（缺少 proof 或有被 scope filter 排除的異常紀錄）。僅註冊 container 的 Ticket 為 current + not_enrolled。
 
 Ticket 與 Ticket-context resources 暴露頂層 `sync_health`；approval 的健康度在 enrollment 提交後計算。原有 failed lifecycle obligation 可使新版 approval 回 approved + failed，並不阻止規格核准；正常新 update 則立即回 pending。Acceptance／Revocation 仍維持原本 receipt bytes，請另查此唯讀投影。
+
+
+## 核准時的內容合併
+
+每次 enqueue update 都在原本 approval transaction 中，依剛配置的 sequence 查找緊鄰 predecessor。只有同 mapping、來源為該 Ticket／Project 的 approved revision、完整 pinned payload 正確且零 attempts 的 update，才能成為新 intent 的 `supersedes_sync_intent_id`。不越過 close／reopen／create，也不越過曾開始或已完成的 update；無法安全證明 predecessor 時保留 null pointer。歷史 provenance 不完整本身不阻止 domain approval。
+
+A ← B ← C 保存三筆不可變 intents 與兩條原始 links。若 B 開始後才出現 C，C 不指向 B；B terminal failure 可被較新的 desired C 取代 retry requirement，而 A 仍維持已被 B supersede。B 尚 started 則仍是 pending barrier。Health 與後續 ordered read 共用同一純分類結果；讀取不改寫舊 intent、attempt、request state、receipt 或 audit。

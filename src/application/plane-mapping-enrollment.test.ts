@@ -45,6 +45,9 @@ it("pins an independent update and monotonic sequence for each active Plane mapp
   }
   const newer = approveReplacement();
   expect(allIntents().filter(intent => intent.sourceTicketRevisionId === newer.revision.id).map(intent => intent.sequenceNumber)).toEqual([2, 2, 2]);
+  for (const intent of allIntents().filter(intent => intent.sourceTicketRevisionId === newer.revision.id)) {
+    expect(intent.supersedesSyncIntentId).toBe(intents.find(previous => previous.mappingId === intent.mappingId)!.id);
+  }
 });
 
 it("queues close/reopen exactly once across receipt replay even when the active mapping item is archived", () => {
@@ -96,6 +99,7 @@ it("does not enqueue close or reopen for partial target acceptance/revocation", 
 
 it("rolls back approval, artifacts, audit, actor and all mapping sequences when outbox fails", () => {
   mapping("first"); mapping("second");
+  approveReplacement();
   const draft = replacementDraft();
   const service = new ProductGraphService(f.ports, { actor: { id: "new-reviewer", displayName: "New" } });
   const before = dump();
@@ -156,6 +160,7 @@ it("guards sequence allocation transaction boundaries and duplicate sequence ins
 it("persists pending outbox and resumes sequences after database reopen", async () => {
   const enrolled = mapping("first");
   approveReplacement();
+  approveReplacement();
   const original = allIntents();
   const directory = mkdtempSync(join(tmpdir(), "plane-enrollment-"));
   try {
@@ -165,7 +170,8 @@ it("persists pending outbox and resumes sequences after database reopen", async 
     try {
       const ports = createSqlitePorts(database);
       expect(ports.syncIntents.findById(original[0]!.id)).toEqual(original[0]);
-      expect(ports.transactions.run(() => ports.planeEnrollment.allocateSequence(enrolled.id, "now"))).toBe(2);
+      expect(ports.syncIntents.findById(original[1]!.id)!.supersedesSyncIntentId).toBe(original[0]!.id);
+      expect(ports.transactions.run(() => ports.planeEnrollment.allocateSequence(enrolled.id, "now"))).toBe(3);
       expect(database.pragma("foreign_key_check")).toEqual([]);
     } finally { database.close(); }
   } finally { rmSync(directory, { recursive: true, force: true }); }

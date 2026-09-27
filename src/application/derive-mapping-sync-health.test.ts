@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SyncAttempt, SyncIntentDetails } from "../domain/sync-intent.js";
 import { deriveMappingSyncHealth, type MappingSyncHealthInput } from "./derive-mapping-sync-health.js";
+import { classifyMappingSyncObligations } from "./mapping-sync-obligations.js";
 import { hashJson } from "./plane-export-payload.js";
 
 function intent(id: string, sequence: number | null, operation = "update", revision = "revision-2",
@@ -194,4 +195,105 @@ describe("deriveMappingSyncHealth", () => {
       expect(result.syncHealth).toBe("pending");
       expect(result.reasons.some(reason => ["invalid_obligation", "incomplete_history"].includes(reason.code))).toBe(true);
     });
+});
+
+
+describe("durable mapping obligations", () => {
+  it.each(["started", "failed", "succeeded"] as const)("keeps A superseded when B is %s and newer C has no edge", outcome => {
+    // 前置：A ← B；B 已啟動，因此 C 不再連到 B。
+    const input = fixture();
+    const a = intent("A", 1);
+    const b = intent("B", 2, "update", "revision-3", [outcome]);
+    b.syncIntent.supersedesSyncIntentId = "A";
+    const c = intent("C", 3, "update", "revision-4", ["succeeded"]);
+    input.ticket.currentApprovedRevisionId = "revision-4";
+    input.mapping.nextSequenceNumber = 4;
+    input.intents = [c, a, b];
+    const before = JSON.stringify(input);
+
+    const classification = classifyMappingSyncObligations(input);
+    const health = target(input);
+
+    expect(classification.diagnostics).toEqual([]);
+    expect(classification.entries.map(entry => [entry.details.syncIntent.id, entry.disposition, entry.attemptState])).toEqual([
+      ["create", "fulfilled", "succeeded"], ["A", "superseded_unstarted", "unstarted"],
+      ["B", outcome === "failed" ? "obsolete_failed_content" : outcome === "succeeded" ? "fulfilled" : "required", outcome],
+      ["C", "fulfilled", "succeeded"]
+    ]);
+    expect(health.syncHealth).toBe(outcome === "started" ? "pending" : "current");
+    expect(health.ignoredContentIntentIds).toContain("A");
+    expect(JSON.stringify(input)).toBe(before);
+  });
+
+  it("retains the damaged chain without resurrecting an independent valid historical edge", () => {
+    const input = fixture();
+    const entries = [intent("A", 1), intent("B", 2), intent("C", 3), intent("D", 4), intent("E", 5)];
+    entries[1]!.syncIntent.supersedesSyncIntentId = "A";
+    entries[2]!.syncIntent.supersedesSyncIntentId = "B";
+    entries[0]!.syncIntent.supersedesSyncIntentId = "missing";
+    entries[4]!.syncIntent.supersedesSyncIntentId = "D";
+    input.intents = entries;
+    input.mapping.nextSequenceNumber = 6;
+    input.ticket.currentApprovedRevisionId = "revision-2";
+
+    const result = classifyMappingSyncObligations(input);
+
+    expect(result.diagnostics).toEqual([{ code: "invalid_supersession", intentId: "A" }]);
+    expect(result.entries.filter(entry => entry.disposition === "superseded_unstarted").map(entry => entry.details.syncIntent.id)).toEqual(["D"]);
+  });
+
+  it("does not discharge a valid-looking suffix behind an invalid intermediate obligation", () => {
+    const input = fixture();
+    const a = intent("A", 1);
+    const b = intent("B", 2);
+    const c = intent("C", 3);
+    const d = intent("D", 4);
+    b.syncIntent.supersedesSyncIntentId = "A";
+    c.syncIntent.supersedesSyncIntentId = "B";
+    d.syncIntent.supersedesSyncIntentId = "C";
+    c.syncIntent.payloadHash = "damaged";
+    input.intents = [a, b, c, d];
+    input.mapping.nextSequenceNumber = 5;
+    input.ticket.currentApprovedRevisionId = "revision-2";
+
+    const result = classifyMappingSyncObligations(input);
+
+    expect(result.entries.map(entry => [entry.details.syncIntent.id, entry.disposition])).toEqual([
+      ["create", "fulfilled"], ["A", "required"], ["B", "required"], ["D", "required"]
+    ]);
+    expect(result.diagnostics).toContainEqual({ code: "invalid_obligation", intentId: "C" });
+  });
+
+  it("retains content before a damaged lifecycle barrier instead of validating a crossing edge", () => {
+    const input = fixture();
+    const a = intent("A", 1);
+    const barrier = intent("close", 2, "close", "revision-2");
+    barrier.syncIntent.payloadHash = "damaged";
+    const c = intent("C", 3, "update", "revision-3", ["succeeded"]);
+    c.syncIntent.supersedesSyncIntentId = "A";
+    input.intents = [a, barrier, c];
+    input.mapping.nextSequenceNumber = 4;
+    input.ticket.currentApprovedRevisionId = "revision-3";
+
+    const result = classifyMappingSyncObligations(input);
+
+    expect(result.entries.map(entry => [entry.details.syncIntent.id, entry.disposition])).toEqual([
+      ["create", "fulfilled"], ["A", "required"], ["C", "fulfilled"]
+    ]);
+    expect(result.diagnostics).toContainEqual({ code: "invalid_supersession", intentId: "C" });
+    expect(result.diagnostics).toContainEqual({ code: "invalid_obligation", intentId: "close" });
+  });
+
+  it("does not make a foreign scoped intent executable", () => {
+    const input = fixture();
+    const foreign = intent("foreign", 1);
+    foreign.syncIntent.mappingId = "other";
+    input.intents = [foreign];
+    input.mapping.nextSequenceNumber = 2;
+
+    const result = classifyMappingSyncObligations(input);
+
+    expect(result.entries.map(entry => entry.details.syncIntent.id)).toEqual(["create"]);
+    expect(result.diagnostics).toContainEqual({ code: "invalid_obligation", intentId: "foreign" });
+  });
 });

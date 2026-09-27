@@ -63,6 +63,8 @@ Approval commit 後應立即回傳成功；若存在尚未完成的 intents，�
 
 同一 External Work Item mapping 的 intents 必須具有單調 sequence 並序列化處理。若較舊 content-update intent 尚未開始，較新的 update intent 可以用 `supersedes_sync_intent_id` 指向它，只送出最新 desired content；舊 intent 保留為 immutable history。較舊 update 已開始時，新 intent 必須等待它成為 terminal。Create、close、reopen 等 lifecycle intents 不得被 content coalescing 省略。
 
+有效 supersession edge 是持久的歷史證明，不因 source intent 已開始、成功、失敗或不再是最新 desired content 而撤銷；只對零 attempts 的 target 生效。解釋時檢查完整 history 的同 mapping、向後 sequence 與無 lifecycle barrier 關係；損壞 chain 不解除義務。Enrollment 只連結緊鄰且可驗證的零 attempts content predecessor，不改寫既有 links。
+
 若較舊 content update 成為 terminal failure，較新的 content intent 可直接取代其 retry requirement，不需先重試過時內容。舊 failure 與 attempts 必須保留，但不再影響最新 desired revision 的 Sync Health。Failed lifecycle intent 則形成 per-mapping ordering barrier，後續 intents 必須等待它成功或被明確解決。
 
 Failed lifecycle intent 永久無法完成時不得 silent skip。使用者必須選擇修復後重試、成功建立 replacement 後切換 mapping，或執行 Sync Mapping Termination。Termination 必須記錄 Decision、理由、actor 與時間，archive mapping，並保留所有 intents、attempts 與 errors；failure 不得被改寫成 success。Archived mapping 才從 Sync Health 排除。
