@@ -164,8 +164,8 @@ export type GraphNode = {
   sourceRefType: string | null;
   sourceRefId: string | null;
   lifecycleStatus: LifecycleStatus;
-  createdInGraphRevisionId: string;
-  lastChangedInGraphRevisionId: string;
+  createdInGraphRevisionId: string | null;
+  lastChangedInGraphRevisionId: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -179,8 +179,8 @@ export type GraphEdge = {
   relationType: GraphRelationType;
   confidence: number | null;
   lifecycleStatus: LifecycleStatus;
-  createdInGraphRevisionId: string;
-  lastChangedInGraphRevisionId: string;
+  createdInGraphRevisionId: string | null;
+  lastChangedInGraphRevisionId: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;

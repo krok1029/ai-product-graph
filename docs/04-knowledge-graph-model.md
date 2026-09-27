@@ -131,3 +131,9 @@ SQLite 比較適合本機 MCP MVP：
 - Graph Revision 必須保存來源 Product Brief Version；成功核准對應 batch 時，Project 的 Product Intent Reconciliation pointers 必須在同一 transaction 前進。
 - Product Intent Reconciliation 為 `pending` 時不得執行 implementation handoff 或 Result Acceptance；完成後只讓引用已變更或 archived nodes 的 Ticket Revisions 失效。
 - Graph changes 第一版使用簡單 audit log 追蹤，不做完整 event sourcing。
+
+### Ticket ownership 與 revision provenance
+
+Ticket canonical node 使用 Ticket ID，`type/source/source_ref_type = ticket`，`source_ref_id` 指向相同 Ticket。穩定 graph slug 為 `ticket:<Ticket ID>`，不以 title 或 Ticket slug 猜測 identity。Node 投影 aggregate 的 title／lifecycle；replacement draft 不改 title，approval 才同步。Archived Ticket 的 node 保留供歷史讀取。
+
+產品意圖 node／edge 的 created-in 與 last-changed Graph Revision 必填。Ticket-owned node／edge 的兩個 references 為 null；目前 nullable edge 僅限同 Project 的 Ticket endpoints。Ticket writes 不建立 Graph Revision、不移動 Project reconciliation pointers，也不使 pending Graph Draft Batch stale。Ticket generation 的 source nodes 與 revision related nodes 僅能引用 active product-intent ownership nodes；Ticket projection 不參與 revision-based freshness inputs。見 ADR 0036。

@@ -180,6 +180,7 @@ Deliverables：
 - 預設 database path 是 `./data/ai-product-graph.sqlite`。
 - 可用 `AI_PRODUCT_GRAPH_DB_PATH` 覆蓋 database path。
 - 每個 connection 必須在任何 migration、repository query 或 transaction 前執行 `PRAGMA foreign_keys = ON`，並讀回確認為 `1`；失敗時關閉 connection，server startup／connection acquisition 必須失敗。
+- 唯一例外是明確標記的 referenced-table rebuild migration（ADR 0036）：connection 已完成 ON 驗證後，可在 transaction 外暫停 FK enforcement；migration transaction 內必須先完成 `foreign_key_check` 才記錄 version 並 commit，失敗則 rollback，finally 恢復並驗證 ON。此例外不適用 repository queries 或一般 transactions。
 - 所有 pending migrations 完成後、server 開始服務前必須執行 `PRAGMA foreign_key_check`；任何 violation 都必須回報 storage integrity error 並停止啟動，不得自動刪除或修復資料。
 - 重啟 server 後資料仍存在。
 - Migration 必須一次建立完整 contract，即使第一批 use cases 只使用 projects / ideas / Product Brief / graph / tickets 的子集。

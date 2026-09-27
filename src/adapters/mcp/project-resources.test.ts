@@ -81,7 +81,7 @@ it("isolates approved graph and ticket reads by project and excludes unapproved 
   expect(await read(first.projectId, "tickets")).toMatchObject({ tickets: [{ id: ticket.ticket.id, current_approved_revision_id: ticket.revision.id }] });
   expect(await read(other.projectId, "tickets")).toEqual({ tickets: [] });
   const graph = await read(first.projectId, "graph");
-  expect(graph).toMatchObject({ graph_revision_id: first.revisionId, nodes: [{ id: first.nodeId }], edges: [] });
+  expect(graph).toMatchObject({ graph_revision_id: first.revisionId, nodes: expect.arrayContaining([expect.objectContaining({ id: first.nodeId }), expect.objectContaining({ id: ticket.ticket.id, type: "ticket" })]), edges: [] });
   expect(JSON.stringify(graph)).not.toContain(other.nodeId);
   expect(ports.auditLog.list()).toHaveLength(audits);
 });
