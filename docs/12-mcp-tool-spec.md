@@ -1397,6 +1397,15 @@ Product Brief Version 匯出驗收：
 - `suggested_filename` 為 `product-brief-{version_id}-v{version_number}.md`，identity 中非英數、底線、連字號字元轉為連字號。
 - 匯出不寫入檔案、不修改 structured data、approval 或 audit history。
 
+Ticket Revision 與 Implementation Brief 匯出驗收：
+
+- `entity_type` 另支援 `ticket_revision` 與 `implementation_brief`，直接依指定 artifact ID 讀取。兩者同樣只允許 active draft／approved；不存在回傳 `NOT_FOUND`，archived 回傳 `CONFLICT`。
+- Ticket Revision 必須包含該版本的 title、user story、scope、acceptance criterion IDs／文字、non-goals、dependencies、related graph node IDs、follow-up trace、implementation notes，以及所有 required repositories 與 per-revision scopes。保留 Ticket／Project／Revision identities、revision number、base revision、source graph revision、draft batch 與核准來源；歷史 approved revision 不得改用 current revision 或目前 active target membership。
+- Implementation Brief 必須包含 implementation plan、suggested files、test strategy、risks、PR summary draft、Review Status、核准來源與 supersedes identity；附上固定引用的 Ticket Revision、Product Brief Version 與 Repository Context Snapshot。Snapshot 包含 repository identity／名稱、summary、files、module notes、baseline commit、dirty state、可核准性及擷取時間，不讀取目前 repository metadata 取代快照。
+- 匯出是審查投影，不是 handoff；尚無可驗證 baseline 的 draft 仍可匯出，產品意圖的 current pointer 改變不會改寫或阻擋 active artifact 的固定來源。Implementation Brief 的來源引用不存在或 scope 不一致回傳 `STORAGE_ERROR`。
+- 建議檔名為 `ticket-revision-{revision_id}-r{revision_number}.md` 與 `implementation-brief-{brief_id}.md`；identity 字元規則與 Product Brief 相同。
+- 空集合明示 `None`、來源 Markdown／HTML 視為文字；不寫入檔案、不修改 canonical data、approval、current pointers 或 audit history。
+
 ## MVP Resources
 
 ```text
