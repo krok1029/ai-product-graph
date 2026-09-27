@@ -1,5 +1,5 @@
 import type { ApplicationPorts } from "../../application/ports.js";
-import type { Decision, OperationReceipt, ResultAcceptance } from "../../domain/result-acceptance.js";
+import type { Decision, OperationReceipt, ResultRevocation, ResultAcceptance } from "../../domain/result-acceptance.js";
 import type { SqliteDatabase } from "./database.js";
 
 const acceptanceColumns = `id, project_id AS projectId,
@@ -7,7 +7,7 @@ const acceptanceColumns = `id, project_id AS projectId,
   accepted_at AS acceptedAt`;
 
 export function createResultAcceptanceRepositories(database: SqliteDatabase): Pick<
-  ApplicationPorts, "resultAcceptances" | "decisions" | "operationReceipts"
+  ApplicationPorts, "resultAcceptances" | "resultRevocations" | "decisions" | "operationReceipts"
 > {
   return {
     resultAcceptances: {
@@ -31,6 +31,20 @@ export function createResultAcceptanceRepositories(database: SqliteDatabase): Pi
            outcome, waiver_decision_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
           .run(value.id, value.resultAcceptanceId, value.acceptanceCriterionId,
             value.submittedVerdictId, value.outcome, value.waiverDecisionId, value.createdAt);
+      }
+    },
+    resultRevocations: {
+      insert(value) {
+        database.prepare(`INSERT INTO result_revocations
+          (id, project_id, result_acceptance_id, decision_id, previous_delivery_status, resulting_delivery_status)
+          VALUES (?, ?, ?, ?, ?, ?)`).run(value.id, value.projectId, value.resultAcceptanceId,
+          value.decisionId, value.previousDeliveryStatus, value.resultingDeliveryStatus);
+      },
+      findByAcceptanceId(acceptanceId) {
+        return database.prepare(`SELECT id, project_id AS projectId, result_acceptance_id AS resultAcceptanceId,
+          decision_id AS decisionId, previous_delivery_status AS previousDeliveryStatus,
+          resulting_delivery_status AS resultingDeliveryStatus FROM result_revocations WHERE result_acceptance_id = ?`)
+          .get(acceptanceId) as ResultRevocation | undefined ?? null;
       }
     },
     decisions: {

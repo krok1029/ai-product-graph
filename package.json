@@ -14,7 +14,7 @@
     "typecheck": "tsgo --noEmit",
     "typecheck:ts6": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "smoke": "tsx src/smoke.ts"
+    "smoke": "node --import tsx src/smoke.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
