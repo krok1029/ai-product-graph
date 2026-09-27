@@ -1,3 +1,5 @@
+import { createResultRepositories } from "./result-repositories.js";
+import { createResultAcceptanceRepositories } from "./result-acceptance-repositories.js";
 // SQLite ports 組合。
 //
 // 把各個 SQLite adapter modules 組成 ApplicationPorts interface。每個
@@ -15,6 +17,8 @@ import { createTicketRepositories } from "./ticket-repositories.js";
 export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
   return {
     ...createCoreRepositories(database),
+    ...createResultAcceptanceRepositories(database),
+    ...createResultRepositories(database),
     ...createGraphRepositories(database),
     ...createTicketRepositories(database),
     ...createImplementationRepositories(database),

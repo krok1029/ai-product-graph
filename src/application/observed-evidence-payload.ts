@@ -1,3 +1,4 @@
+import { canonicalizeJson } from "./canonical-json.js";
 // Observed Evidence 的 closed schema、語意正規化與 canonical JSON hash。
 
 import { createHash } from "node:crypto";
@@ -253,25 +254,6 @@ function normalizeExitCode(value: unknown, status: string) {
   return value;
 }
 
-function canonicalizeJson(value: unknown): string {
-  if (value === null || typeof value === "boolean" || typeof value === "number") {
-    return JSON.stringify(value);
-  }
-  if (typeof value === "string") {
-    assertUnicode(value);
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map(canonicalizeJson).join(",")}]`;
-  }
-  if (isRecord(value)) {
-    return `{${Object.keys(value)
-      .sort((left, right) => left < right ? -1 : left > right ? 1 : 0)
-      .map(key => `${JSON.stringify(key)}:${canonicalizeJson(value[key])}`)
-      .join(",")}}`;
-  }
-  throw validationError("payload contains unsupported JSON value.");
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
