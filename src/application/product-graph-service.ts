@@ -5,6 +5,8 @@
 // 交給專門的 workflow modules。
 
 import { ulid } from "ulid";
+import { NodeTraceReads, type NodeTraceInput } from "./node-trace.js";
+import { TicketReads } from "./ticket-reads.js";
 import { ProjectReads } from "./project-reads.js";
 
 import { ApplicationError } from "../domain/errors.js";
@@ -115,6 +117,18 @@ export class ProductGraphService {
     });
 
     return { project, auditLogId: audit.id };
+  }
+
+  getNode(nodeId: string) {
+    return new NodeTraceReads(this.ports).getNode(nodeId);
+  }
+
+  getTicket(ticketId: string) {
+    return new TicketReads(this.ports).getTicket(ticketId);
+  }
+
+  getNodeTrace(input: NodeTraceInput) {
+    return new NodeTraceReads(this.ports).getTrace(input);
   }
 
   getProjectBrief(projectId: string) {
@@ -484,7 +498,7 @@ export class ProductGraphService {
     ticketId: string;
     includeMarkdown?: boolean;
   }) {
-    return this.ticketWorkflow.getContext(input);
+    return new TicketReads(this.ports).getContext(input);
   }
 
   createImplementationBriefDraft(input: {

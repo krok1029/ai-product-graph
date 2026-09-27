@@ -5,6 +5,7 @@
 // 到 ProductGraphService。
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { registerNodeResources } from "./node-resources.js";
 import { registerProjectResources } from "./project-resources.js";
 import { z } from "zod";
 
@@ -636,6 +637,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
   );
 
   registerProjectResources(server, service);
+  registerNodeResources(server, service);
 
   return server;
 }

@@ -486,6 +486,15 @@ Output：
 }
 ```
 
+Trace 讀取契約：
+
+- `direction` 可為 `outgoing`（source → target）、`incoming`（target → source）或 `both`；預設 `both`。回傳 edge 仍保留原本的 source／target，不因 traversal 方向反轉。
+- `max_depth` 是從 root 計算的最大 edge hops，接受 0–10 的整數，預設 3。0 只回傳 root、空 edges 與 root 的零長度 path。
+- 使用 BFS，每個可達 node 只展開一次；cycles 與 self-loops 不會產生無限路徑。`edges` 包含從深度小於上限的 node 按方向走過的全部 edges（包含 cycle edges），不是完整 induced subgraph。
+- `paths` 是每個回傳 node 的一條最短路徑，格式為 `{ "node_ids": ["root", "destination"], "edge_ids": ["edge"] }`；包含 root 的 `{ "node_ids": ["root"], "edge_ids": [] }`。不列舉所有可能路徑。相同長度路徑依 BFS 與 edge ID 字典順序選擇，nodes／edges 依 ID 排序，paths 依終點 node ID 排序。
+- Project scope 由 root 決定，nodes 與 edges 都必須同屬該 Project，跨 Project endpoints 不會被遍歷。只展開 active nodes 與 active edges；edge 的兩個 endpoints 也必須 active。
+- 明確指定 archived root 時可讀取該歷史 node，但 trace 只回傳 root 與零長度 path，不隱含展開歷史 graph。不存在的 root 回傳 `NOT_FOUND`。此查詢不修改資料或建立 audit event。
+
 ### create_ticket_draft_batch
 
 儲存 client agent 同一次產生的 Ticket Draft Batch。每個新工作單位會建立穩定 Ticket identity 與第一個 draft Ticket Revision。
@@ -1344,6 +1353,13 @@ product-graph://nodes/{nodeId}/trace
 - `/projects/{projectId}/tickets`：回傳 `{ tickets }`，只列出此 Project 的 active、具有 current approved revision 的 Tickets，依 `created_at`、`id` 排序。尚未核准任何 Ticket 時為空陣列；draft-only 與 archived Tickets 不列入。
 - 三個子資源都要求 Project 存在且 active。不存在時 MCP error code 為 `-32002`，error data 的 domain code 為 `NOT_FOUND`；Project archived 時為 `-32602`／`CONFLICT`。不把缺失的 Project 當作空集合。
 - 既有 `/projects` 與 `/projects/{projectId}` summary resources 保留原有行為。
+
+### Ticket 與 Node resources 的讀取契約
+
+- `/tickets/{ticketId}` 回傳 `{ ticket }`；`/nodes/{nodeId}` 回傳 `{ node }`。明確以 ID 讀取 identity 可包含 draft-only Ticket 或 archived entity，保留其 lifecycle status，方便查閱歷史。
+- `/tickets/{ticketId}/context` 與 `get_ticket_context` 預設相同，回傳 `{ ticket, revision, related_nodes, related_edges, markdown: null }`。要求 active Ticket 與有效的 current approved revision；尚未核准或 archived Ticket 回傳 `CONFLICT`。related nodes 是該 revision 的明確引用，可能包含後來 archived 的歷史來源，且只包含相同 Project；related edges 只包含 active 關係。
+- `/nodes/{nodeId}/trace` 等同 `get_node_trace` 的 `direction = both`、`max_depth = 3`，包含上述 active graph 與 archived root 語意。
+- 四個 resource 都使用 `application/json` 且不修改資料。不存在的 identity 使用 MCP `-32002`／domain `NOT_FOUND`；狀態衝突使用 `-32602`／`CONFLICT`。可由明確 identity 查閱 archived Project 內的資料，不將 Project lifecycle 當作身份讀取權限。
 
 ## MVP Prompts
 
