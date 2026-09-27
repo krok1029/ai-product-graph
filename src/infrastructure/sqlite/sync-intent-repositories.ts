@@ -69,11 +69,12 @@ export function createSyncIntentRepositories(database: SqliteDatabase): Pick<App
         });
       },
       listAttempts(syncIntentId) {
-        const rows = database.prepare(`SELECT id, sync_intent_id AS syncIntentId,
-          external_work_item_id AS externalWorkItemId, operation, idempotency_key AS idempotencyKey,
-          started_at AS startedAt, completed_at AS completedAt, result_status AS resultStatus,
-          response_json AS responseJson, error_json AS errorJson FROM sync_attempts
-          WHERE sync_intent_id = ? ORDER BY started_at, id`).all(syncIntentId) as AttemptRow[];
+        const rows = database.prepare(`SELECT a.id, a.sync_intent_id AS syncIntentId,
+          a.external_work_item_id AS externalWorkItemId, a.operation, a.idempotency_key AS idempotencyKey,
+          a.started_at AS startedAt, a.completed_at AS completedAt, a.result_status AS resultStatus,
+          a.response_json AS responseJson, a.error_json AS errorJson FROM sync_attempts a
+          LEFT JOIN sync_intent_claims c ON c.attempt_id = a.id
+          WHERE a.sync_intent_id = ? ORDER BY a.started_at, COALESCE(c.sequence, 0), a.id`).all(syncIntentId) as AttemptRow[];
         return rows.map(({ responseJson, errorJson, ...row }) => ({ ...row,
           response: responseJson === null ? null : JSON.parse(responseJson) as unknown,
           error: errorJson === null ? null : JSON.parse(errorJson) as unknown

@@ -1,3 +1,4 @@
+import type { SyncAttemptClaimRepository } from "./sync-attempt-claim-ports.js";
 import type { ExternalWorkItemRepository } from "./external-work-item-ports.js";
 import type { SyncIntentRepository } from "./sync-intent-ports.js";
 import type { ExternalContainerRepository } from "./external-container-ports.js";
@@ -289,6 +290,7 @@ export interface OperationReceiptRepository {
 }
 
 export type ApplicationPorts = {
+  syncClaims: SyncAttemptClaimRepository;
   externalWorkItems: ExternalWorkItemRepository;
   syncIntents: SyncIntentRepository;
   externalContainers: ExternalContainerRepository;

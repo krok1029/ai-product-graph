@@ -1402,3 +1402,11 @@ SQLite 的 referenced-table rebuild 在 transaction 外暫停 foreign-key enforc
 新 Ticket 第一版 draft 即建立 lineage；replacement draft 僅保存提案，approval 才切換 edge。省略 `traces_to_ticket_id` 繼承目前 lineage，明確 null 表示 approval 時移除。同 target 沿用原 edge 與 establishing revision，變更 audit 另記本次 approved revision 及原／新 edge、Ticket、node IDs。Original Ticket 可為 active 或 archived，其 delivery/completion 不受影響。
 
 Backfill 優先採 current approved revision，沒有 current approved pointer 才採最初 revision，忽略 pending replacements。Hook 在 SQLite migration transaction 內用既有 ULID library 產生 IDs，並用相同儲存約束驗證 same-Project endpoints、self-reference 與 establishing revision。無效舊資料會回滾整個 migration，包含 schema migration marker；重新啟動不重複建立 edges。Backfill 不偽造產品意圖 GraphRevision 或使用者 approval。
+
+## Sync execution coordination（migration 006）
+
+`sync_intent_claims` 保存 execution claim history；它不改寫 immutable `sync_intents`，也不新增 domain status。每列包含 `sequence`、`sync_intent_id`、永久唯一 `claim_token`、`worker_id`、唯一 `attempt_id`、`claimed_at`、`expires_at`、`invocation_started_at`、`invocation_kind`、`requires_reconciliation` 與 `released_at`。Partial unique index 保證同 intent 最多一筆未釋放 claim。
+
+Claim 以 `BEGIN IMMEDIATE` 原子保存 attempt／claim／audit。到期接手保留原 attempt 的 failed/interrupted outcome，新 token fence 拒絕舊 worker 寫入。Provider invocation stage 在呼叫外部服務前 commit；不確定性跨失敗與 restart 繼承，只有已執行 reconciliation 且 provider 保證沒有延遲請求的 definitive absence 才可解除。Success completion port 要求既有 transaction 與 matching item／mapping／snapshot，供 processor 一起提交成果。詳見 [ADR 0037](adr/0037-durable-sync-claims-and-reconciliation.md)。
+
+Attempt history 依 `started_at` 排序；相同時間的 execution attempts 以 claim `sequence` 排序，沒有 claim 的舊 history 保留 ID tie-break。所有 claim 時間使用 canonical UTC 毫秒，lease 在 `now == expires_at` 已失效。
