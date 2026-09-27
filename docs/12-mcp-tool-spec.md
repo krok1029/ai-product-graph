@@ -919,10 +919,12 @@ Input：
   "evidence_type": "test_execution",
   "idempotency_key": "repo-01J-test-pnpm-test-2026-07-24T00:00:00.000Z",
   "payload": {
+    "schema_version": 1,
     "command": "pnpm test",
     "status": "passed",
     "started_at": "2026-07-24T00:00:00.000Z",
     "completed_at": "2026-07-24T00:01:00.000Z",
+    "exit_code": 0,
     "summary": ""
   }
 }

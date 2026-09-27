@@ -8,9 +8,12 @@ import type {
   GraphEdge,
   GraphNode,
   GraphRevision,
+  AcceptanceCriterionVerdict,
   ImplementationBrief,
+  ImplementationResult,
   ImplementationTarget,
   Idea,
+  ObservedEvidence,
   ProductBrief,
   ProductBriefVersion,
   Project,
@@ -259,5 +262,53 @@ export function serializeImplementationBrief(brief: ImplementationBrief) {
     approved_at: brief.approvedAt,
     created_at: brief.createdAt,
     updated_at: brief.updatedAt
+  };
+}
+
+export function serializeObservedEvidence(evidence: ObservedEvidence) {
+  return {
+    id: evidence.id,
+    project_id: evidence.projectId,
+    repository_id: evidence.repositoryId,
+    evidence_type: evidence.evidenceType,
+    idempotency_key: evidence.idempotencyKey,
+    payload_hash: evidence.payloadHash,
+    lifecycle_status: evidence.lifecycleStatus,
+    created_at: evidence.createdAt
+  };
+}
+
+export function serializeImplementationResult(result: ImplementationResult) {
+  return {
+    id: result.id,
+    project_id: result.projectId,
+    implementation_brief_id: result.implementationBriefId,
+    implementation_target_id: result.implementationTargetId,
+    ticket_revision_id: result.ticketRevisionId,
+    supersedes_implementation_result_id:
+      result.supersedesImplementationResultId,
+    result: result.result,
+    review_status: result.reviewStatus,
+    lifecycle_status: result.lifecycleStatus,
+    submission_disposition: result.result.submission_disposition,
+    stale_at_submission: result.staleAtSubmission,
+    stale_reasons: result.staleReasons,
+    created_at: result.createdAt,
+    updated_at: result.updatedAt,
+    archived_at: result.archivedAt
+  };
+}
+
+export function serializeAcceptanceCriterionVerdict(
+  verdict: AcceptanceCriterionVerdict
+) {
+  return {
+    id: verdict.id,
+    implementation_result_id: verdict.implementationResultId,
+    acceptance_criterion_id: verdict.acceptanceCriterionId,
+    verdict: verdict.verdict,
+    reason: verdict.reason,
+    evidence_ids: verdict.evidenceIds,
+    created_at: verdict.createdAt
   };
 }

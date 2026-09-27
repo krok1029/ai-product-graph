@@ -24,6 +24,10 @@ import {
   type GraphChangeInput
 } from "./graph-workflow.js";
 import {
+  ImplementationResultWorkflow,
+  type CriterionVerdictInput
+} from "./implementation-result-workflow.js";
+import {
   ImplementationWorkflow,
   type ImplementationBriefInput,
   type RepositoryContextInput
@@ -56,6 +60,7 @@ export class ProductGraphService {
   private readonly graphWorkflow: GraphWorkflow;
   private readonly ticketWorkflow: TicketWorkflow;
   private readonly implementationWorkflow: ImplementationWorkflow;
+  private readonly implementationResultWorkflow: ImplementationResultWorkflow;
 
   constructor(
     private readonly ports: ApplicationPorts,
@@ -85,6 +90,10 @@ export class ProductGraphService {
       idFactory: this.idFactory,
       clock: this.clock,
       actor: this.actor
+    });
+    this.implementationResultWorkflow = new ImplementationResultWorkflow(ports, {
+      idFactory: this.idFactory,
+      clock: this.clock
     });
   }
 
@@ -531,6 +540,27 @@ export class ProductGraphService {
     };
   }) {
     return this.implementationWorkflow.getHandoff(input);
+  }
+
+  recordObservedEvidence(input: {
+    projectId: string;
+    repositoryId: string;
+    evidenceType: "commit" | "pull_request" | "test_execution" | "artifact";
+    idempotencyKey: string;
+    payload: unknown;
+  }) {
+    return this.implementationResultWorkflow.recordObservedEvidence(input);
+  }
+
+  submitImplementationResult(input: {
+    implementationBriefId: string;
+    supersedesImplementationResultId?: string | null;
+    observedEvidenceIds: string[];
+    summary: string;
+    criterionVerdicts: CriterionVerdictInput[];
+    unfinishedItems: string[];
+  }) {
+    return this.implementationResultWorkflow.submitResult(input);
   }
 
   private requireProject(projectId: string): Project {

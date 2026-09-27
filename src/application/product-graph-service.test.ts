@@ -657,6 +657,268 @@ describe("ProductGraphService", () => {
     ).toThrowError(ApplicationError);
   });
 
+  it("records Observed Evidence idempotently with canonical payload hashing", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedTicketTarget(service, ports);
+
+    const first = service.recordObservedEvidence({
+      projectId: setup.projectId,
+      repositoryId: setup.repositoryId,
+      evidenceType: "commit",
+      idempotencyKey: "commit-abc123",
+      payload: {
+        schema_version: 1,
+        commit_sha: "abc123",
+        committed_at: "2026-07-28T00:00:00.000Z",
+        changed_files: ["src/timer.ts", "src/App.tsx", "src/timer.ts"]
+      }
+    });
+    const replay = service.recordObservedEvidence({
+      projectId: setup.projectId,
+      repositoryId: setup.repositoryId,
+      evidenceType: "commit",
+      idempotencyKey: "commit-abc123",
+      payload: {
+        changed_files: ["src/App.tsx", "src/timer.ts"],
+        committed_at: "2026-07-28T00:00:00.000Z",
+        commit_sha: "abc123",
+        schema_version: 1
+      }
+    });
+
+    expect(first.created).toBe(true);
+    expect(replay.created).toBe(false);
+    expect(replay.observedEvidence.id).toBe(first.observedEvidence.id);
+    expect(first.observedEvidence.payload).toMatchObject({
+      changed_files: ["src/App.tsx", "src/timer.ts"]
+    });
+    expect(first.observedEvidence.payloadHash).toMatch(/^sha256:/);
+  });
+
+  it("rejects Observed Evidence idempotency key reuse with different payload", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedTicketTarget(service, ports);
+    service.recordObservedEvidence({
+      projectId: setup.projectId,
+      repositoryId: setup.repositoryId,
+      evidenceType: "test_execution",
+      idempotencyKey: "test-pnpm",
+      payload: sampleTestEvidencePayload("passed", 0)
+    });
+
+    expect(() =>
+      service.recordObservedEvidence({
+        projectId: setup.projectId,
+        repositoryId: setup.repositoryId,
+        evidenceType: "test_execution",
+        idempotencyKey: "test-pnpm",
+        payload: sampleTestEvidencePayload("failed", 1)
+      })
+    ).toThrowError(ApplicationError);
+  });
+
+  it("submits an active draft Implementation Result with evidence and verdicts", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedImplementationBrief(service, ports);
+    const evidence = service.recordObservedEvidence({
+      projectId: setup.projectId,
+      repositoryId: setup.repositoryId,
+      evidenceType: "test_execution",
+      idempotencyKey: "test-pnpm-result",
+      payload: sampleTestEvidencePayload("passed", 0)
+    });
+    const revision = ports.ticketRevisions.findById(setup.ticketRevisionId);
+    const criteria = revision?.specification.acceptance_criteria ?? [];
+
+    const result = service.submitImplementationResult({
+      implementationBriefId: setup.implementationBriefId,
+      observedEvidenceIds: [evidence.observedEvidence.id],
+      summary: "Added the preset countdown starts.",
+      criterionVerdicts: criteria.map(criterion => ({
+        acceptanceCriterionId: criterion.id,
+        verdict: "satisfied",
+        reason: "The test execution passed for the preset countdown behavior.",
+        evidenceIds: [evidence.observedEvidence.id]
+      })),
+      unfinishedItems: []
+    });
+
+    expect(result.implementationResult.reviewStatus).toBe("draft");
+    expect(result.implementationResult.lifecycleStatus).toBe("active");
+    expect(result.implementationResult.staleAtSubmission).toBe(false);
+    expect(result.criterionVerdicts).toHaveLength(criteria.length);
+    expect(
+      ports.implementationResults.findById(result.implementationResult.id)
+        ?.implementationBriefId
+    ).toBe(setup.implementationBriefId);
+  });
+
+  it("archives submitted Implementation Result when handoff source is stale", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedImplementationBrief(service, ports);
+    const evidence = service.recordObservedEvidence({
+      projectId: setup.projectId,
+      repositoryId: setup.repositoryId,
+      evidenceType: "test_execution",
+      idempotencyKey: "test-pnpm-stale",
+      payload: sampleTestEvidencePayload("passed", 0)
+    });
+    const revision = ports.ticketRevisions.findById(setup.ticketRevisionId);
+    const criteria = revision?.specification.acceptance_criteria ?? [];
+    const productBriefDraft = service.createProductBriefDraft({
+      projectId: setup.projectId,
+      sourceIdeaId: setup.ideaId,
+      baseApprovedVersionId: setup.approvedProductBriefVersionId,
+      brief: sampleBrief("Changed product intent")
+    });
+    service.approveProductBriefVersion(productBriefDraft.version.id);
+
+    const result = service.submitImplementationResult({
+      implementationBriefId: setup.implementationBriefId,
+      observedEvidenceIds: [evidence.observedEvidence.id],
+      summary: "Added the preset countdown starts.",
+      criterionVerdicts: criteria.map(criterion => ({
+        acceptanceCriterionId: criterion.id,
+        verdict: "satisfied",
+        reason: "The test execution passed for the preset countdown behavior.",
+        evidenceIds: [evidence.observedEvidence.id]
+      })),
+      unfinishedItems: []
+    });
+
+    expect(result.implementationResult.lifecycleStatus).toBe("archived");
+    expect(result.implementationResult.staleAtSubmission).toBe(true);
+    expect(result.implementationResult.staleReasons).toContain(
+      "product_intent_unreconciled"
+    );
+    expect(result.observedEvidenceIds).toEqual([evidence.observedEvidence.id]);
+  });
+
+  it("persists canonical evidence bytes and scopes idempotency to Project", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedImplementationBrief(service, ports);
+    const repository = ports.repositories.findById(setup.repositoryId)!;
+    ports.repositories.insert({ ...repository, id: "second-repository", slug: "second" });
+    const input = {
+      projectId: setup.projectId, repositoryId: setup.repositoryId,
+      evidenceType: "test_execution" as const, idempotencyKey: "same-key",
+      payload: sampleTestEvidencePayload("passed", 0)
+    };
+    const first = service.recordObservedEvidence(input);
+    const persisted = database!.prepare("SELECT payload_json FROM observed_evidence WHERE id = ?")
+      .get(first.observedEvidence.id) as { payload_json: string };
+    expect(JSON.parse(persisted.payload_json)).toEqual(first.observedEvidence.payload);
+    expect(persisted.payload_json).toBe(JSON.stringify(first.observedEvidence.payload,
+      Object.keys(first.observedEvidence.payload).sort()));
+    expect(() => service.recordObservedEvidence({ ...input, repositoryId: "second-repository" }))
+      .toThrow("idempotency key was reused");
+    const other = service.createProject({ name: "Other project" }).project;
+    ports.repositories.insert({ ...repository, id: "other-project-repository", projectId: other.id });
+    expect(service.recordObservedEvidence({ ...input, projectId: other.id,
+      repositoryId: "other-project-repository" }).created).toBe(true);
+    expect(() => service.recordObservedEvidence({ ...input, projectId: other.id }))
+      .toThrow("Repository was not found");
+    expect(ports.tickets.findById(setup.ticketId)?.deliveryStatus).toBe("planned");
+  });
+
+  it("rejects invalid result evidence and verdicts without partial writes", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedImplementationBrief(service, ports);
+    const input = resultInput(ports, setup);
+    const repository = ports.repositories.findById(setup.repositoryId)!;
+    ports.repositories.insert({ ...repository, id: "foreign-repository", slug: "foreign" });
+    const evidence = service.recordObservedEvidence({
+      projectId: setup.projectId, repositoryId: "foreign-repository",
+      evidenceType: "test_execution", idempotencyKey: "foreign",
+      payload: sampleTestEvidencePayload("passed", 0)
+    }).observedEvidence;
+    expect(() => service.submitImplementationResult({ ...input, observedEvidenceIds: [evidence.id] }))
+      .toThrow("Target Repository");
+    expect(() => service.submitImplementationResult({ ...input,
+      criterionVerdicts: input.criterionVerdicts.map(verdict => ({ ...verdict, evidenceIds: [evidence.id] })) }))
+      .toThrow("subset");
+    expect(() => service.submitImplementationResult({ ...input, criterionVerdicts: [] }))
+      .toThrow("Each acceptance criterion");
+    expect(() => service.submitImplementationResult({ ...input,
+      criterionVerdicts: [...input.criterionVerdicts, input.criterionVerdicts[0]!] }))
+      .toThrow("duplicates");
+    expect(() => service.submitImplementationResult({ ...input,
+      criterionVerdicts: [...input.criterionVerdicts, { ...input.criterionVerdicts[0]!, acceptanceCriterionId: "unknown" }] }))
+      .toThrow("unknown acceptance criterion");
+    expect(() => service.submitImplementationResult({ ...input,
+      criterionVerdicts: input.criterionVerdicts.map(verdict => ({ ...verdict, reason: "  " })) }))
+      .toThrow("reason");
+    expect(() => service.submitImplementationResult({ ...input, supersedesImplementationResultId: "missing" }))
+      .toThrow("active approved Result");
+    expect(database!.prepare("SELECT count(*) AS count FROM implementation_results").get())
+      .toEqual({ count: 0 });
+    expect(ports.observedEvidence.findById(evidence.id)?.id).toBe(evidence.id);
+    expect(ports.tickets.findById(setup.ticketId)?.deliveryStatus).toBe("planned");
+  });
+
+  it("keeps independent draft verdicts and summary-only evidence on repeated submissions", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedImplementationBrief(service, ports);
+    const evidence = service.recordObservedEvidence({
+      projectId: setup.projectId, repositoryId: setup.repositoryId,
+      evidenceType: "test_execution", idempotencyKey: "summary-only",
+      payload: sampleTestEvidencePayload("failed", 1)
+    }).observedEvidence;
+    const input = { ...resultInput(ports, setup), observedEvidenceIds: [evidence.id] };
+    const first = service.submitImplementationResult(input);
+    const second = service.submitImplementationResult(input);
+    expect(first.implementationResult.lifecycleStatus).toBe("active");
+    expect(first.observedEvidenceIds).toEqual([evidence.id]);
+    expect(first.criterionVerdicts.every(verdict => verdict.evidenceIds.length === 0)).toBe(true);
+    expect(second.criterionVerdicts[0]?.id).not.toBe(first.criterionVerdicts[0]?.id);
+    expect(ports.tickets.findById(setup.ticketId)?.deliveryStatus).toBe("planned");
+  });
+
+  it.each(["same target", "removed target"])("archives late results after a replacement revision with %s", mode => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedImplementationBrief(service, ports);
+    const specification = sampleTicketInput(setup.goalNodeId, setup.repositoryId);
+    if (mode === "removed target") {
+      const repository = ports.repositories.findById(setup.repositoryId)!;
+      ports.repositories.insert({ ...repository, id: "replacement-repository", slug: "replacement" });
+      specification.implementationTargets[0]!.repositoryId = "replacement-repository";
+    }
+    const draft = service.createTicketRevisionDraft({
+      ticketId: setup.ticketId, baseApprovedRevisionId: setup.ticketRevisionId,
+      sourceGraphRevisionId: setup.graphRevisionId, specification
+    });
+    service.approveTicketRevision(draft.revision.id);
+    const result = service.submitImplementationResult(resultInput(ports, setup));
+    expect(result.implementationResult.lifecycleStatus).toBe("archived");
+    expect(result.implementationResult.ticketRevisionId).toBe(setup.ticketRevisionId);
+    expect(result.implementationResult.staleReasons).toContain("ticket_revision_not_current");
+    if (mode === "removed target") {
+      expect(result.implementationResult.staleReasons).toContain("implementation_target_archived");
+    }
+    expect(ports.tickets.findById(setup.ticketId)?.deliveryStatus).toBe("planned");
+  });
+
+  it("keeps results reviewable after a no-op product-intent reconciliation", () => {
+    const { service, ports } = createTestService();
+    const setup = createApprovedImplementationBrief(service, ports);
+    const nextBrief = service.createProductBriefDraft({
+      projectId: setup.projectId, sourceIdeaId: setup.ideaId,
+      baseApprovedVersionId: setup.approvedProductBriefVersionId,
+      brief: sampleBrief("Clarified intent without graph changes")
+    });
+    service.approveProductBriefVersion(nextBrief.version.id);
+    const graphDraft = service.createGraphDraftBatch({
+      projectId: setup.projectId, baseGraphRevisionId: setup.graphRevisionId,
+      sourceProductBriefVersionId: nextBrief.version.id,
+      reconciliationSummary: "Existing nodes still represent the clarified intent.", changes: []
+    });
+    service.approveGraphDraftBatch(graphDraft.graphDraftBatch.id);
+    const result = service.submitImplementationResult(resultInput(ports, setup));
+    expect(result.implementationResult.lifecycleStatus).toBe("active");
+    expect(result.implementationResult.staleReasons).toEqual([]);
+    expect(ports.tickets.findById(setup.ticketId)?.deliveryStatus).toBe("planned");
+  });
+
   it("rejects Implementation Brief approval for dirty repository context without a fingerprint", () => {
     const { service, ports } = createTestService();
     const setup = createApprovedTicketTarget(service, ports);
@@ -724,7 +986,7 @@ function createApprovedProductBrief(service: ProductGraphService) {
 }
 
 function createApprovedGraphWithGoal(service: ProductGraphService) {
-  const { projectId, approvedVersionId } =
+  const { projectId, ideaId, approvedVersionId } =
     createApprovedProductBrief(service);
   const draft = service.createGraphDraftBatch({
     projectId,
@@ -748,6 +1010,8 @@ function createApprovedGraphWithGoal(service: ProductGraphService) {
   );
   return {
     projectId,
+    ideaId,
+    approvedProductBriefVersionId: approvedVersionId,
     graphRevisionId: approval.graphRevision.id,
     goalNodeId: approval.applied.addedIds[0] as string
   };
@@ -794,12 +1058,33 @@ function createApprovedTicketTarget(
   }
   return {
     projectId: graph.projectId,
+    ideaId: graph.ideaId,
+    approvedProductBriefVersionId: graph.approvedProductBriefVersionId,
     graphRevisionId: graph.graphRevisionId,
     goalNodeId: graph.goalNodeId,
     repositoryId: repository.id,
     ticketId: approval.ticket.id,
     ticketRevisionId: approval.revision.id,
     implementationTargetId
+  };
+}
+
+function createApprovedImplementationBrief(
+  service: ProductGraphService,
+  ports: ReturnType<typeof createSqlitePorts>
+) {
+  const setup = createApprovedTicketTarget(service, ports);
+  const draft = service.createImplementationBriefDraft({
+    implementationTargetId: setup.implementationTargetId,
+    repoContext: sampleRepositoryContext(),
+    brief: sampleImplementationBrief()
+  });
+  const approval = service.approveImplementationBrief(
+    draft.implementationBrief.id
+  );
+  return {
+    ...setup,
+    implementationBriefId: approval.implementationBrief.id
   };
 }
 
@@ -847,6 +1132,22 @@ function sampleImplementationBrief() {
   };
 }
 
+function sampleTestEvidencePayload(
+  status: "passed" | "failed" | "errored" | "cancelled",
+  exitCode: number | null
+) {
+  return {
+    schema_version: 1,
+    command: "pnpm test",
+    status,
+    started_at: "2026-07-28T00:00:00.000Z",
+    completed_at: "2026-07-28T00:01:00.000Z",
+    exit_code: exitCode,
+    summary: "Test run completed.",
+    log_artifact_ref: null
+  };
+}
+
 function sampleBrief(
   productGoal = "Create a traceable planning workflow"
 ): ProductBriefJson {
@@ -860,5 +1161,20 @@ function sampleBrief(
     success_metrics: [],
     risks: [],
     open_questions: []
+  };
+}
+
+function resultInput(
+  ports: ReturnType<typeof createSqlitePorts>,
+  setup: { implementationBriefId: string; ticketRevisionId: string }
+) {
+  const revision = ports.ticketRevisions.findById(setup.ticketRevisionId)!;
+  return {
+    implementationBriefId: setup.implementationBriefId,
+    observedEvidenceIds: [] as string[], summary: "Implementation report", unfinishedItems: [],
+    criterionVerdicts: revision.specification.acceptance_criteria.map(criterion => ({
+      acceptanceCriterionId: criterion.id, verdict: "satisfied" as const,
+      reason: "Implementation awaits evidence verification", evidenceIds: [] as string[]
+    }))
   };
 }

@@ -11,10 +11,14 @@ import type {
   GraphEdge,
   GraphNode,
   GraphRevision,
+  AcceptanceCriterionVerdict,
   ImplementationBrief,
   ImplementationBriefJson,
+  ImplementationResult,
+  ImplementationResultJson,
   ImplementationTarget,
   Idea,
+  ObservedEvidence,
   Project,
   ProductBrief,
   ProductBriefJson,
@@ -238,6 +242,45 @@ export type ImplementationBriefRow= {
   approved_at: string|null;
   created_at: string;
   updated_at: string;
+};
+
+export type ObservedEvidenceRow= {
+  id: string;
+  project_id: string;
+  repository_id: string;
+  evidence_type: ObservedEvidence["evidenceType"];
+  idempotency_key: string;
+  payload_hash: string;
+  payload_json: string;
+  lifecycle_status: "active" | "archived";
+  created_at: string;
+};
+
+export type ImplementationResultRow= {
+  id: string;
+  project_id: string;
+  implementation_brief_id: string;
+  implementation_target_id: string;
+  ticket_revision_id: string;
+  supersedes_implementation_result_id: string|null;
+  result_json: string;
+  review_status: "draft" | "approved";
+  lifecycle_status: "active" | "archived";
+  stale_at_submission: number;
+  stale_reasons_json: string;
+  created_at: string;
+  updated_at: string;
+  archived_at: string|null;
+};
+
+export type AcceptanceCriterionVerdictRow= {
+  id: string;
+  implementation_result_id: string;
+  acceptance_criterion_id: string;
+  verdict: "satisfied" | "unsatisfied";
+  reason: string;
+  evidence_ids_json: string;
+  created_at: string;
 };
 
 export type AuditRow= {
@@ -510,6 +553,56 @@ export function mapImplementationBrief(row: ImplementationBriefRow): Implementat
     approvedAt: row.approved_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+export function mapObservedEvidence(row: ObservedEvidenceRow): ObservedEvidence {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    repositoryId: row.repository_id,
+    evidenceType: row.evidence_type,
+    idempotencyKey: row.idempotency_key,
+    payloadHash: row.payload_hash,
+    payload: JSON.parse(row.payload_json) as Record<string, unknown>,
+    lifecycleStatus: row.lifecycle_status,
+    createdAt: row.created_at
+  };
+}
+
+export function mapImplementationResult(
+  row: ImplementationResultRow
+): ImplementationResult {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    implementationBriefId: row.implementation_brief_id,
+    implementationTargetId: row.implementation_target_id,
+    ticketRevisionId: row.ticket_revision_id,
+    supersedesImplementationResultId:
+      row.supersedes_implementation_result_id,
+    result: JSON.parse(row.result_json) as ImplementationResultJson,
+    reviewStatus: row.review_status,
+    lifecycleStatus: row.lifecycle_status,
+    staleAtSubmission: row.stale_at_submission === 1,
+    staleReasons: JSON.parse(row.stale_reasons_json) as string[],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    archivedAt: row.archived_at
+  };
+}
+
+export function mapAcceptanceCriterionVerdict(
+  row: AcceptanceCriterionVerdictRow
+): AcceptanceCriterionVerdict {
+  return {
+    id: row.id,
+    implementationResultId: row.implementation_result_id,
+    acceptanceCriterionId: row.acceptance_criterion_id,
+    verdict: row.verdict,
+    reason: row.reason,
+    evidenceIds: JSON.parse(row.evidence_ids_json) as string[],
+    createdAt: row.created_at
   };
 }
 

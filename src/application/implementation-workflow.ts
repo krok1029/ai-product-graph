@@ -7,7 +7,6 @@
 import { ApplicationError } from "../domain/errors.js";
 import type {
   AuditLogEntry,
-  GraphNode,
   ImplementationBrief,
   ImplementationBriefJson,
   ImplementationTarget,
@@ -18,6 +17,10 @@ import type {
   Ticket,
   TicketRevision
 } from "../domain/models.js";
+import {
+  evaluateImplementationFreshness,
+  evaluateTicketSourceFreshness
+} from "./implementation-freshness.js";
 import type { ApplicationPorts } from "./ports.js";
 import {
   isRepositoryContextApprovable,
@@ -55,6 +58,14 @@ type ImplementationWorkflowOptions= {
     id: string;
     displayName: string;
   };
+};
+
+type BriefSource= {
+  target: ImplementationTarget;
+  ticket: Ticket;
+  revision: TicketRevision;
+  repository: Repository;
+  productBriefVersion: ProductBriefVersion;
 };
 
 export class ImplementationWorkflow {
@@ -291,7 +302,8 @@ export class ImplementationWorkflow {
     }
     const source = this.requireBriefSource(brief);
     const snapshot = this.requireSnapshot(brief.repositoryContextSnapshotId);
-    const staleReason = this.findStaleReason(
+    const staleReason = evaluateImplementationFreshness(
+      this.ports,
       source.ticket,
       source.revision,
       snapshot,
@@ -313,7 +325,7 @@ export class ImplementationWorkflow {
     };
   }
 
-  private requireBriefSource(brief: ImplementationBrief) {
+  private requireBriefSource(brief: ImplementationBrief): BriefSource {
     const target = this.requireActiveImplementationTarget(
       brief.implementationTargetId
     );
@@ -388,210 +400,15 @@ export class ImplementationWorkflow {
     return { target, ticket, revision, productBriefVersion };
   }
 
-  private findStaleReason(
-    ticket: Ticket,
-    revision: TicketRevision,
-    snapshot: RepositoryContextSnapshot,
-    currentRepositoryState: {
-      commitSha: string;
-      dirtyStateFingerprint?: string|null;
-    }
-  ): { reason: string; details: Record<string, unknown> }|null {
-    const project = this.ports.projects.findById(ticket.projectId);
-    const productBrief = this.ports.productBriefs.findByProjectId(
-      ticket.projectId
-    );
-    if (
-      !project||
-      !productBrief||
-      project.lastReconciledProductBriefVersionId !== productBrief.currentApprovedVersionId
-    ) {
-      return {
-        reason: "product_intent_unreconciled",
-        details: {
-          projectId: ticket.projectId,
-          currentProductBriefVersionId:
-            productBrief?.currentApprovedVersionId ?? null,
-          lastReconciledProductBriefVersionId:
-            project?.lastReconciledProductBriefVersionId ?? null
-        }
-      };
-    }
-    if (ticket.currentApprovedRevisionId !== revision.id) {
-      return {
-        reason: "ticket_revision_not_current",
-        details: {
-          ticketId: ticket.id,
-          currentApprovedRevisionId: ticket.currentApprovedRevisionId,
-          briefTicketRevisionId: revision.id
-        }
-      };
-    }
-    const sourceProblem = this.findTicketSourceProblem(ticket, revision);
-    if (sourceProblem) {
-      return sourceProblem;
-    }
-    const commitSha = normalizeRequiredString(
-      currentRepositoryState.commitSha,
-      "current_repository_state.commit_sha"
-    );
-    if (snapshot.baselineCommitSha !== commitSha) {
-      return {
-        reason: "repository_baseline_mismatch",
-        details: {
-          repositoryContextSnapshotId: snapshot.id,
-          expectedCommitSha: snapshot.baselineCommitSha,
-          currentCommitSha: commitSha
-        }
-      };
-    }
-    const dirtyStateFingerprint = normalizeOptionalText(
-      currentRepositoryState.dirtyStateFingerprint
-    );
-    if (snapshot.dirtyStateFingerprint !== dirtyStateFingerprint) {
-      return {
-        reason: "repository_dirty_state_mismatch",
-        details: {
-          repositoryContextSnapshotId: snapshot.id,
-          expectedDirtyStateFingerprint: snapshot.dirtyStateFingerprint,
-          currentDirtyStateFingerprint: dirtyStateFingerprint
-        }
-      };
-    }
-    return null;
-  }
-
   private requireFreshTicketSources(ticket: Ticket, revision: TicketRevision) {
-    const sourceProblem = this.findTicketSourceProblem(ticket, revision);
+    const sourceProblem = evaluateTicketSourceFreshness(
+      this.ports,
+      ticket,
+      revision
+    );
     if (sourceProblem) {
       throw staleHandoff(sourceProblem.reason, sourceProblem.details);
     }
-  }
-
-  private findTicketSourceProblem(
-    ticket: Ticket,
-    revision: TicketRevision,
-    visitedTicketIds= new Set<string>()
-  ): { reason: string; details: Record<string, unknown> }|null {
-    if (visitedTicketIds.has(ticket.id)) {
-      return null;
-    }
-    visitedTicketIds.add(ticket.id);
-    if (
-      revision.ticketId !== ticket.id||
-      revision.reviewStatus !== "approved" ||
-      revision.lifecycleStatus !== "active"
-    ) {
-      return {
-        reason: "ticket_revision_not_active_approved",
-        details: {
-          ticketId: ticket.id,
-          ticketRevisionId: revision.id,
-          reviewStatus: revision.reviewStatus,
-          lifecycleStatus: revision.lifecycleStatus
-        }
-      };
-    }
-    for (const nodeId of this.ports.ticketRevisions.listGraphNodeIds(
-      revision.id
-    )) {
-      const node = this.ports.graphNodes.findById(nodeId);
-      if (!node||node.projectId !== revision.projectId) {
-        return {
-          reason: "graph_node_not_found",
-          details: { ticketRevisionId: revision.id, graphNodeId: nodeId }
-        };
-      }
-      if (node.lifecycleStatus !== "active") {
-        return {
-          reason: "graph_node_archived",
-          details: { ticketRevisionId: revision.id, graphNodeId: node.id }
-        };
-      }
-      const changedAfterSource = this.isGraphRevisionAfter(
-        node.lastChangedInGraphRevisionId,
-        revision.sourceGraphRevisionId
-      );
-      if (changedAfterSource === null) {
-        return {
-          reason: "graph_revision_not_found",
-          details: {
-            ticketRevisionId: revision.id,
-            graphNodeId: node.id,
-            sourceGraphRevisionId: revision.sourceGraphRevisionId,
-            lastChangedInGraphRevisionId: node.lastChangedInGraphRevisionId
-          }
-        };
-      }
-      if (changedAfterSource) {
-        return {
-          reason: "graph_node_changed",
-          details: {
-            ticketRevisionId: revision.id,
-            graphNodeId: node.id,
-            sourceGraphRevisionId: revision.sourceGraphRevisionId,
-            lastChangedInGraphRevisionId: node.lastChangedInGraphRevisionId
-          }
-        };
-      }
-    }
-    for (const dependencyId of this.ports.ticketRevisions.listDependencyTicketIds(
-      revision.id
-    )) {
-      const dependency = this.ports.tickets.findById(dependencyId);
-      if (
-        !dependency||
-        dependency.projectId !== ticket.projectId||
-        dependency.lifecycleStatus !== "active" ||
-        !dependency.currentApprovedRevisionId
-      ) {
-        return {
-          reason: "ticket_dependency_not_current",
-          details: {
-            ticketRevisionId: revision.id,
-            dependencyTicketId: dependencyId
-          }
-        };
-      }
-      const dependencyRevision = this.ports.ticketRevisions.findById(
-        dependency.currentApprovedRevisionId
-      );
-      if (!dependencyRevision) {
-        return {
-          reason: "ticket_dependency_not_current",
-          details: {
-            ticketRevisionId: revision.id,
-            dependencyTicketId: dependencyId
-          }
-        };
-      }
-      const dependencyProblem = this.findTicketSourceProblem(
-        dependency,
-        dependencyRevision,
-        visitedTicketIds
-      );
-      if (dependencyProblem) {
-        return {
-          reason: "ticket_dependency_stale",
-          details: {
-            ticketRevisionId: revision.id,
-            dependencyTicketId: dependencyId,
-            dependencyStaleReason: dependencyProblem.reason,
-            dependencyDetails: dependencyProblem.details
-          }
-        };
-      }
-    }
-    return null;
-  }
-
-  private isGraphRevisionAfter(candidateId: string, baseId: string) {
-    const candidate = this.ports.graphRevisions.findById(candidateId);
-    const base = this.ports.graphRevisions.findById(baseId);
-    if (!candidate||!base||candidate.projectId !== base.projectId) {
-      return null;
-    }
-    return candidate.sequenceNumber>base.sequenceNumber;
   }
 
   private requireSupersededBrief(
