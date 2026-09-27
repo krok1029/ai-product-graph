@@ -1,3 +1,4 @@
+import type { PlaneObservationReadRepository } from "./plane-observation-read-ports.js";
 import type { PlaneObservationWriteRepository } from "./plane-observation-ports.js";
 import type { SyncMappingTerminationRepository } from "./sync-mapping-termination-ports.js";
 import type { ExternalWorkItemWriteRepository } from "./external-work-item-write-ports.js";
@@ -294,6 +295,7 @@ export interface OperationReceiptRepository {
 }
 
 export type ApplicationPorts = {
+  planeObservationReads: PlaneObservationReadRepository;
   planeObservationWrites: PlaneObservationWriteRepository;
   syncMappingTerminations: SyncMappingTerminationRepository;
   externalWorkItemWrites: ExternalWorkItemWriteRepository;

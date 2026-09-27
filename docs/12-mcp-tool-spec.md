@@ -1733,3 +1733,15 @@ Terminated mapping 不再 enrollment 且從目前 Sync Health 排除，其他 ma
 結果包含 `mapping_id` 與 `termination`。後者包含 `record`（`id`、`project_id`、`mapping_id`、`decision_id`、`stopped_sync_intent_ids`）、`decision`（`id`、`project_id`、`decision_type`、`summary`、`actor_id`、`created_at`），以及依 mapping sequence 排序的 `stopped_intents`。各 intent 沿用 `sync_intent`、`attempts`、`request_state` 格式；failed errors、started attempts 與 archived intents 原樣保留。成功 intents 與原始 manual create 不列入停止 membership；原始 create 可用既有 mapping sync history 查詢。
 
 Archived mapping 的 health `current`／`included:false` 代表它已退出目前同步義務。此歷史查詢說明使用者何時、為何終止，而不把失敗宣稱成同步成功。查詢不呼叫 provider、不改寫 audit／actor／receipt，也不需要完整 create proof 才能讀取合法的 termination 紀錄。Started attempt 仍可能有未確認的外部結果；停止未來排程不等於撤回已送出的請求。
+
+### `get_mapping_content_drift_history`
+
+Strict input：`{ mapping_id: string }`，只接受 trim 後非空的 mapping identity。Resource 為 `product-graph://external-work-item-mappings/{mappingId}/content-drifts`，提供相同 data；錯誤沿用既有 tool envelope／resource MCP error 規則。
+
+Output data：`{ mapping, observations, drifts }`。Mapping 使用既有完整 serializer。Observations 只包含明確 inbound capture，每筆為 `{ snapshot, provenance }`：snapshot 欄位同既有 External Work Item Snapshot；provenance 包含 `snapshot_id`、`project_id`、`mapping_id`、`external_work_item_id`、`ticket_id`、`source_ticket_revision_id`、`actor_id`、`audit_log_id`。首次 outbound create 的 snapshot 仍可從既有 item history 查詢，不假冒 inbound observation。
+
+Drifts 包含 `id`、`project_id`、`mapping_id`、`snapshot_id`、原始 versioned `diff`、`detected_at`、`resolution_decision_id`。Diff 固定歷史比較時的 approved revision 與四個 managed fields 差異；查詢時不以目前 revision 重新計算，也不因後來內容吻合或新版 approval 宣告舊 drift 已解決。只提供 stored resolution Decision reference，不推測 Decision type 或增加 resolution state。
+
+Observations 依 snapshot `captured_at`、ID 升冪；drifts 依 `detected_at`、ID 升冪。`captured_at` 是收到 provider response 的時間，audit created_at 是本機 commit 時間；此 API 不把 commit order 宣告成外部權威狀態。原始 snapshot JSON（含未知巢狀欄位）與 provider token 原樣保留，HTML 不解讀、不執行。
+
+Active／archived mappings 均可讀；沒有 observation 時回空陣列。未知 mapping 回 `NOT_FOUND`；已知 mapping、snapshot、revision、actor、audit、drift 或 linked Decision 的 scope／identity 不一致回 `CONFLICT`，不以 SQL filter 隱藏損壞資料。讀取使用同一 transaction，不要求原始 outbound create proof 仍完整，也不修改 provider、actor、audit、claim、receipt、snapshot、diff、mapping、health 或任何 domain state。
