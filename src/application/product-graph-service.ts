@@ -117,8 +117,8 @@ export class ProductGraphService {
     return { project, auditLogId: audit.id };
   }
 
-  exportMarkdownDraft(input: MarkdownExportInput) {
-    return new MarkdownExport(this.ports).export(input);
+  getMarkdownExportArtifact(input: MarkdownExportInput) {
+    return new MarkdownExport(this.ports).readArtifact(input);
   }
 
   listProjects() {
