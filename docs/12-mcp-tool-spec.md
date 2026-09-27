@@ -1335,6 +1335,16 @@ product-graph://nodes/{nodeId}
 product-graph://nodes/{nodeId}/trace
 ```
 
+### Project resources 的讀取契約
+
+所有 resource 回傳 `application/json`，只讀取資料，不建立 audit event 或修改 approval。
+
+- `/projects/{projectId}/brief`：回傳 `{ product_brief, version }`，只呈現 active Product Brief 的 current approved version。尚未核准時兩者都是 `null`；新 draft 不影響既有 approved version。
+- `/projects/{projectId}/graph`：回傳 `{ graph_revision_id, nodes, edges }`，與 `get_graph_context` 的預設 active graph 一致。尚未建立 graph 時 revision 為 `null`，nodes／edges 為空陣列。
+- `/projects/{projectId}/tickets`：回傳 `{ tickets }`，只列出此 Project 的 active、具有 current approved revision 的 Tickets，依 `created_at`、`id` 排序。尚未核准任何 Ticket 時為空陣列；draft-only 與 archived Tickets 不列入。
+- 三個子資源都要求 Project 存在且 active。不存在時 MCP error code 為 `-32002`，error data 的 domain code 為 `NOT_FOUND`；Project archived 時為 `-32602`／`CONFLICT`。不把缺失的 Project 當作空集合。
+- 既有 `/projects` 與 `/projects/{projectId}` summary resources 保留原有行為。
+
 ## MVP Prompts
 
 ```text
