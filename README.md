@@ -48,7 +48,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 目前已實作本機 stdio MCP、SQLite 持久化，以及 Project／Repository／Idea → Product Brief → Graph → Ticket Revision → Implementation Brief／handoff → Observed Evidence／Implementation Result → Result Acceptance／Revocation 的主流程。另提供 6 個 client-side prompts、9 個 resources、node trace 與三種 artifact 的 Markdown 匯出。
 
-Plane integration 目前完成首次匯出的本機 preparation：註冊穩定 container identity、明確提交 pinned export request、查詢 intent 與 attempt history。另有可注入 provider port 的首次 create 執行核心，支援 durable claims、reconciliation、原子 mapping／snapshot 保存，以及 active mapping 的 durable content/status enrollment；正式 stdio 不啟動 processor，尚無實際 Plane API adapter，也尚未完成 Phase 3 的自動與雙向同步。
+Plane integration 目前完成首次匯出的本機 preparation：註冊穩定 container identity、明確提交 pinned export request、查詢 intent 與 attempt history。另有可注入 provider port 的首次 create 執行核心，支援 durable claims、reconciliation、原子 mapping／snapshot 保存，以及 active mapping 的 durable content/status enrollment；正式 stdio 不啟動 processor；Plane HTTP adapter 可由明確單次 CLI 執行 first create／reconciliation，Phase 3 的後續 update/status execution 與雙向同步尚未完成。
 
 `pnpm test` 包含真實 stdio server、全新暫存資料庫、跨重啟 receipt replay 與 SQLite integrity 的端到端驗證；`pnpm smoke` 驗證 application 主路徑到 Result submission。TypeScript 7／6 typechecks 與 build 也是交付檢查。這些檢查涵蓋目前可驗證路徑；其他規格邊界由 GitHub Issues 持續追蹤。
 
@@ -109,3 +109,7 @@ Plane integration 目前完成首次匯出的本機 preparation：註冊穩定 c
 ```
 
 Hosted MCP server、Postgres 和 UI 都延後，等本機 MCP workflow 被證明有用後再處理。
+
+## Plane 首次匯出
+
+已排入的 Plane create Sync Intent 可透過 `pnpm plane:export -- <sync-intent-id>` 明確執行。連線參數、重試限制及 built command 見 [操作手冊](docs/16-operation-manual.md#單次-plane-首次匯出-cli)。一般 stdio 啟動不會自動匯出；後續 update／close／reopen execution 與雙向同步仍待完成。
