@@ -1642,3 +1642,29 @@ Pinned payload version 1：
 Idempotency key 由 server 對 Project ID、Local Actor ID、operation 及 trimmed client key 的 canonical JSON 做 SHA-256，使用 `plane-ticket-export:` namespace。先以 Ticket identity 取得 Project scope，再查 durable intent。同 key、同三個 command IDs 回放原 intent／audit，不寫入額外 audit，即使來源已 archive 或 revision 已 supersede；同 key 不同 command 回 `CONFLICT`。跨 Project／Actor 的 key scope 獨立。此流程不使用 Result Acceptance／Revocation 專用的 Operation Receipt。
 
 不同 key／Actor 對同 Ticket／container 的 outstanding create（包含 failed attempt）回 `CONFLICT`；存在 active mapping 亦拒絕。已有 succeeded attempt 的 create 不再 outstanding，但 active mapping 仍阻擋。Actor、intent、audit 在同一 transaction 內保存，SQLite trigger 同時保護重複需求；失敗全部 rollback，原 key 可重新嘗試。既有 Ticket／approval／Graph／Result 不變。
+
+## External Work Item History Read Tools
+
+目前僅支援 Plane Ticket-level mapping。這兩個工具只讀取已持久化的 identities 與歷史，不呼叫 provider、不新增 audit／attempt、不更動 Ticket 或 snapshot。此 slice 沒有 live Plane processor，查詢到 item 不代表目前外部服務仍可連線或已與最新 Ticket 同步。
+
+### `list_ticket_external_work_items`
+
+封閉 input：`{ "ticket_id": "<Ticket ID>" }`。Output data：`{ "items": [{ "mapping": {}, "external_work_item": {}, "snapshots": [] }] }`。
+
+包含 active 與 archived mappings，依 mapping 的 `created_at`、`id` 升冪排序。每個 mapping 的 snapshots 依 `captured_at`、`id` 升冪排序。Archived Project／Ticket／revision 不影響歷史可讀性；known Ticket 無有效 mapping 回空陣列，unknown Ticket 回 `NOT_FOUND`。
+
+### `get_external_work_item`
+
+封閉 input：`{ "external_work_item_id": "<Internal External Work Item ID>" }`。Output data：`{ "external_work_item": {}, "mappings": [], "snapshots": [] }`。使用內部穩定 identity 查詢，不接受 external URL、title、Project 或 owner scope override。Unknown item 或非 Plane item 回 `NOT_FOUND`。
+
+Mappings 依 `created_at`、`id` 升冪排序，snapshots 跨 mappings 依 `captured_at`、`id` 升冪排序。無有效 mapping 的 Plane item 仍回傳 item 本身，但 mappings 與 snapshots 為空，不引入無法驗證 owner scope 的 snapshot。
+
+共用 serialization：
+
+- `external_work_item`：`id`、`external_container_id`、`provider`、`external_id`、`external_url`、`lifecycle_status`、`metadata`、`created_at`、`updated_at`、`archived_at`。
+- `mapping`：`id`、`project_id`、`internal_owner_type`、`internal_owner_id`、`external_container_id`、`external_work_item_id`、`source_ticket_revision_id`、`lifecycle_status`、`next_sequence_number`、`metadata`、`created_at`、`updated_at`、`archived_at`。
+- `snapshot`：`id`、`project_id`、`external_work_item_id`、`mapping_id`、`content`、`external_status`、`concurrency_token`、`captured_at`。
+
+可空欄位保留 `null`；`metadata` 與 snapshot `content` 是持久化 JSON 原值，包含 arrays、null 與原有欄位，不以 Ticket 的最新 specification 重建。
+
+所有 mapping 必須具有一致的 Project、Ticket owner、Plane container 與 item identity：mapping Project 等於 owner Ticket Project；source revision 若非 null，必須屬於相同 Ticket／Project；item 與 mapping container 相同，item／container provider 均為 Plane。Snapshot 必須指向有效 mapping，且 Project／item 均與該 mapping 相符。任一不一致的歷史紀錄不混入結果，不修改或刪除原始資料。

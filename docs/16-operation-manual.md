@@ -507,3 +507,11 @@ Integrity check 失敗時不可自動刪除或修復資料。
 取得 approved Ticket revision 與上述 container ID 後，呼叫 `request_plane_ticket_export({ticket_id, source_ticket_revision_id, external_container_id, idempotency_key})`。請保存此操作的 client key；網路中斷或 server 重啟時，以同 key／同 IDs 重送可取得原 intent 與 audit ID。此操作只排入本機 durable request，不代表 Plane work item 已建立。
 
 使用 `get_sync_intent({sync_intent_id})` 讀取 pinned payload、request state 與 attempt history；`list_ticket_export_requests({ticket_id})` 列出該 Ticket 的歷史需求。現階段沒有 provider processor，正常新增需求會維持 `pending`、attempts 為空。不要用新 key 繞過 pending 或 failed request：同 Ticket／container 的 outstanding create 會被拒絕。後續 provider execution、mapping enrollment 與雙向同步尚未交付。
+
+### 查詢已保存的 Plane work item 歷史
+
+使用 `list_ticket_external_work_items({ticket_id})` 查看 Ticket 的全部有效身分關聯，包含已 archive 的 mapping；每筆回傳 mapping、External Work Item 與 snapshots。Mapping 依建立時間與 id 排序，每組 snapshots 依擷取時間與 id 排序。
+
+取得 item 的內部 `id` 後，使用 `get_external_work_item({external_work_item_id})` 讀取該 item 的全部有效 mappings，以及跨 mappings 依時間排序的 snapshot history。請使用此穩定 id，不要傳顯示名稱、外部 URL 或外部系統的 item id。Ticket 已 archive 仍可讀歷史；沒有 mapping 的已知 Ticket 回空列表，無有效 mapping 的 Plane item 不會帶入無 owner scope 的 snapshots。
+
+Snapshot 是當時保存的外部內容，包含 external status 與 concurrency token，並非目前 Ticket specification 或 live provider 狀態。讀取工具不連線 Plane、不建立 request／attempt／audit，也不改變內部 Ticket completion。此階段沒有 live Plane processor；排入 request 後只有 pending 需求而沒有 External Work Item 是正常結果。Mapping 與 snapshot 查詢已能獨立驗證，實際 provider execution 與自動 enrollment 另行交付。
