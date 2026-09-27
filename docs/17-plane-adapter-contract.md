@@ -31,3 +31,13 @@ Description 中每個使用者字串均 escape `& < > " '`，CRLF／CR／LF 轉�
 [Create API](https://developers.plane.so/api-reference/issue/add-issue) 列出 `name`、`description_html` 與 external marker fields。[Work item model](https://developers.plane.so/api-reference/issue/overview) 定義 project、state 與 `updated_at` 等資料欄位；未知欄位保持 external-only。
 
 [官方 pinned implementation](https://github.com/makeplane/plane/blob/5f7d92784c403f76284f0f16718f320221dc7fec/apps/api/plane/api/views/issue.py) 在雙 marker filter 下回傳單一 item；[List API](https://developers.plane.so/api-reference/issue/list-issues) 另有一般分頁契約。Transport 必須先辨識外層 response，再將每個候選 item 交給本 observation mapper。來源查核日為 2026-09-27；目前未執行真實 Plane export。
+
+## 已知 item 觀察與 managed content 差異
+
+`planeKnownItemObservation(value, request)` 用已儲存的 external item ID 與 container project 驗證身分。回應必須含完全吻合的 `id`、`project`，以及 string 型別的 `name`、`description_html`；空字串是可記錄的內容差異。兩個 markers 可改變、為 null 或缺漏，但其他型別拒絕。建立與 reconciliation 的 `planeItemObservation` 仍要求原始 markers 完全吻合。
+
+已知 item mapper 與建立 mapper 共用純 JSON 深複製、status、timestamp 與 URL 規則。Unknown fields 原樣保存；無效 JSON／身分／managed fields 回傳 null，不代表 item 已刪除。`state` 與精確的 `updated_at` 只是外部 observation，不能改變內部進度。
+
+`planeManagedContent.compare({expected, observed})` 是同步純函數，expected 使用比較時已核准 revision 的 payload 與**原始 create intent key**。它重用 `planeCreateFields` 的 hash/schema 驗證與 HTML escaping，依 `name`、`description_html`、`external_source`、`external_id` 的固定順序回傳差異。每筆包含 expected 字串及 observed `{present:false}` 或 `{present:true,value:string|null}`；缺漏與 null 不合併。輸入的身分、metadata 或 JSON 不合法即 throw，不能製造部分差異。
+
+HTML 採精確字串比較，provider whitespace／normalization 可能產生保守的差異。Labels、assignees、status、token 等外部欄位不參與 managed content 比較；它們仍留在完整 snapshot JSON。此 adapter 不保存 snapshot、不自動採納外部內容、不解析 HTML 回 domain，也不把讀取相符當成 outbound 同步成功。
