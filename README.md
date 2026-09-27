@@ -121,3 +121,9 @@ Hosted MCP server、Postgres 和 UI 都延後，等本機 MCP workflow 被證明
 `get_mapping_termination` 與 mapping termination resource 可查詢停止同步的 Decision、actor、理由、時間及停止前的原始 attempts／errors；archived health 的 `current` 不表示這些歷史失敗已成功。
 
 `get_mapping_sync_plan` 與 mapping `sync-plan` resource 可查詢依 sequence 排序的下一個同步義務、阻擋原因及歷史 content supersession。這是唯讀觀測，沒有取得 execution claim，也不執行外部寫入；完整 state／欄位與範例語意見 [Ordered Mapping Sync Plan](docs/20-mapping-sync-plan.md)。
+
+### 明確讀取 Plane 內容
+
+完成首次 export 後，使用同一組 Plane 與 database 環境設定，執行 `pnpm plane:observe -- <mapping-id>`；build 後可用 `node dist/plane-observe.js <mapping-id>`。每次 GET 保存獨立 snapshot，與 commit 時的 approved Ticket Revision 比較並保存 Content Drift；不更新遠端或內部規格，也不改變 Sync Health。
+
+`captured`（含有 drift）exit 0；provider unknown／執行失敗 exit 1；參數或設定錯誤 exit 2。`--help` 不需 credentials，也不開啟 database。完整輸出、actor 設定與歷史語意見 [操作手冊](docs/16-operation-manual.md#明確讀取-plane-內容)。

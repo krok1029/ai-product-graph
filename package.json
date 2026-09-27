@@ -16,7 +16,9 @@
     "test": "vitest run",
     "smoke": "node --import tsx src/smoke.ts",
     "plane:export": "node --import tsx src/plane-export.ts",
-    "plane:export:built": "node dist/plane-export.js"
+    "plane:export:built": "node dist/plane-export.js",
+    "plane:observe": "node --import tsx src/plane-observe.ts",
+    "plane:observe:built": "node dist/plane-observe.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
