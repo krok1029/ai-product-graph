@@ -33,6 +33,11 @@ import {
   type TicketSpecInput
 } from "./ticket-workflow.js";
 
+import {
+  RepositoryWorkflow,
+  type CreateRepositoryInput
+} from "./repository-workflow.js";
+
 type ServiceOptions = {
   idFactory?: () => string;
   clock?: () => Date;
@@ -46,6 +51,7 @@ export class ProductGraphService {
   private readonly idFactory: () => string;
   private readonly clock: () => Date;
   private readonly actor: NonNullable<ServiceOptions["actor"]>;
+  private readonly repositoryWorkflow: RepositoryWorkflow;
   private readonly graphWorkflow: GraphWorkflow;
   private readonly ticketWorkflow: TicketWorkflow;
   private readonly implementationWorkflow: ImplementationWorkflow;
@@ -60,6 +66,10 @@ export class ProductGraphService {
       id: "00000000000000000000000001",
       displayName: "Local User"
     };
+    this.repositoryWorkflow = new RepositoryWorkflow(ports, {
+      idFactory: this.idFactory,
+      clock: this.clock
+    });
     this.graphWorkflow = new GraphWorkflow(ports, {
       idFactory: this.idFactory,
       clock: this.clock,
@@ -75,6 +85,14 @@ export class ProductGraphService {
       clock: this.clock,
       actor: this.actor
     });
+  }
+
+  createRepository(input: CreateRepositoryInput) {
+    return this.repositoryWorkflow.create(input);
+  }
+
+  listRepositories(projectId: string) {
+    return this.repositoryWorkflow.list(projectId);
   }
 
   createProject(input: { name: string; description?: string }) {

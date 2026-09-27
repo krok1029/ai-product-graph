@@ -135,48 +135,70 @@ it("runs the Graph reconciliation workflow through MCP", async () => {
     const graphNodeId = ((context.nodes as Array<{ id: string }>)[0] as {
       id: string;
     }).id;
-    const repository = {
-      id: "01MCPREPOSITORY0000000001",
-      projectId: project.id,
-      slug: "app",
-      name: "App Repository",
-      rootPath: null,
-      remoteUrl: null,
-      lifecycleStatus: "active" as const,
-      createdAt: "2026-07-28T00:00:00.000Z",
-      updatedAt: "2026-07-28T00:00:00.000Z"
-    };
-    ports.repositories.insert(repository);
-    const ticketDraft = toolData(
+    const repository = toolData(
       await client.callTool({
-        name: "create_ticket_draft_batch",
+        name: "create_repository",
         arguments: {
           project_id: project.id,
-          source_graph_revision_id: graphRevisionId,
-          source_node_ids: [graphNodeId],
-          tickets: [
-            {
-              title: "Build countdown preset controls",
-              user_story:
-                "As a user, I can start a preset countdown quickly.",
-              scope: ["Add preset controls"],
-              acceptance_criteria: [
-                "A user can start a preset countdown in one tap."
-              ],
-              non_goals: [],
-              related_graph_node_ids: [graphNodeId],
-              implementation_targets: [
-                {
-                  repository_id: repository.id,
-                  scope: ["Timer controls"]
-                }
-              ],
-              implementation_notes: []
-            }
-          ]
+          slug: "app",
+          name: "App Repository"
         }
       })
-    );
+    ).repository as { id: string; name: string };
+    expect(toolData(await client.callTool({
+      name: "list_repositories",
+      arguments: { project_id: project.id }
+    })).repositories).toEqual([repository]);
+    const ticketInput = {
+      project_id: project.id,
+      source_graph_revision_id: graphRevisionId,
+      source_node_ids: [graphNodeId],
+      tickets: [
+        {
+          title: "Build countdown preset controls",
+          user_story:
+            "As a user, I can start a preset countdown quickly.",
+          scope: ["Add preset controls"],
+          acceptance_criteria: [
+            "A user can start a preset countdown in one tap."
+          ],
+          non_goals: [],
+          related_graph_node_ids: [graphNodeId],
+          implementation_targets: [
+            {
+              repository_id: repository.id,
+              scope: ["Timer controls"]
+            }
+          ],
+          implementation_notes: []
+        }
+      ]
+    };
+    const otherProject = toolData(await client.callTool({
+      name: "create_project",
+      arguments: { name: "Another Project" }
+    })).project as { id: string };
+    const otherRepository = toolData(await client.callTool({
+      name: "create_repository",
+      arguments: { project_id: otherProject.id, slug: "app", name: "Other App" }
+    })).repository as { id: string };
+    const wrongScope = await client.callTool({
+      name: "create_ticket_draft_batch",
+      arguments: {
+        ...ticketInput,
+        tickets: ticketInput.tickets.map(ticket => ({
+          ...ticket,
+          implementation_targets: [{ repository_id: otherRepository.id, scope: ["Wrong scope"] }]
+        }))
+      }
+    });
+    expect(wrongScope.isError).toBe(true);
+    expect(JSON.parse((wrongScope.content as Array<{ text: string }>)[0]!.text).error.code)
+      .toBe("NOT_FOUND");
+    const ticketDraft = toolData(await client.callTool({
+      name: "create_ticket_draft_batch",
+      arguments: ticketInput
+    }));
     const ticketRevisionId = (
       (ticketDraft.tickets as Array<{ revision: { id: string } }>)[0] as {
         revision: { id: string };

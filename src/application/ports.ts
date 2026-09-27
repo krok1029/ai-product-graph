@@ -136,6 +136,8 @@ export interface GraphEdgeRepository {
 export interface RepositoryRepository {
   insert(repository: Repository): void;
   findById(id: string): Repository | null;
+  findBySlug(projectId: string, slug: string): Repository | null;
+  list(projectId: string): Repository[];
 }
 
 export interface TicketDraftBatchRepository {

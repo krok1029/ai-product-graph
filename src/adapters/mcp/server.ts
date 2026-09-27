@@ -38,6 +38,7 @@ import {
   serializeTicketDraftBatch,
   serializeTicketRevision
 } from "./serializers.js";
+import { registerRepositoryTools } from "./repository-tools.js";
 import { success, toToolResult } from "./tool-envelope.js";
 import { registerPlanningPrompts } from "./prompts.js";
 
@@ -47,6 +48,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
     version: "0.1.0"
   });
 
+  registerRepositoryTools(server, service);
   registerPlanningPrompts(server);
 
   server.registerTool(

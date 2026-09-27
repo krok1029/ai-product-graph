@@ -357,6 +357,22 @@ export function createCoreRepositories(
             repository.updatedAt
           );
       },
+      findBySlug(projectId, slug) {
+        const row = database
+          .prepare(`SELECT id, project_id, slug, name, root_path, remote_url,
+            lifecycle_status, created_at, updated_at
+            FROM repositories WHERE project_id = ? AND slug = ?`)
+          .get(projectId, slug) as RepositoryRow | undefined;
+        return row ? mapRepository(row) : null;
+      },
+      list(projectId) {
+        const rows = database
+          .prepare(`SELECT id, project_id, slug, name, root_path, remote_url,
+            lifecycle_status, created_at, updated_at
+            FROM repositories WHERE project_id = ? ORDER BY created_at, id`)
+          .all(projectId) as RepositoryRow[];
+        return rows.map(mapRepository);
+      },
       findById(id) {
         const row = database
           .prepare(
