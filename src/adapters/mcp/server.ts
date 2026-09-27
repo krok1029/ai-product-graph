@@ -1,3 +1,4 @@
+import { registerSyncIntentTools } from "./sync-intent-tools.js";
 // MCP server 註冊入口。
 //
 // 註冊 AI Product Graph 的 MCP tools 與 resources。Validation、serialization
@@ -40,6 +41,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
   });
 
   registerRepositoryTools(server, service);
+  registerSyncIntentTools(server, service);
   registerPlanningPrompts(server);
 
   server.registerTool(

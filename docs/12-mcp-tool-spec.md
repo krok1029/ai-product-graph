@@ -1492,3 +1492,63 @@ Prompts 應回傳 instructions，要求 client agent 產生符合 tool input sch
 Arguments 經 trim 後不得為空。`prompts/get` 只回傳 client-side instructions 與工具呼叫 JSON 範例，不讀寫 domain 資料、不執行 generation，也不呼叫 provider。Client 先讀 `tools/list` 的實際 schema，並取得來源與精確版本，才填寫 JSON。範例中的 `<...>` 不是可提交的 identities；缺少介面或來源資料時停止相關生成並取得 structured context。
 
 所有生成均先建立 draft；使用者對該 draft identity 的明確核准才可觸發 approval tools。唯讀 review／trace 不執行 mutations，review 通過不構成 Approval。Prompt 不替代 tools 的資料驗證、來源 freshness 與 optimistic concurrency checks。
+
+## Sync Intent Read Tools
+
+### `get_sync_intent`
+
+Input：`{ "sync_intent_id": "<Sync Intent ID>" }`。
+
+Output data：
+
+```json
+{
+  "sync_intent": {
+    "id": "intent-id",
+    "project_id": "project-id",
+    "mapping_id": null,
+    "external_container_id": "container-id",
+    "sequence_number": null,
+    "operation": "create",
+    "source_event_type": "plane_ticket_export_requested",
+    "source_event_id": "original-audit-id",
+    "source_ticket_revision_id": "approved-revision-id",
+    "payload_hash": "sha256",
+    "payload": {
+      "schema_version": 1,
+      "owner": { "type": "ticket", "id": "ticket-id" },
+      "source_ticket_revision_id": "approved-revision-id",
+      "specification": { "title": "Pinned title" }
+    },
+    "idempotency_key": "stable-logical-operation-key",
+    "supersedes_sync_intent_id": null,
+    "lifecycle_status": "active",
+    "created_at": "2026-09-27T00:00:00.000Z"
+  },
+  "attempts": [],
+  "request_state": "pending"
+}
+```
+
+`payload` 是原始持久化 JSON 的解析結果；上例省略其 specification 的其他欄位。讀取不得從 Ticket 的最新 title、revision 或其他 mutable state 重新產生 payload。Container identity 以 intent 的 `external_container_id` 回傳；metadata 由 External Container list 工具另行查詢。
+
+`attempts` 包含全部歷史，依 `started_at`、`id` 升冪排序。每個 attempt 回傳 `id`、`sync_intent_id`、`external_work_item_id`、`operation`、`idempotency_key`、`started_at`、`completed_at`、`result_status`、解析後的 `response` 與 `error`；可空欄位保留 `null`。
+
+單一 request 的 `request_state` 依序判定：
+
+1. Intent 已 archive：`archived`。
+2. 任一 attempt 成功：`succeeded`，晚到的 failure 不覆蓋成功。
+3. 無成功 attempt 時，最新 attempt 是 `started`：`running`；是 `failed`：`failed`。
+4. 尚無 attempt：`pending`。
+
+這是單一 request 的狀態，不是 owner／mapping 的 Sync Health，不回傳 `current`。Unknown intent 回傳 `NOT_FOUND`。Archived intent 仍可查詢。
+
+### `list_ticket_export_requests`
+
+Input：`{ "ticket_id": "<Ticket ID>" }`。Output data：`{ "requests": [] }`；每個 request 與 `get_sync_intent` 的 data 結構相同。
+
+只列出 `source_event_type = plane_ticket_export_requested` 且 `operation = create` 的 intents。Ownership 由 `source_ticket_revision_id → Ticket Revision → Ticket` 確认，intent、revision 與 Ticket 的 Project 必須一致；pinned payload 的 `owner.type = ticket`、`owner.id` 與 source revision 也必須相符。其他 owner、Project、event 或 operation 的資料不得混入。
+
+Requests 依 `created_at`、`id` 升冪排序，包含 archived intents／Ticket／revision 的歷史。Existing Ticket 尚無 request 回傳空陣列；unknown Ticket 回傳 `NOT_FOUND`。
+
+兩個工具皆只讀，不新增 audit、不變更 domain state、不啟動 processor 或呼叫 provider。重啟後應得到相同的 pinned request 與完整 attempts；查詢成功不表示外部 work item 已建立。

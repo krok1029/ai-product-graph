@@ -1,3 +1,4 @@
+import { SyncIntentReads } from "./sync-intent-reads.js";
 import { ResultRevocationWorkflow, type RevokeResultAcceptanceInput } from "./result-revocation-workflow.js";
 import { ResultAcceptanceWorkflow, type AcceptImplementationResultInput } from "./result-acceptance-workflow.js";
 // Product graph service facade。
@@ -115,6 +116,14 @@ export class ProductGraphService {
 
   acceptImplementationResult(input: AcceptImplementationResultInput) {
     return this.resultAcceptanceWorkflow.accept(input);
+  }
+
+  getSyncIntent(syncIntentId: string) {
+    return new SyncIntentReads(this.ports).get(syncIntentId);
+  }
+
+  listTicketExportRequests(ticketId: string) {
+    return new SyncIntentReads(this.ports).listTicketExportRequests(ticketId);
   }
 
   createRepository(input: CreateRepositoryInput) {
