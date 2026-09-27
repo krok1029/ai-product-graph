@@ -14,7 +14,8 @@ const contentSchema = z.object({
 export function validHealthObligation(details: SyncIntentDetails, mapping: ExternalWorkItemMapping,
   originalCreate: boolean): boolean {
   const intent = details.syncIntent;
-  const payload = intent.payload;
+  const payload = record(intent.payload);
+  if (!payload) return false;
   const owner = record(payload.owner);
   if (!nonempty.safeParse(intent.id).success || !nonempty.safeParse(intent.idempotencyKey).success ||
       !nonempty.safeParse(intent.sourceEventId).success || intent.projectId !== mapping.projectId ||

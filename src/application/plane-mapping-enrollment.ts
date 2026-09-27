@@ -2,6 +2,7 @@ import { ApplicationError } from "../domain/errors.js";
 import type { ExternalWorkItemMapping } from "../domain/external-work-item.js";
 import type { Ticket, TicketRevision } from "../domain/models.js";
 import type { SyncIntent } from "../domain/sync-intent.js";
+import { canCoalescePredecessor } from "./mapping-sync-obligations.js";
 import { hashJson, planeExportPayload } from "./plane-export-payload.js";
 import type { ApplicationPorts } from "./ports.js";
 
@@ -78,6 +79,18 @@ export class PlaneMappingEnrollment {
       payloadHash: hashJson(payload), payload, idempotencyKey, supersedesSyncIntentId: null,
       lifecycleStatus: "active", createdAt: event.now
     };
+    if (operation === "update") {
+      // allocateSequence 的回傳值才是本次 transaction 中的最新序號。
+      const predecessor = this.ports.syncIntents.listByMappingId(mapping.id)
+        .find(previous => previous.sequenceNumber === intent.sequenceNumber! - 1);
+      const source = predecessor?.sourceTicketRevisionId && this.ports.ticketRevisions.findById(predecessor.sourceTicketRevisionId);
+      if (predecessor && source && source.ticketId === mapping.internalOwnerId && source.projectId === mapping.projectId &&
+          source.reviewStatus === "approved" && hashJson(planeExportPayload(source)) === predecessor.payloadHash &&
+          canCoalescePredecessor({ syncIntent: predecessor,
+            attempts: this.ports.syncIntents.listAttempts(predecessor.id), requestState: "pending" }, mapping, intent.sequenceNumber!)) {
+        intent.supersedesSyncIntentId = predecessor.id;
+      }
+    }
     this.ports.syncIntents.insert(intent);
     return intent.id;
   }

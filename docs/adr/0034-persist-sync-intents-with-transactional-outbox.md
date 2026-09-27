@@ -66,6 +66,8 @@ Post-commit Sync Intent processor 在 transaction 外消費 intents，對每次 
 
 Processor 必須依 External Work Item mapping sequence 序列化 intents。尚未開始的 content-update intent 可以由較新 revision 的 intent 以 `supersedes_sync_intent_id` 取代，舊 intent 仍保留；已開始的 update 必須先成為 terminal。Create、close、reopen 等 lifecycle intents 不得被 coalesce 或跳過。
 
+有效 supersession edge 是持久的歷史證明，不因 source intent 已開始、成功、失敗或不再是最新 desired content 而撤銷；只對零 attempts 的 target 生效。解釋時檢查完整 history 的同 mapping、向後 sequence 與無 lifecycle barrier 關係；損壞 chain 不解除義務。Enrollment 只連結緊鄰且可驗證的零 attempts content predecessor，不改寫既有 links。
+
 Terminal-failed content update 可由較新的 content intent 取代其 retry requirement；processor 不需先重送過時 payload。Failed lifecycle intent 不得被新版內容繞過，必須作為 ordering barrier 等待成功或明確 resolution。
 
 若 lifecycle failure 永久無法修復，processor 不得自行略過。使用者可在修復後 retry、建立 replacement，或執行 Sync Mapping Termination。Termination archive mapping 並使 pending intents 不再執行，但必須保留其原始 outcome 與 errors；archived mapping 才從目前 Sync Health 排除。
