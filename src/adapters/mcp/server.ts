@@ -40,6 +40,7 @@ import {
   serializeTicketDraftBatch,
   serializeTicketRevision
 } from "./serializers.js";
+import { registerRepositoryTools } from "./repository-tools.js";
 import { success, toToolResult } from "./tool-envelope.js";
 
 export function createMcpServer(service: ProductGraphService): McpServer {
@@ -47,6 +48,8 @@ export function createMcpServer(service: ProductGraphService): McpServer {
     name: "ai-product-graph",
     version: "0.1.0"
   });
+
+  registerRepositoryTools(server, service);
 
   server.registerTool(
     "create_project",

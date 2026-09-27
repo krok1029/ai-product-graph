@@ -22,6 +22,8 @@ Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite sche
 - `create_project`
 - `list_projects`
 - `get_project`
+- `create_repository`
+- `list_repositories`
 - `add_idea`
 - `get_idea`
 - `create_product_brief_draft`
@@ -39,11 +41,12 @@ Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite sche
 
 其餘章節描述的是已定案但尚未完整實作的操作契約。
 
-另有一個尚待實作補齊的操作缺口：
+Repository provisioning 已可透過 MCP 完成：
 
-- Ticket、Implementation Target 與 Observed Evidence 都需要既有 `repository_id`。
-- 目前 MVP Tool Spec 尚未定義建立或綁定 Repository 的 MCP tool。
-- 在 Repository provisioning workflow 補齊前，repository-backed 流程只能透過測試 fixture、seed 或 infrastructure setup 準備 Repository identity。
+- 建立 Project 後，用 `create_repository` 提供 `project_id`、Project 內唯一 `slug` 與 `name`；可附 `root_path`、`remote_url` 作為 metadata。
+- 保存回傳的 `repository.id`，供 Ticket implementation targets 與 Observed Evidence 使用。重新開啟 server 後可透過 `list_repositories` 找回相同 identity。
+- 重複 slug 會回傳 conflict；先查詢既有 identity，勿以新的 slug 重複登記同一次操作。查詢包含 archived 歷史資料，新的 Target 只能引用 active Repository。
+- 此操作不掃描 local repository 或呼叫 provider；Repository context 與 baseline 仍由 client 於建立 Implementation Brief 時提供。
 
 外部 Plane／GitHub 同步目前只有資料模型與 durable outbox contract，尚未提供完整的使用者操作 tools。
 
