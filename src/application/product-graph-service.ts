@@ -6,6 +6,7 @@
 
 import { ulid } from "ulid";
 import { MarkdownExport, type MarkdownExportInput } from "./markdown-export.js";
+import { ProjectReads } from "./project-reads.js";
 
 import { ApplicationError } from "../domain/errors.js";
 import type {
@@ -119,6 +120,14 @@ export class ProductGraphService {
 
   getMarkdownExportArtifact(input: MarkdownExportInput) {
     return new MarkdownExport(this.ports).readArtifact(input);
+  }
+
+  getProjectBrief(projectId: string) {
+    return new ProjectReads(this.ports).getBrief(projectId);
+  }
+
+  getProjectTickets(projectId: string) {
+    return new ProjectReads(this.ports).getTickets(projectId);
   }
 
   listProjects() {

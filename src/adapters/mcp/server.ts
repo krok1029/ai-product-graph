@@ -4,10 +4,8 @@
 // 與 error envelope 放在鄰近 modules，讓這個檔案專注在把 MCP call routing
 // 到 ProductGraphService。
 
-import {
-  McpServer,
-  ResourceTemplate
-} from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { registerProjectResources } from "./project-resources.js";
 import { z } from "zod";
 import { registerMarkdownTools } from "./markdown-tools.js";
 
@@ -42,12 +40,15 @@ import {
   serializeTicketRevision
 } from "./serializers.js";
 import { success, toToolResult } from "./tool-envelope.js";
+import { registerPlanningPrompts } from "./prompts.js";
 
 export function createMcpServer(service: ProductGraphService): McpServer {
   const server = new McpServer({
     name: "ai-product-graph",
     version: "0.1.0"
   });
+
+  registerPlanningPrompts(server);
 
   server.registerTool(
     "create_project",
@@ -635,66 +636,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
       })
   );
 
-  server.registerResource(
-    "projects",
-    "product-graph://projects",
-    {
-      title: "Projects",
-      description: "All AI Product Graph projects.",
-      mimeType: "application/json"
-    },
-    async uri => ({
-      contents: [
-        {
-          uri: uri.href,
-          mimeType: "application/json",
-          text: JSON.stringify(
-            {
-              projects: service.listProjects().projects.map(serializeProject)
-            },
-            null,
-            2
-          )
-        }
-      ]
-    })
-  );
-
-  server.registerResource(
-    "project",
-    new ResourceTemplate("product-graph://projects/{projectId}", {
-      list: undefined
-    }),
-    {
-      title: "Project",
-      description: "An AI Product Graph project summary.",
-      mimeType: "application/json"
-    },
-    async (uri, variables) => {
-      const projectId = String(variables.projectId);
-      const result = service.getProject(projectId);
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            mimeType: "application/json",
-            text: JSON.stringify(
-              {
-                project: serializeProject(result.project),
-                counts: {
-                  ideas: result.counts.ideas,
-                  graph_nodes: result.counts.graphNodes,
-                  tickets: result.counts.tickets
-                }
-              },
-              null,
-              2
-            )
-          }
-        ]
-      };
-    }
-  );
+  registerProjectResources(server, service);
 
   registerMarkdownTools(server, service);
 
