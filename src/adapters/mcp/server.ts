@@ -39,12 +39,15 @@ import {
   serializeTicketRevision
 } from "./serializers.js";
 import { success, toToolResult } from "./tool-envelope.js";
+import { registerPlanningPrompts } from "./prompts.js";
 
 export function createMcpServer(service: ProductGraphService): McpServer {
   const server = new McpServer({
     name: "ai-product-graph",
     version: "0.1.0"
   });
+
+  registerPlanningPrompts(server);
 
   server.registerTool(
     "create_project",

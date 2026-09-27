@@ -1357,3 +1357,16 @@ trace-feature-context
 ```
 
 Prompts 應回傳 instructions，要求 client agent 產生符合 tool input schema 的 JSON。
+
+| Prompt | 必填字串 arguments | 輸出用途 |
+| --- | --- | --- |
+| `product-brief` | `project_id`, `source_idea_id` | `create_product_brief_draft` arguments |
+| `extract-graph` | `project_id` | `create_graph_draft_batch` arguments |
+| `generate-tickets` | `project_id` | `create_ticket_draft_batch` arguments |
+| `implementation-brief` | `ticket_id`, `implementation_target_id` | `create_implementation_brief_draft` arguments |
+| `review-ticket-quality` | `ticket_id` | 唯讀品質 findings 與 open questions |
+| `trace-feature-context` | `project_id`, `node_id` | 唯讀 paths、source references 與 gaps |
+
+Arguments 經 trim 後不得為空。`prompts/get` 只回傳 client-side instructions 與工具呼叫 JSON 範例，不讀寫 domain 資料、不執行 generation，也不呼叫 provider。Client 先讀 `tools/list` 的實際 schema，並取得來源與精確版本，才填寫 JSON。範例中的 `<...>` 不是可提交的 identities；缺少介面或來源資料時停止相關生成並取得 structured context。
+
+所有生成均先建立 draft；使用者對該 draft identity 的明確核准才可觸發 approval tools。唯讀 review／trace 不執行 mutations，review 通過不構成 Approval。Prompt 不替代 tools 的資料驗證、來源 freshness 與 optimistic concurrency checks。
