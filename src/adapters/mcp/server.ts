@@ -1,3 +1,4 @@
+import { registerExternalWorkItemTools } from "./external-work-item-tools.js";
 import { registerPlaneExportTools } from "./plane-export-tools.js";
 import { registerSyncIntentTools } from "./sync-intent-tools.js";
 import { registerExternalContainerTools } from "./external-container-tools.js";
@@ -42,6 +43,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
     version: "0.1.0"
   });
 
+  registerExternalWorkItemTools(server, service);
   registerExternalContainerTools(server, service);
   registerRepositoryTools(server, service);
   registerSyncIntentTools(server, service);

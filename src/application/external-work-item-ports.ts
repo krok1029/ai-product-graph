@@ -1,0 +1,10 @@
+import type { ExternalWorkItem, ExternalWorkItemMapping, ExternalWorkItemSnapshot } from "../domain/external-work-item.js";
+
+export interface ExternalWorkItemRepository {
+  findById(id: string): ExternalWorkItem | null;
+  // 僅包含 Project、Ticket owner、source revision 與 Plane container 一致的 mappings。
+  listTicketMappings(ticketId: string): ExternalWorkItemMapping[];
+  listItemMappings(itemId: string): ExternalWorkItemMapping[];
+  listMappingSnapshots(mappingId: string): ExternalWorkItemSnapshot[];
+  listItemSnapshots(itemId: string): ExternalWorkItemSnapshot[];
+}
