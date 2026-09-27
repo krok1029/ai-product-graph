@@ -134,7 +134,7 @@ export interface GraphEdgeRepository {
       updatedAt: string;
     }
   ): void;
-  archive(edgeId: string, graphRevisionId: string, archivedAt: string): void;
+  archive(edgeId: string, graphRevisionId: string | null, archivedAt: string): void;
 }
 
 export interface RepositoryRepository {
