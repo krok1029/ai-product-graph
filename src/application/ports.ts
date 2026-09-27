@@ -1,3 +1,4 @@
+import type { Decision, OperationReceipt, ResultAcceptance, ResultAcceptanceCriterionOutcome } from "../domain/result-acceptance.js";
 import type {
   AuditLogEntry,
   GraphDraftBatch,
@@ -153,6 +154,7 @@ export interface TicketRepository {
   insert(ticket: Ticket): void;
   findById(id: string): Ticket | null;
   findBySlug(projectId: string, slug: string): Ticket | null;
+  setDeliveryStatus(ticketId: string, status: Ticket["deliveryStatus"], updatedAt: string): void;
   updateCurrentApprovedRevision(
     ticketId: string,
     expectedRevisionId: string | null,
@@ -226,6 +228,11 @@ export interface ObservedEvidenceRepository {
 }
 
 export interface ImplementationResultRepository {
+  listVerdicts(resultId: string): AcceptanceCriterionVerdict[];
+  listEvidenceIds(resultId: string): string[];
+  approve(resultId: string, approvedAt: string): void;
+  archive(resultId: string, archivedAt: string): void;
+  archiveOtherDrafts(targetId: string, exceptResultId: string, archivedAt: string): string[];
   insert(
     result: ImplementationResult,
     observedEvidenceIds: string[],
@@ -256,7 +263,27 @@ export interface TransactionRunner {
   run<T>(work: () => T): T;
 }
 
+export interface ResultAcceptanceRepository {
+  insert(acceptance: ResultAcceptance): void;
+  findById(id: string): ResultAcceptance | null;
+  findByResultId(resultId: string): ResultAcceptance | null;
+  insertOutcome(outcome: ResultAcceptanceCriterionOutcome): void;
+}
+
+export interface DecisionRepository {
+  insert(decision: Decision): void;
+  findById(id: string): Decision | null;
+}
+
+export interface OperationReceiptRepository {
+  insert(receipt: OperationReceipt): void;
+  find(projectId: string, actorId: string, operation: OperationReceipt["operationName"], key: string): OperationReceipt | null;
+}
+
 export type ApplicationPorts = {
+  resultAcceptances: ResultAcceptanceRepository;
+  decisions: DecisionRepository;
+  operationReceipts: OperationReceiptRepository;
   localActors: LocalActorRepository;
   projects: ProjectRepository;
   ideas: IdeaRepository;

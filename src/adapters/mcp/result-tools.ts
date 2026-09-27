@@ -13,6 +13,24 @@ import {
 import { success, toToolResult } from "./tool-envelope.js";
 
 export function registerResultTools(server: McpServer, service: ProductGraphService) {
+  server.registerTool("accept_implementation_result", {
+    title: "Accept Implementation Result",
+    description: "Accept a current draft Result with explicit criterion waivers and complete the Ticket when every required target is accepted.",
+    inputSchema: z.object({
+      idempotency_key: z.string().trim().min(1),
+      implementation_result_id: z.string().trim().min(1),
+      waivers: z.array(z.object({
+        acceptance_criterion_id: z.string().trim().min(1),
+        reason: z.string().trim().min(1)
+      }).strict()).default([])
+    }).strict()
+  }, async input => toToolResult(() => {
+    const result = service.acceptImplementationResult({
+      idempotencyKey: input.idempotency_key, implementationResultId: input.implementation_result_id,
+      waivers: input.waivers.map(waiver => ({ acceptanceCriterionId: waiver.acceptance_criterion_id, reason: waiver.reason }))
+    });
+    return success(result.data, result.auditLogId);
+  }));
   server.registerTool(
     "record_observed_evidence",
     {

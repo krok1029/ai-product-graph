@@ -52,6 +52,9 @@ export function createTicketRepositories(
       }
     },
     tickets: {
+      setDeliveryStatus(ticketId, status, updatedAt) {
+        database.prepare("UPDATE tickets SET delivery_status = ?, updated_at = ? WHERE id = ?").run(status, updatedAt, ticketId);
+      },
       listByProjectId(projectId) {
         const rows = database.prepare(
           `SELECT id, project_id, slug, title, current_approved_revision_id,

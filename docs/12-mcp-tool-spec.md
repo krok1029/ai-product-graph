@@ -1281,6 +1281,7 @@ Validation：
 - 若 replay 本身建立 observability log，該 log ID 不得取代 replay response 的 top-level `audit_log_id`。Replay response 的 `audit_log_id` 必須是 receipt 保存的原始成功 domain transaction audit log ID；若原始成功 response 沒有 `audit_log_id`，replay 也不得因 replay observability 產生新的 top-level `audit_log_id`。
 - Input 是 closed schema；不得包含 `actor_id`、`accepted_at`、`approved_by`、`approved_by_actor_id`、`approved_at` 或其他 acceptance actor/time 欄位。Server 必須從目前 Local Actor 取得 `Result Acceptance.actor_id`；不得信任、靜默忽略或保存 client-provided values。
 - Result 必須是 active draft。
+- Receipt miss 後，綁定的 Implementation Brief 必須仍為 active approved；綁定的 Product Brief Version 也必須仍為 active approved，但不要求是 current pointer。Brief 已被替代或來源已封存時回傳 `STALE_HANDOFF`；既有成功 receipt replay 不受這些後續狀態變更影響。
 - Result 不得已有任何 Result Acceptance 紀錄；每個 Implementation Result 最多只能接受一次，即使既有 Acceptance 後來被撤銷也不得重新接受。
 - `stale_at_submission = true` 或 Lifecycle Status 為 archived 的 Result 必須拒絕 acceptance。
 - 同一 Implementation Target 最多只能有一份 active approved Result。

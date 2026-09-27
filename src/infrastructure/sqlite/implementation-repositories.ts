@@ -8,12 +8,10 @@ import type { ApplicationPorts } from "../../application/ports.js";
 import type { SqliteDatabase } from "./database.js";
 import {
   mapImplementationBrief,
-  mapImplementationResult,
   mapImplementationTarget,
   mapObservedEvidence,
   mapRepositoryContextSnapshot,
   type ImplementationBriefRow,
-  type ImplementationResultRow,
   type ImplementationTargetRow,
   type ObservedEvidenceRow,
   type RepositoryContextSnapshotRow
@@ -27,7 +25,6 @@ export function createImplementationRepositories(
   | "repositoryContextSnapshots"
   | "implementationBriefs"
   | "observedEvidence"
-  | "implementationResults"
   | "implementationArtifacts"
 > {
   return {
@@ -272,94 +269,6 @@ export function createImplementationRepositories(
           )
           .get(projectId, idempotencyKey) as ObservedEvidenceRow|undefined;
         return row? mapObservedEvidence(row):null;
-      }
-    },
-    implementationResults: {
-      insert(result, observedEvidenceIds, verdicts) {
-        database
-          .prepare(
-            `INSERT INTO implementation_results (
-          id, project_id, implementation_brief_id, implementation_target_id,
-          ticket_revision_id, supersedes_implementation_result_id,
-          result_json, review_status, lifecycle_status,
-          stale_at_submission, stale_reasons_json, metadata_json,
-          created_at, updated_at, archived_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', ?, ?, ?)`
-          )
-          .run(
-            result.id,
-            result.projectId,
-            result.implementationBriefId,
-            result.implementationTargetId,
-            result.ticketRevisionId,
-            result.supersedesImplementationResultId,
-            JSON.stringify(result.result),
-            result.reviewStatus,
-            result.lifecycleStatus,
-            result.staleAtSubmission? 1:0,
-            JSON.stringify(result.staleReasons),
-            result.createdAt,
-            result.updatedAt,
-            result.archivedAt
-          );
-        const evidenceStatement = database.prepare(
-          `INSERT INTO implementation_result_evidence (
-            implementation_result_id, observed_evidence_id, created_at
-          ) VALUES (?, ?, ?)`
-        );
-        for (const observedEvidenceId of observedEvidenceIds) {
-          evidenceStatement.run(
-            result.id,
-            observedEvidenceId,
-            result.createdAt
-          );
-        }
-        const verdictStatement = database.prepare(
-          `INSERT INTO acceptance_criterion_verdicts (
-            id, implementation_result_id, acceptance_criterion_id,
-            verdict, reason, evidence_ids_json, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)`
-        );
-        for (const verdict of verdicts) {
-          verdictStatement.run(
-            verdict.id,
-            verdict.implementationResultId,
-            verdict.acceptanceCriterionId,
-            verdict.verdict,
-            verdict.reason,
-            JSON.stringify(verdict.evidenceIds),
-            verdict.createdAt
-          );
-        }
-      },
-      findById(id) {
-        const row = database
-          .prepare(
-            `SELECT id, project_id, implementation_brief_id,
-                implementation_target_id, ticket_revision_id,
-                supersedes_implementation_result_id, result_json,
-                review_status, lifecycle_status, stale_at_submission,
-                stale_reasons_json, created_at, updated_at, archived_at
-         FROM implementation_results WHERE id = ?`
-          )
-          .get(id) as ImplementationResultRow|undefined;
-        return row? mapImplementationResult(row):null;
-      },
-      findActiveApprovedByTargetId(implementationTargetId) {
-        const row = database
-          .prepare(
-            `SELECT id, project_id, implementation_brief_id,
-                implementation_target_id, ticket_revision_id,
-                supersedes_implementation_result_id, result_json,
-                review_status, lifecycle_status, stale_at_submission,
-                stale_reasons_json, created_at, updated_at, archived_at
-         FROM implementation_results
-         WHERE implementation_target_id = ?
-           AND review_status = 'approved'
-           AND lifecycle_status = 'active'`
-          )
-          .get(implementationTargetId) as ImplementationResultRow|undefined;
-        return row? mapImplementationResult(row):null;
       }
     },
     implementationArtifacts: {

@@ -1,3 +1,4 @@
+import { ResultAcceptanceWorkflow, type AcceptImplementationResultInput } from "./result-acceptance-workflow.js";
 // Product graph service facade。
 //
 // MCP adapters、smoke tests 與未來 local callers 使用的公開 application
@@ -55,6 +56,7 @@ type ServiceOptions = {
 };
 
 export class ProductGraphService {
+  private readonly resultAcceptanceWorkflow: ResultAcceptanceWorkflow;
   private readonly idFactory: () => string;
   private readonly clock: () => Date;
   private readonly actor: NonNullable<ServiceOptions["actor"]>;
@@ -74,6 +76,9 @@ export class ProductGraphService {
       id: "00000000000000000000000001",
       displayName: "Local User"
     };
+    this.resultAcceptanceWorkflow = new ResultAcceptanceWorkflow(ports, {
+      idFactory: this.idFactory, clock: this.clock, actor: this.actor
+    });
     this.repositoryWorkflow = new RepositoryWorkflow(ports, {
       idFactory: this.idFactory,
       clock: this.clock
@@ -97,6 +102,10 @@ export class ProductGraphService {
       idFactory: this.idFactory,
       clock: this.clock
     });
+  }
+
+  acceptImplementationResult(input: AcceptImplementationResultInput) {
+    return this.resultAcceptanceWorkflow.accept(input);
   }
 
   createRepository(input: CreateRepositoryInput) {
