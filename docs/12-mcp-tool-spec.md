@@ -1668,3 +1668,16 @@ Mappings 依 `created_at`、`id` 升冪排序，snapshots 跨 mappings 依 `capt
 可空欄位保留 `null`；`metadata` 與 snapshot `content` 是持久化 JSON 原值，包含 arrays、null 與原有欄位，不以 Ticket 的最新 specification 重建。
 
 所有 mapping 必須具有一致的 Project、Ticket owner、Plane container 與 item identity：mapping Project 等於 owner Ticket Project；source revision 若非 null，必須屬於相同 Ticket／Project；item 與 mapping container 相同，item／container provider 均為 Plane。Snapshot 必須指向有效 mapping，且 Project／item 均與該 mapping 相符。任一不一致的歷史紀錄不混入結果，不修改或刪除原始資料。
+
+
+## Active Plane Mapping Enrollment
+
+`approve_ticket_revision` 成功時，`created_sync_intent_ids` 列出該次 transaction 為每個 active Plane Ticket mapping 保存的 intents。每個 mapping 建立 pinned `update`；若 approval 將 Ticket 從 done 重設為 planned，接著建立 `reopen`。尚無 mapping 的 Ticket 回空陣列，不會自動首次匯出。
+
+`accept_implementation_result`／`revoke_result_acceptance` 的既有 receipt response contract 不變。真正進入 done 的 acceptance 在同一 transaction 保存每個 mapping 的 `close`；真正離開 done 的 revocation 保存 `reopen`。Receipt replay 不建立額外 intents，狀態不變也不製造 lifecycle event。
+
+Update payload 與首次 export 使用相同 version 1 canonical specification projection。Close/reopen payload 為 `{schema_version: 1, owner: {type: "ticket", id}, source_ticket_revision_id, delivery_status}`；不含 provider REST DTO 或 external-only fields。每筆 intent 固定 mapping、container、revision、domain audit ID 與 canonical payload hash；key 由 mapping／operation／source event 產生，sequence 在 domain transaction 原子遞增，SQLite unique index 阻擋重複 sequence。
+
+首次 create 成功時，application factory `createPlaneCreateProcessor` 必定執行 mapping enrollment，補入 create 執行期間較新的 current revision 與 done state。Catch-up 的 source event 為 `plane_mapping.created`，source event ID 連回原 create request audit，payload 固定補入時的 current revision。原 create intent 與首次 mapping source revision 保持不變。
+
+所有 update／close／reopen 目前只持久化、保持 pending；create processor 拒絕執行這些 operations。`get_sync_intent` 可查已知 intent ID 的 request state，不能把它或 mapping lifecycle 當成 owner Sync Health。`list_ticket_export_requests` 仍只列首次 create requests，不擴張成所有 mapping intents。Live Plane REST、update/status processor、衍生 Sync Health 與雙向同步尚未交付。

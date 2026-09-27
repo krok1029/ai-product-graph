@@ -1,3 +1,5 @@
+import { reconcileImplementationTargets } from "./ticket-target-reconciliation.js";
+import { PlaneMappingEnrollment } from "./plane-mapping-enrollment.js";
 // Ticket workflow 主流程。
 //
 // 負責 Ticket identity、不可變 Ticket Revision drafts、approval，以及
@@ -8,7 +10,6 @@ import { ApplicationError } from "../domain/errors.js";
 import type {
   AuditLogEntry,
   GraphNode,
-  ImplementationTarget,
   Repository,
   Ticket,
   TicketDraftBatch,
@@ -288,8 +289,8 @@ export class TicketWorkflow {
         updatedAt: now
       });
 
-      const implementationTargets = this.reconcileImplementationTargets(
-        revision,
+      const implementationTargets = reconcileImplementationTargets(
+        this.ports, this.options.idFactory, revision,
         now
       );
       const previousApprovedRevisionId = ticket.currentApprovedRevisionId;
@@ -364,6 +365,8 @@ export class TicketWorkflow {
         createdAt: now
       });
       this.ports.auditLog.append(audit);
+      const createdSyncIntentIds = new PlaneMappingEnrollment(this.ports, this.options.idFactory)
+        .onRevisionApproved(ticket, approvedRevision, audit.id, now);
 
       return {
         ticket: updatedTicket,
@@ -376,7 +379,7 @@ export class TicketWorkflow {
         archivedImplementationResultIds:
           archivedArtifacts.implementationResultIds,
         archivedStaleRevisionIds,
-        createdSyncIntentIds: [] as string[],
+        createdSyncIntentIds,
         auditLogId: audit.id
       };
     });
@@ -519,50 +522,6 @@ export class TicketWorkflow {
       createdAt: input.now,
       updatedAt: input.now
     };
-  }
-
-  private reconcileImplementationTargets(revision: TicketRevision, now: string) {
-    const activeTargets = this.ports.implementationTargets.listActiveByTicketId(
-      revision.ticketId
-    );
-    const activeByRepository = new Map(
-      activeTargets.map(target => [target.repositoryId, target])
-    );
-    const requiredRepositories = new Set(
-      revision.requiredTargets.map(target => target.repository_id)
-    );
-    const targets: Array<
-      ImplementationTarget&{ identityAction: "created" | "reused" }
-    >=[];
-    const archivedTargetIds: string[]= [];
-
-    for (const required of revision.requiredTargets) {
-      const existing = activeByRepository.get(required.repository_id);
-      if (existing) {
-        targets.push({ ...existing, identityAction: "reused" });
-      } else {
-        const target: ImplementationTarget= {
-          id: this.options.idFactory(),
-          projectId: revision.projectId,
-          ticketId: revision.ticketId,
-          repositoryId: required.repository_id,
-          lifecycleStatus: "active",
-          createdAt: now,
-          updatedAt: now
-        };
-        this.ports.implementationTargets.insert(target);
-        targets.push({ ...target, identityAction: "created" });
-      }
-    }
-
-    for (const target of activeTargets) {
-      if (!requiredRepositories.has(target.repositoryId)) {
-        this.ports.implementationTargets.archive(target.id, now);
-        archivedTargetIds.push(target.id);
-      }
-    }
-
-    return { targets, archivedTargetIds };
   }
 
   private proposeImplementationTargets(

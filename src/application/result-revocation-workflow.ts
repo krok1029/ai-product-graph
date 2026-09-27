@@ -1,3 +1,4 @@
+import { PlaneMappingEnrollment } from "./plane-mapping-enrollment.js";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { ApplicationError } from "../domain/errors.js";
@@ -92,6 +93,8 @@ export class ResultRevocationWorkflow {
         entityType: "result_revocation", entityId: revocation.id,
         beforeSummary: { deliveryStatus: ticket.deliveryStatus }, afterSummary: data,
         metadata: {}, createdAt: now });
+      new PlaneMappingEnrollment(this.ports, this.options.idFactory)
+        .onDeliveryChanged(ticket, resultingStatus, auditLogId, now);
       const responseJson = canonicalizeJson(data);
       this.ports.operationReceipts.insert({ id: this.options.idFactory(), projectId: acceptance.projectId,
         localActorId: decision.actorId, operationName: "revoke_result_acceptance", idempotencyKey: command.idempotencyKey,
