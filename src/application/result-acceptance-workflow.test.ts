@@ -20,6 +20,34 @@ function count(f: ReturnType<typeof setup>, table: string) {
 }
 
 describe("Result Acceptance", () => {
+  it("rejects a result when its brief was superseded after submission", () => {
+    const f = setup();
+    const result = f.submit();
+    replaceBrief(f);
+    expect(() => accept(f, result.implementationResult.id)).toThrow(expect.objectContaining({ code: "STALE_HANDOFF" }));
+    expect(count(f, "result_acceptances")).toBe(0);
+    expect(count(f, "operation_receipts")).toBe(0);
+    expect(f.ports.tickets.findById(f.ticket.id)?.deliveryStatus).toBe("planned");
+  });
+
+  it("replays a successful acceptance after its source brief was superseded", () => {
+    const f = setup();
+    const result = f.submit();
+    const original = accept(f, result.implementationResult.id);
+    replaceBrief(f);
+    expect(accept(f, result.implementationResult.id)).toEqual(original);
+    expect(count(f, "result_acceptances")).toBe(1);
+  });
+
+  it("rejects an archived bound Product Brief Version without comparing current provenance pointers", () => {
+    const f = setup();
+    const result = f.submit();
+    f.database.prepare("UPDATE product_brief_versions SET lifecycle_status = 'archived' WHERE id = ?")
+      .run(f.productBrief.version.id);
+    expect(() => accept(f, result.implementationResult.id)).toThrow(expect.objectContaining({ code: "STALE_HANDOFF" }));
+    expect(count(f, "operation_receipts")).toBe(0);
+  });
+
   it("completes only after all current required targets have accepted results", () => {
     const f = setup(2);
     const first = f.submit(0), second = f.submit(1);
@@ -186,3 +214,16 @@ describe("Result Acceptance", () => {
   });
 
 });
+
+function replaceBrief(f: ReturnType<typeof setup>) {
+  const old = f.briefs[0]!;
+  const replacement = f.service.createImplementationBriefDraft({
+    implementationTargetId: old.implementationTargetId,
+    supersedesImplementationBriefId: old.id,
+    repoContext: { repositoryName: f.ports.repositoryContextSnapshots.findById(old.repositoryContextSnapshotId)!.context.repository_name, summary: "Updated plan", fileList: [],
+      moduleNotes: [], baselineCommitSha: "abc123", hasUncommittedChanges: false },
+    brief: { implementationPlan: ["Updated implementation plan"], suggestedFilesToInspect: [],
+      testStrategy: ["Verify updated plan"], risks: [], prSummaryDraft: "Updated implementation" }
+  });
+  f.service.approveImplementationBrief(replacement.implementationBrief.id);
+}

@@ -13,12 +13,14 @@ export function requireAcceptanceSource(ports: ApplicationPorts, result: Impleme
   const ticket = target && ports.tickets.findById(target.ticketId);
   const revision = ports.ticketRevisions.findById(result.ticketRevisionId);
   const brief = ports.implementationBriefs.findById(result.implementationBriefId);
+  const productBriefVersion = brief && ports.productBriefVersions.findById(brief.productBriefVersionId);
   const repository = target && ports.repositories.findById(target.repositoryId);
   const project = ports.projects.findById(result.projectId);
   const snapshot = brief && ports.repositoryContextSnapshots.findById(brief.repositoryContextSnapshotId);
-  if (!target || !ticket || !revision || !brief || !repository || !project || !snapshot ||
-      [target, ticket, repository, project].some(entity => entity.lifecycleStatus !== "active") ||
-      [target, ticket, revision, brief, repository, snapshot].some(entity => entity.projectId !== result.projectId) ||
+  if (!target || !ticket || !revision || !brief || !repository || !project || !snapshot || !productBriefVersion ||
+      [target, ticket, repository, project, brief, productBriefVersion].some(entity => entity.lifecycleStatus !== "active") ||
+      [target, ticket, revision, brief, repository, snapshot, productBriefVersion].some(entity => entity.projectId !== result.projectId) ||
+      brief.reviewStatus !== "approved" || productBriefVersion.reviewStatus !== "approved" ||
       brief.implementationTargetId !== target.id || brief.ticketRevisionId !== revision.id ||
       revision.ticketId !== ticket.id || snapshot.repositoryId !== repository.id ||
       !revision.requiredTargets.some(required => required.repository_id === repository.id)) {
