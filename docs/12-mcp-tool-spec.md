@@ -1579,7 +1579,7 @@ Output data：
 
 `payload` 是原始持久化 JSON 的解析結果；上例省略其 specification 的其他欄位。讀取不得從 Ticket 的最新 title、revision 或其他 mutable state 重新產生 payload。Container identity 以 intent 的 `external_container_id` 回傳；metadata 由 External Container list 工具另行查詢。
 
-`attempts` 包含全部歷史，依 `started_at`、`id` 升冪排序。每個 attempt 回傳 `id`、`sync_intent_id`、`external_work_item_id`、`operation`、`idempotency_key`、`started_at`、`completed_at`、`result_status`、解析後的 `response` 與 `error`；可空欄位保留 `null`。
+`attempts` 包含全部歷史，依 `started_at` 升冪排序；同時刻先列沒有 claim 的舊 attempts（依 `id` 排序），再依 durable claim `sequence` 列 execution attempts，最後以 `id` 作 tie-break。每個 attempt 回傳 `id`、`sync_intent_id`、`external_work_item_id`、`operation`、`idempotency_key`、`started_at`、`completed_at`、`result_status`、解析後的 `response` 與 `error`；可空欄位保留 `null`。
 
 單一 request 的 `request_state` 依序判定：
 

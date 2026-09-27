@@ -93,3 +93,9 @@ Integrations
 - 不需要 Neo4j，除非 graph query 複雜度證明需要。
 - Embedding / semantic search 第一版只預留，不實作。
 - UI 是可選介面，不是第一產品表面。
+
+## Durable Sync Attempt claim boundary
+
+`SyncAttemptClaims` 與 `ApplicationPorts.syncClaims` 提供 Plane manual create request 的 claim、invocation 記錄與 failure lifecycle。SQLite 專用 coordination history 以唯一 token、lease 與原子寫入協調多個 workers，意外中斷後可從 durable attempts 恢復。Claim token 只能 fence 本機 transaction，不能保證 provider exactly-once；可能已送出的 request 必須先 reconciliation，不能直接重送。
+
+Provider invocation 不在 SQLite transaction 內。Processor 的 success port 必須在包含 External Work Item、mapping、snapshot、trace 與 audit 的同一 transaction 執行。此階段不新增可偽造 success 的 MCP mutation，也不自動啟動 processor 或 live Plane adapter。詳見 [ADR 0037](adr/0037-durable-sync-claims-and-reconciliation.md)。

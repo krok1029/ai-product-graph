@@ -1,3 +1,4 @@
+import { createSyncAttemptClaimRepository } from "./sync-attempt-claim-repository.js";
 import { createSyncIntentRepositories } from "./sync-intent-repositories.js";
 import { createExternalContainerRepository } from "./external-container-repository.js";
 import { createResultRepositories } from "./result-repositories.js";
@@ -18,6 +19,7 @@ import { createTicketRepositories } from "./ticket-repositories.js";
 
 export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
   return {
+    syncClaims: createSyncAttemptClaimRepository(database),
     externalContainers: createExternalContainerRepository(database),
     ...createCoreRepositories(database),
     ...createSyncIntentRepositories(database),
