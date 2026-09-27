@@ -4,6 +4,7 @@
 // 會在 persistence 前驗證 graph changes，讓 SQLite adapters 專注在 storage，
 // 不需要承擔領域 ownership rules。
 
+import { validateFinalEdgeUniqueness } from "./graph-edge-uniqueness.js";
 import { ApplicationError } from "../domain/errors.js";
 import type {
   AuditLogEntry,
@@ -440,7 +441,6 @@ export class GraphWorkflow {
         .map(input => input.targetId as string)
     );
     const batchSlugs = new Set<string>();
-    const batchEdgeKeys = new Set<string>();
     const activeEdges = this.ports.graphEdges.list(projectId,"active");
 
     const changes: GraphDraftBatchChange[]= inputs.map(input => {
@@ -519,34 +519,6 @@ export class GraphWorkflow {
             this.ports
           );
           conflict= source.conflict ?? target.conflict;
-          const key = `${source.key}|${target.key}|${String(
-            normalizedPayload.relation_type
-          )}`;
-          if (!conflict&&batchEdgeKeys.has(key)) {
-            conflict= graphConflict(
-              "DUPLICATE_EDGE",
-              "The Graph Draft Batch contains a duplicate edge.",
-              { key }
-            );
-          }
-          batchEdgeKeys.add(key);
-          if (
-            !conflict&&
-            source.nodeId&&
-            target.nodeId&&
-            activeEdges.some(
-              edge =>
-                edge.sourceNodeId === source.nodeId&&
-                edge.targetNodeId === target.nodeId&&
-                edge.relationType === normalizedPayload.relation_type
-            )
-          ) {
-            conflict= graphConflict(
-              "DUPLICATE_EDGE",
-              "An equivalent active GraphEdge already exists.",
-              { key }
-            );
-          }
         } else {
           const edge = this.ports.graphEdges.findById(input.targetId as string);
           if (
@@ -592,14 +564,15 @@ export class GraphWorkflow {
       };
     });
 
+    const edgeConflicts = validateFinalEdgeUniqueness(activeEdges, changes);
     return {
       changes,
-      conflicts: changes
+      conflicts: [...edgeConflicts, ...changes
         .filter(change => change.conflict)
         .map(change => ({
           change_id: change.changeId,
           ...change.conflict
-        }))
+        }))]
     };
   }
 
