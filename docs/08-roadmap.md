@@ -57,6 +57,8 @@ Exit criteria：
 
 ## Phase 3：Plane Integration
 
+目前已交付首次匯出 preparation（Spec #45）：container 註冊、durable manual create request、intent／attempt 查詢及 stdio 重啟驗證。尚未實作 provider processor／外部建立／enrollment／雙向同步，因此本 Phase 尚未完成。
+
 Goal：
 
 支援 open-source PM tool 作為第一個外部 adapter。

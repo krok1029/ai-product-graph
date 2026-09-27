@@ -21,11 +21,13 @@ function fixture() {
   const { database, project, ticket, revision } = context;
   cleanup.push(() => database.close());
   const now = "2026-09-27T01:00:00.000Z";
-  database.prepare(`INSERT INTO external_containers (id, provider, workspace_identity,
-    container_identity, created_at, updated_at) VALUES ('container', 'plane', 'workspace', 'project', ?, ?)`)
-    .run(now, now);
   function intent(id: string, overrides: Partial<SyncIntent> = {}) {
-    const value: SyncIntent = { id, projectId: project.id, mappingId: null, externalContainerId: "container",
+    // 各需求使用不同 container，符合每個 owner/container 僅一筆 outstanding create 的限制。
+    const containerId = `container-${id}`;
+    database.prepare(`INSERT INTO external_containers (id, provider, workspace_identity,
+      container_identity, created_at, updated_at) VALUES (?, 'plane', 'workspace', ?, ?, ?)`)
+      .run(containerId, containerId, now, now);
+    const value: SyncIntent = { id, projectId: project.id, mappingId: null, externalContainerId: containerId,
       sequenceNumber: null, operation: "create", sourceEventType: "plane_ticket_export_requested",
       sourceEventId: "original-event", sourceTicketRevisionId: revision.id, payloadHash: "pinned-hash",
       payload: { schema_version: 1, owner: { type: "ticket", id: ticket.id },
@@ -85,7 +87,7 @@ describe("Sync Intent history reads", () => {
       expect(result.ok).toBe(true);
       expect(result.audit_log_id).toBeUndefined();
       expect(result.data).toMatchObject({ sync_intent: {
-        id: original.id, external_container_id: "container", payload: original.payload,
+        id: original.id, external_container_id: original.externalContainerId, payload: original.payload,
         source_ticket_revision_id: original.sourceTicketRevisionId, payload_hash: "pinned-hash"
       }, request_state: "failed", attempts: [{ id: "failure", result_status: "failed", error: { code: "TIMEOUT" }, response: null }] });
       expect(listed.data).toEqual({ requests: [result.data] });
