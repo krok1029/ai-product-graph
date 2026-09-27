@@ -236,6 +236,12 @@ export class ImplementationWorkflow {
         }
       }
 
+      this.ports.localActors.ensure({
+        id: this.options.actor.id,
+        displayName: this.options.actor.displayName,
+        createdAt: now,
+        updatedAt: now
+      });
       if (activeApproved) {
         this.ports.implementationBriefs.archive(activeApproved.id, now);
       }
