@@ -229,7 +229,12 @@ export function createMcpServer(service: ProductGraphService): McpServer {
               operation: z.enum(["add","update","archive"]),
               entity_kind: z.enum(["node","edge"]),
               target_id: z.string().min(1).nullable(),
-              payload: z.record(z.unknown())
+              // 保留所有原始欄位，讓 application 拒絕未宣告欄位（包含 __proto__）。
+              payload: z.unknown().refine(
+                (value): value is Record<string, unknown> =>
+                  typeof value === "object" && value !== null && !Array.isArray(value),
+                "payload must be an object."
+              )
             })
             .strict()
         )
