@@ -37,7 +37,7 @@ _Avoid_: draft、approved、planned、done、stale
 _Avoid_: stale batch 套用、自動 merge、自動核准 AI 萃取結果、逐一核准 batch 內的變更、整張替換、盲目追加、自動合併身分不明的實體、沒有審查紀錄就解除 reconciliation pending
 
 **Graph Revision**:
-每次 Graph Draft Batch 成功原子套用後建立的不可變 graph application record，具有 Project 內單調遞增的 sequence number，並記錄該 batch 的 `source_product_brief_version_id`。No-op Graph Draft Batch 也會建立 Graph Revision，用來證明某個 Product Brief Version 已完成 graph reconciliation 但沒有 entity 變更。每個 GraphNode 與 GraphEdge 記錄建立及最近變更所在的 Graph Revision；Ticket Revision 記錄核准時的 source Graph Revision。若引用 entity 的 last-changed revision 晚於 Ticket Revision 的 source revision，該 Ticket Revision 的來源已變更。
+每次 Graph Draft Batch 成功原子套用後建立的不可變 graph application record，具有 Project 內單調遞增的 sequence number，並記錄該 batch 的 `source_product_brief_version_id`。No-op Graph Draft Batch 也會建立 Graph Revision，用來證明某個 Product Brief Version 已完成 graph reconciliation 但沒有 entity 變更。產品意圖 ownership 的 GraphNode 與 GraphEdge 記錄建立及最近變更所在的 Graph Revision；Ticket-owned graph entity 的變更屬於 Ticket 生命週期，不構成產品意圖 Graph Revision。Ticket Revision 記錄核准時的 source Graph Revision。若引用 entity 的 last-changed revision 晚於 Ticket Revision 的 source revision，該 Ticket Revision 的來源已變更。
 _Avoid_: 完整 graph snapshot、event sourcing、以 updated_at 推測變更順序
 
 **Product Intent Reconciliation**:
@@ -45,7 +45,7 @@ Project 目前 approved Product Brief Version 與已核准 product-intent Graph 
 _Avoid_: Product Brief approval 後仍交付未對齊 graph、只因 current pointer 改變就全面失效、在 graph reconciliation 前猜測受影響 Tickets
 
 **Ticket**:
-AI Product Graph 內部具有穩定 identity 的可執行規劃單位，也是 canonical graph entity。Ticket 只具有 Lifecycle Status 與 Delivery Status，不具有 Review Status；被審查的是 Ticket Revision。第一個 approved Ticket Revision 讓 Ticket 可用於規劃與 handoff。Ticket 必須能追溯到產品意圖，例如 product goal、pain point 或 workflow；它不等同於任何外部專案管理或程式碼託管系統中的工作項目。
+AI Product Graph 內部具有穩定 identity 的可執行規劃單位，也是 canonical graph entity；graph 中的 Ticket 與規劃 Ticket 是同一 identity，其 title 與 lifecycle 以 Ticket 為準。Ticket 只具有 Lifecycle Status 與 Delivery Status，不具有 Review Status；被審查的是 Ticket Revision。第一個 approved Ticket Revision 讓 Ticket 可用於規劃與 handoff。Ticket 必須能追溯到產品意圖，例如 product goal、pain point 或 workflow；它不等同於任何外部專案管理或程式碼託管系統中的工作項目。
 _Avoid_: GitHub Issue, Plane issue, external ticket
 
 **External Work Item**:

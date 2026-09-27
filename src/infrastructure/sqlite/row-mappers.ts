@@ -143,8 +143,8 @@ export type GraphNodeRow= {
   source_ref_type: string|null;
   source_ref_id: string|null;
   lifecycle_status: "active" | "archived";
-  created_in_graph_revision_id: string;
-  last_changed_in_graph_revision_id: string;
+  created_in_graph_revision_id: string | null;
+  last_changed_in_graph_revision_id: string | null;
   metadata_json: string;
   created_at: string;
   updated_at: string;
@@ -158,8 +158,8 @@ export type GraphEdgeRow= {
   relation_type: GraphEdge["relationType"];
   confidence: number|null;
   lifecycle_status: "active" | "archived";
-  created_in_graph_revision_id: string;
-  last_changed_in_graph_revision_id: string;
+  created_in_graph_revision_id: string | null;
+  last_changed_in_graph_revision_id: string | null;
   metadata_json: string;
   created_at: string;
   updated_at: string;
