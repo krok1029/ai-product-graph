@@ -18,7 +18,8 @@ const payloadSchema = z.object({
   source_ticket_revision_id: nonempty,
   specification: specificationSchema
 });
-const timestampSchema = z.string().datetime({ offset: true });
+// datetime 驗證日曆與格式，Date.parse 再拒絕超出範圍的 offset；保留原始微秒字串。
+const timestampSchema = z.string().datetime({ offset: true }).refine(value => Number.isFinite(Date.parse(value)));
 const externalSource = "ai-product-graph";
 
 export function planeCreateFields(request: PlaneCreateRequest): {

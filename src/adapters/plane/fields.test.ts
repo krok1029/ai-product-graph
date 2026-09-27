@@ -183,6 +183,23 @@ describe("planeItemObservation", () => {
     expect(target(item, requestFixture())).toBeNull();
   });
 
+  it.each(["+99:99", "+24:00", "+08:99", "-24:00", "-00:60"])(
+    "should reject an impossible timestamp timezone offset %s", offset => {
+      const item = { ...itemFixture(), updated_at: `2026-09-27T08:30:20.123456${offset}` };
+
+      expect(target(item, requestFixture())).toBeNull();
+    });
+
+  it.each(["Z", "+08:00", "-05:30"])("should retain the exact microsecond token with valid timezone %s", offset => {
+    const updatedAt = `2026-09-27T08:30:20.123456${offset}`;
+    const item = { ...itemFixture(), updated_at: updatedAt };
+
+    const result = target(item, requestFixture());
+
+    expect(result!.concurrencyToken).toBe(updatedAt);
+    expect(result!.content.updated_at).toBe(updatedAt);
+  });
+
   it.each(["javascript:alert(1)", "/relative", "https:plane.example/item", "https://plane.example/line\nbreak", "https://user:secret@example.com/item", " https://plane.example/item ", 123])(
     "should not promote untrusted URL %s to external URL", url => {
       const item = { ...itemFixture(), url };
