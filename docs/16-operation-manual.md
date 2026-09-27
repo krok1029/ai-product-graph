@@ -515,3 +515,11 @@ Integrity check 失敗時不可自動刪除或修復資料。
 取得 item 的內部 `id` 後，使用 `get_external_work_item({external_work_item_id})` 讀取該 item 的全部有效 mappings，以及跨 mappings 依時間排序的 snapshot history。請使用此穩定 id，不要傳顯示名稱、外部 URL 或外部系統的 item id。Ticket 已 archive 仍可讀歷史；沒有 mapping 的已知 Ticket 回空列表，無有效 mapping 的 Plane item 不會帶入無 owner scope 的 snapshots。
 
 Snapshot 是當時保存的外部內容，包含 external status 與 concurrency token，並非目前 Ticket specification 或 live provider 狀態。讀取工具不連線 Plane、不建立 request／attempt／audit，也不改變內部 Ticket completion。此階段沒有 live Plane processor；排入 request 後只有 pending 需求而沒有 External Work Item 是正常結果。Mapping 與 snapshot 查詢已能獨立驗證，實際 provider execution 與自動 enrollment 另行交付。
+
+### 首次匯出執行核心（development API）
+
+`PlaneCreateProcessor` 透過注入的 provider port、durable claims 與 enrollment callback 處理已存在的 request；正式 stdio entrypoint 不會自行啟動它，尚無 live Plane REST adapter 或 credentials 設定。每次 process 最多呼叫一次 create 或 reconciliation，每次皆有 durable attempt。
+
+若 create 已可能送出，或外部成功後本機 commit 失敗，下一次必須先 reconciliation。`found` 可原子保存成功；`unknown` 保留 failure，不能盲目重建；只有 provider 能保證不存在且舊請求不會晚到的 `definitely_absent`，才允許後續另一個 attempt create。一般 404 不具備這項保證。Lease fencing 只保護本機 outcome commit，不能提供跨系統 exactly-once。
+
+成功會同時保存 item、mapping、snapshot、graph trace、attempt outcome 與 audit，並在同一 transaction 呼叫 enrollment port 補上目前 desired state。Enrolled update／lifecycle intents 以及 live activation 仍須完成後續交付，不能把單次 create 成功視為整個 Phase 3 完成。
