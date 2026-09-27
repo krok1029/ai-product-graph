@@ -104,3 +104,19 @@ export const implementationBriefSchema = z
     pr_summary_draft: z.string().min(1)
   })
   .strict();
+
+export const observedEvidenceTypeSchema = z.enum([
+  "commit",
+  "pull_request",
+  "test_execution",
+  "artifact"
+]);
+
+export const implementationResultVerdictSchema = z
+  .object({
+    acceptance_criterion_id: z.string().min(1),
+    verdict: z.enum(["satisfied","unsatisfied"]),
+    reason: z.string().min(1),
+    evidence_ids: z.array(z.string().min(1))
+  })
+  .strict();

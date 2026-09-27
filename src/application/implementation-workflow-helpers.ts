@@ -5,7 +5,11 @@
 // 提供的 brief 與 repository context parsing 保持小而可重用。
 
 import { ApplicationError } from "../domain/errors.js";
-import type { ImplementationBriefJson, RepositoryContextJson } from "../domain/models.js";
+
+import type {
+  ImplementationBriefJson,
+  RepositoryContextJson
+} from "../domain/models.js";
 import type {
   ImplementationBriefInput,
   RepositoryContextInput

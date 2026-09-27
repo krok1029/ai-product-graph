@@ -7,6 +7,7 @@
 import { ulid } from "ulid";
 import { NodeTraceReads, type NodeTraceInput } from "./node-trace.js";
 import { TicketReads } from "./ticket-reads.js";
+import { MarkdownExport, type MarkdownExportInput } from "./markdown-export.js";
 import { ProjectReads } from "./project-reads.js";
 
 import { ApplicationError } from "../domain/errors.js";
@@ -25,6 +26,10 @@ import {
   type GraphChangeInput
 } from "./graph-workflow.js";
 import {
+  ImplementationResultWorkflow,
+  type CriterionVerdictInput
+} from "./implementation-result-workflow.js";
+import {
   ImplementationWorkflow,
   type ImplementationBriefInput,
   type RepositoryContextInput
@@ -34,6 +39,11 @@ import {
   TicketWorkflow,
   type TicketSpecInput
 } from "./ticket-workflow.js";
+
+import {
+  RepositoryWorkflow,
+  type CreateRepositoryInput
+} from "./repository-workflow.js";
 
 type ServiceOptions = {
   idFactory?: () => string;
@@ -48,9 +58,11 @@ export class ProductGraphService {
   private readonly idFactory: () => string;
   private readonly clock: () => Date;
   private readonly actor: NonNullable<ServiceOptions["actor"]>;
+  private readonly repositoryWorkflow: RepositoryWorkflow;
   private readonly graphWorkflow: GraphWorkflow;
   private readonly ticketWorkflow: TicketWorkflow;
   private readonly implementationWorkflow: ImplementationWorkflow;
+  private readonly implementationResultWorkflow: ImplementationResultWorkflow;
 
   constructor(
     private readonly ports: ApplicationPorts,
@@ -62,6 +74,10 @@ export class ProductGraphService {
       id: "00000000000000000000000001",
       displayName: "Local User"
     };
+    this.repositoryWorkflow = new RepositoryWorkflow(ports, {
+      idFactory: this.idFactory,
+      clock: this.clock
+    });
     this.graphWorkflow = new GraphWorkflow(ports, {
       idFactory: this.idFactory,
       clock: this.clock,
@@ -77,6 +93,18 @@ export class ProductGraphService {
       clock: this.clock,
       actor: this.actor
     });
+    this.implementationResultWorkflow = new ImplementationResultWorkflow(ports, {
+      idFactory: this.idFactory,
+      clock: this.clock
+    });
+  }
+
+  createRepository(input: CreateRepositoryInput) {
+    return this.repositoryWorkflow.create(input);
+  }
+
+  listRepositories(projectId: string) {
+    return this.repositoryWorkflow.list(projectId);
   }
 
   createProject(input: { name: string; description?: string }) {
@@ -129,6 +157,10 @@ export class ProductGraphService {
 
   getNodeTrace(input: NodeTraceInput) {
     return new NodeTraceReads(this.ports).getTrace(input);
+  }
+
+  getMarkdownExportArtifact(input: MarkdownExportInput) {
+    return new MarkdownExport(this.ports).readArtifact(input);
   }
 
   getProjectBrief(projectId: string) {
@@ -522,6 +554,27 @@ export class ProductGraphService {
     };
   }) {
     return this.implementationWorkflow.getHandoff(input);
+  }
+
+  recordObservedEvidence(input: {
+    projectId: string;
+    repositoryId: string;
+    evidenceType: "commit" | "pull_request" | "test_execution" | "artifact";
+    idempotencyKey: string;
+    payload: unknown;
+  }) {
+    return this.implementationResultWorkflow.recordObservedEvidence(input);
+  }
+
+  submitImplementationResult(input: {
+    implementationBriefId: string;
+    supersedesImplementationResultId?: string | null;
+    observedEvidenceIds: string[];
+    summary: string;
+    criterionVerdicts: CriterionVerdictInput[];
+    unfinishedItems: string[];
+  }) {
+    return this.implementationResultWorkflow.submitResult(input);
   }
 
   private requireProject(projectId: string): Project {

@@ -136,6 +136,72 @@ Output：
 }
 ```
 
+### create_repository
+
+在 active Project 登記穩定的 Repository identity，供 Ticket Revision 的 implementation targets、Implementation Brief 與 Observed Evidence 引用。不掃描 filesystem、不連線 remote provider，也不建立外部 repository。
+
+Input：
+
+```json
+{
+  "project_id": "01JPROJECT...",
+  "slug": "app",
+  "name": "App Repository",
+  "root_path": "/work/app",
+  "remote_url": "git@example.com:team/app.git"
+}
+```
+
+Success `data`（外層 ToolResult 同時回傳本次建立的 `audit_log_id`）：
+
+```json
+{
+  "repository": {
+    "id": "01JREPOSITORY...",
+    "project_id": "01JPROJECT...",
+    "slug": "app",
+    "name": "App Repository",
+    "root_path": "/work/app",
+    "remote_url": "git@example.com:team/app.git",
+    "lifecycle_status": "active",
+    "created_at": "2026-09-27T00:00:00.000Z",
+    "updated_at": "2026-09-27T00:00:00.000Z"
+  }
+}
+```
+
+Validation 與語意：
+
+- `project_id`、`slug`、`name` 是 required string，經 trim 後不可為空；`slug` 必須符合 `[a-z0-9]+(?:-[a-z0-9]+)*`，長度 1–80。
+- `root_path`、`remote_url` 是 optional string 或 `null`。省略、`null` 或 trim 後空白都保存為 `null`；其他值 trim 後原樣保存。它們只是 client 提供的 metadata，不驗證路徑存在、Git 狀態或 remote 可用性，也不依路徑／URL 合併 identities。SSH remote 字串可用。
+- 成功時由 server 產生 Repository ULID、active lifecycle 與相同的 created／updated timestamp；Repository 沒有 review status。
+- slug 在 Project 內唯一，包含 archived Repository；不同 Projects 可使用相同 slug。重送相同 slug 回傳 conflict，client 可用 `list_repositories` 找回先前 identity；本 tool 不使用 Operation Receipt。
+- Repository 與 `repository.created` audit event 在同一 transaction 保存。Audit 記錄 Project、Repository ID、`mcp_client` source、時間及完整建立摘要；它不構成 Approval。
+- `VALIDATION_ERROR`：空白 required field 或 slug 格式／長度不合法。缺欄位及型別錯誤由 MCP input schema 拒絕。
+- `NOT_FOUND`：Project identity 不存在。
+- `CONFLICT`：Project archived，或 Project 已有相同 slug；不重新啟用或改綁既有 Repository。
+- `STORAGE_ERROR`：SQLite 寫入失敗，Repository 與 audit 一起 rollback。
+
+### list_repositories
+
+列出指定 active Project 內的 Repository identities，包含 archived 歷史資料；依 `created_at`、`id` 升冪排列。每筆使用與 `create_repository` 相同的完整 Repository shape。空 Project 回傳空陣列，不混入其他 Project 的資料。
+
+Input：
+
+```json
+{ "project_id": "01JPROJECT..." }
+```
+
+Success `data`：
+
+```json
+{ "repositories": [] }
+```
+
+- `project_id` 是 required string，trim 後不可為空；空白回傳 `VALIDATION_ERROR`，缺欄位或型別錯誤由 MCP input schema 拒絕。
+- `NOT_FOUND`：Project 不存在；`CONFLICT`：Project archived；SQLite 讀取失敗回傳 `STORAGE_ERROR`。
+- Read tool 不產生 audit event。後續 Ticket Target 只能引用同 Project 的 active Repository ID，不能以 slug、path 或 remote URL 取代。
+
 ### get_project
 
 讀取 project summary。
@@ -862,10 +928,12 @@ Input：
   "evidence_type": "test_execution",
   "idempotency_key": "repo-01J-test-pnpm-test-2026-07-24T00:00:00.000Z",
   "payload": {
+    "schema_version": 1,
     "command": "pnpm test",
     "status": "passed",
     "started_at": "2026-07-24T00:00:00.000Z",
     "completed_at": "2026-07-24T00:01:00.000Z",
+    "exit_code": 0,
     "summary": ""
   }
 }
@@ -1329,6 +1397,14 @@ Output：
   "suggested_filename": "product-brief-ai-product-graph.md"
 }
 ```
+
+Product Brief Version 匯出驗收：
+
+- `entity_type = product_brief_version` 時，依指定的 Version ID 讀取 structured data，不能改用 current version。
+- 只允許 active draft 或 approved version；不存在回傳 `NOT_FOUND`，archived 回傳 `CONFLICT`，不支援的 entity type 回傳 validation error。
+- 必須包含 ProductBriefJson 所有欄位、Version／Project identity 與 review status。空集合明示 `None`，來源中的 Markdown／HTML 視為文字。
+- `suggested_filename` 為 `product-brief-{version_id}-v{version_number}.md`，identity 中非英數、底線、連字號字元轉為連字號。
+- 匯出不寫入檔案、不修改 structured data、approval 或 audit history。
 
 ## MVP Resources
 

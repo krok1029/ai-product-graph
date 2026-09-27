@@ -314,6 +314,57 @@ export type ImplementationBrief = {
   updatedAt: string;
 };
 
+export type ObservedEvidenceType =
+  | "commit"
+  | "pull_request"
+  | "test_execution"
+  | "artifact";
+
+export type ObservedEvidence = {
+  id: string;
+  projectId: string;
+  repositoryId: string;
+  evidenceType: ObservedEvidenceType;
+  idempotencyKey: string;
+  payloadHash: string;
+  payload: Record<string, unknown>;
+  lifecycleStatus: LifecycleStatus;
+  createdAt: string;
+};
+
+export type ImplementationResultJson = {
+  summary: string;
+  unfinished_items: string[];
+  submission_disposition: "reviewable" | "stale_archived";
+};
+
+export type ImplementationResult = {
+  id: string;
+  projectId: string;
+  implementationBriefId: string;
+  implementationTargetId: string;
+  ticketRevisionId: string;
+  supersedesImplementationResultId: string | null;
+  result: ImplementationResultJson;
+  reviewStatus: ReviewStatus;
+  lifecycleStatus: LifecycleStatus;
+  staleAtSubmission: boolean;
+  staleReasons: string[];
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+};
+
+export type AcceptanceCriterionVerdict = {
+  id: string;
+  implementationResultId: string;
+  acceptanceCriterionId: string;
+  verdict: "satisfied" | "unsatisfied";
+  reason: string;
+  evidenceIds: string[];
+  createdAt: string;
+};
+
 export type AuditLogEntry = {
   id: string;
   projectId: string | null;
