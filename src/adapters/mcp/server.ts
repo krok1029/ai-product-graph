@@ -1,4 +1,5 @@
 import { registerSyncIntentTools } from "./sync-intent-tools.js";
+import { registerExternalContainerTools } from "./external-container-tools.js";
 // MCP server 註冊入口。
 //
 // 註冊 AI Product Graph 的 MCP tools 與 resources。Validation、serialization
@@ -40,6 +41,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
     version: "0.1.0"
   });
 
+  registerExternalContainerTools(server, service);
   registerRepositoryTools(server, service);
   registerSyncIntentTools(server, service);
   registerPlanningPrompts(server);

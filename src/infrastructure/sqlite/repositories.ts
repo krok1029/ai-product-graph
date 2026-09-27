@@ -1,4 +1,5 @@
 import { createSyncIntentRepositories } from "./sync-intent-repositories.js";
+import { createExternalContainerRepository } from "./external-container-repository.js";
 import { createResultRepositories } from "./result-repositories.js";
 import { createResultAcceptanceRepositories } from "./result-acceptance-repositories.js";
 // SQLite ports 組合。
@@ -17,6 +18,7 @@ import { createTicketRepositories } from "./ticket-repositories.js";
 
 export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
   return {
+    externalContainers: createExternalContainerRepository(database),
     ...createCoreRepositories(database),
     ...createSyncIntentRepositories(database),
     ...createResultAcceptanceRepositories(database),
