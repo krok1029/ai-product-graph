@@ -635,6 +635,7 @@ Validation：
 - Ticket writes 不建立 Graph Revision、不推進 Project reconciliation pointers；既有 Graph Draft Batch 不因 Ticket creation 或 approval 而 stale。
 - `source_node_ids` 與 `related_graph_node_ids` 只能引用同 Project active product-intent ownership nodes，不能引用 Ticket projection。
 - `acceptance_criteria` 至少一項。
+- `implementation_notes` 是 optional string array，省略時預設為 `[]` 並保存於 immutable specification；明確提供的字串沿用 trim／去重 normalization，空白字串或非字串內容仍拒絕。Initial batch 與 replacement revision 共用此契約。
 - `traces_to_ticket_id` 若存在，必須指向同一 Project 中的 active 或 archived Ticket；建立後以 `traces_to` edge 保存關係。
 - `source_graph_revision_id` 必須是 Project 目前的 Graph Revision。
 - `related_graph_node_ids` 至少一項，且應包含 product goal 或 pain point trace。
@@ -708,6 +709,7 @@ Output：
 Validation：
 
 - `base_approved_revision_id` 必須等於建立 draft 當下的 Ticket current approved revision。
+- `specification.implementation_notes` 可省略，預設與 initial batch 相同為 `[]`，不從舊 revision 繼承。建立 draft 不改動 Ticket current approved pointer、Delivery Status 或舊 revision。
 - `source_graph_revision_id` 必須是 Project 目前的 Graph Revision。
 - Repository 已有同一 Ticket 的 active Implementation Target 時，draft 必須 reuse 該 identity；不得為同一 Repository 建立第二個 active Target。
 - Repository 只有 archived Target 時，draft 必須標示 `create_on_approval`，不得直接復活 archived identity。
