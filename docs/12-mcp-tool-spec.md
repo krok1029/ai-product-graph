@@ -1454,7 +1454,7 @@ product-graph://nodes/{nodeId}/trace
 ### Ticket 與 Node resources 的讀取契約
 
 - `/tickets/{ticketId}` 回傳 `{ ticket }`；`/nodes/{nodeId}` 回傳 `{ node }`。明確以 ID 讀取 identity 可包含 draft-only Ticket 或 archived entity，保留其 lifecycle status，方便查閱歷史。
-- `/tickets/{ticketId}/context` 與 `get_ticket_context` 預設相同，回傳 `{ ticket, revision, related_nodes, related_edges, markdown: null }`。要求 active Ticket 與有效的 current approved revision；尚未核准或 archived Ticket 回傳 `CONFLICT`。related nodes 是該 revision 的明確引用，可能包含後來 archived 的歷史來源，且只包含相同 Project；related edges 只包含 active 關係。
+- `/tickets/{ticketId}/context` 與 `get_ticket_context` 預設相同，回傳 `{ ticket, revision, related_nodes, related_edges, traced_ticket, trace_edge, markdown: null }`。要求 active Ticket 與有效的 current approved revision；尚未核准或 archived Ticket 回傳 `CONFLICT`。related nodes 是該 revision 的明確引用，可能包含後來 archived 的歷史來源，且只包含相同 Project；related edges 只包含 active 關係。
 - `/nodes/{nodeId}/trace` 等同 `get_node_trace` 的 `direction = both`、`max_depth = 3`，包含上述 active graph 與 archived root 語意。
 - 四個 resource 都使用 `application/json` 且不修改資料。不存在的 identity 使用 MCP `-32002`／domain `NOT_FOUND`；狀態衝突使用 `-32602`／`CONFLICT`。可由明確 identity 查閱 archived Project 內的資料，不將 Project lifecycle 當作身份讀取權限。
 
