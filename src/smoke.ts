@@ -214,7 +214,7 @@ try {
       handoff.freshness === "current",
       "Implementation handoff should be current."
     );
-    assert(auditLog.length === 13, "Expected thirteen audit entries.");
+    assert(auditLog.length === 14, "Expected fourteen audit entries.");
 
     console.log(
       JSON.stringify({

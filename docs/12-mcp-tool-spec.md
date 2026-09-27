@@ -920,6 +920,15 @@ Validation：
 - Commit SHA 與 dirty-state fingerprint 必須符合 Repository Context Snapshot。
 - 任一條件不符或無法驗證時回傳 `STALE_HANDOFF`，且不得輸出 handoff payload。
 
+Observability：
+
+- 每次成功 handoff 保存 `implementation_handoff.succeeded` audit；既有 Brief 因 stale 阻擋時保存 `implementation_handoff.blocked`。兩者均以 Brief 為 entity，保存 Project、server LocalActor 與同一 event time；stale 摘要包含 reason 與來源識別 details。
+- Audit transaction 會初始化／更新目前設定的 LocalActor；不改寫來源 artifacts、Ticket 狀態、Graph Revision、Result、Acceptance 或 Operation Receipt。此為每次嘗試的觀測紀錄，沒有 idempotency replay。
+- Stale audit 必須先提交，再回傳原 `STALE_HANDOFF`。未知 requested Brief 的 `NOT_FOUND` 與 storage read failure 不產生 handoff event；storage read failure 不可被誤判為 stale。
+- Audit 不保存原始 client repository context、current commit SHA 或 dirty-state fingerprint。回傳既有 data/error shape 不變。
+- Audit 寫入失敗時回傳 `STORAGE_ERROR`，actor 與 audit 一起 rollback，不回報 handoff 成功或已記錄的 stale event。
+
+
 ### record_observed_evidence
 
 保存由本機 MCP client 提供、通過格式與 repository identity 驗證的 Observed Evidence。此 tool 只記錄機器回報的可追溯 evidence，不代表 implementation 已被接受，也不會改變 Ticket Delivery Status。

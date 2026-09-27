@@ -18,11 +18,10 @@ import type {
   TicketRevision
 } from "../domain/models.js";
 import {
-  evaluateImplementationFreshness,
   evaluateTicketSourceFreshness
 } from "./implementation-freshness.js";
 import type { ApplicationPorts } from "./ports.js";
-import { requireHandoffSource } from "./handoff-source-validation.js";
+import { getObservedImplementationHandoff } from "./handoff-observation.js";
 import {
   isRepositoryContextApprovable,
   normalizeBrief,
@@ -279,49 +278,7 @@ export class ImplementationWorkflow {
       dirtyStateFingerprint?: string|null;
     };
   }) {
-    const brief = this.ports.implementationBriefs.findById(
-      input.implementationBriefId
-    );
-    if (!brief) {
-      throw new ApplicationError(
-        "NOT_FOUND",
-        "Implementation Brief was not found.",
-        { implementationBriefId: input.implementationBriefId }
-      );
-    }
-    if (brief.lifecycleStatus !== "active") {
-      throw staleHandoff("implementation_brief_archived", {
-        implementationBriefId: brief.id
-      });
-    }
-    if (brief.reviewStatus !== "approved") {
-      throw staleHandoff("implementation_brief_not_approved", {
-        implementationBriefId: brief.id
-      });
-    }
-    const source = requireHandoffSource(this.ports, brief);
-    const snapshot = source.snapshot;
-    const staleReason = evaluateImplementationFreshness(
-      this.ports,
-      source.ticket,
-      source.revision,
-      snapshot,
-      input.currentRepositoryState
-    );
-    if (staleReason) {
-      throw staleHandoff(staleReason.reason, staleReason.details);
-    }
-
-    return {
-      freshness: "current" as const,
-      implementationBrief: brief,
-      implementationTarget: source.target,
-      ticket: source.ticket,
-      ticketRevision: source.revision,
-      productBriefVersion: source.productBriefVersion,
-      repository: source.repository,
-      repositoryContextSnapshot: snapshot
-    };
+    return getObservedImplementationHandoff(this.ports, this.options, input);
   }
 
   private requireCurrentTargetSource(implementationTargetId: string) {

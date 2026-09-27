@@ -3,6 +3,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect, it } from "vitest";
 import { ApplicationError } from "../../domain/errors.js";
 import { acceptanceFixture } from "../../test-support/result-acceptance-fixture.js";
+import { domainSnapshot } from "../../test-support/domain-snapshot.js";
 import { createMcpServer } from "./server.js";
 
 type Fixture = ReturnType<typeof acceptanceFixture>;
@@ -27,7 +28,8 @@ async function setup() {
   await target.connect(clientTransport);
   return { ...fixture, target, command: { implementation_brief_id: fixture.briefs[0]!.id,
     current_repository_state: { commit_sha: "abc123", dirty_state_fingerprint: null } },
-    changes: () => fixture.database.prepare("SELECT total_changes() AS count").get(),
+    changes: () => domainSnapshot(fixture.database),
+    observations: () => fixture.ports.auditLog.list().filter(entry => entry.action.startsWith("implementation_handoff.")),
     async close() { await target.close(); await server.close(); fixture.database.close(); }
   };
 }
@@ -35,6 +37,7 @@ async function setup() {
 type Setup = Awaited<ReturnType<typeof setup>>;
 async function expectStale(f: Setup, reason: string) {
   const before = f.changes();
+  const observations = f.observations();
 
   const response = await f.target.callTool({ name: "get_implementation_handoff", arguments: f.command });
 
@@ -45,9 +48,14 @@ async function expectStale(f: Setup, reason: string) {
   expect(envelope).not.toHaveProperty("data");
   expect(response).not.toHaveProperty("structuredContent");
   expect(f.changes()).toEqual(before);
+  expect(f.observations()).toHaveLength(observations.length + 1);
+  expect(f.observations().at(-1)).toMatchObject({
+    action: "implementation_handoff.blocked", entityId: f.command.implementation_brief_id,
+    afterSummary: { freshness: "stale", reason }
+  });
 }
 
-it.each(archivedSources)("blocks archived %s without a payload or writes", async (table, id, reason) => {
+it.each(archivedSources)("blocks archived %s without a payload or domain changes", async (table, id, reason) => {
   const f = await setup();
   try {
     f.database.prepare(`UPDATE ${table} SET lifecycle_status = 'archived' WHERE id = ?`).run(id(f));
@@ -85,7 +93,7 @@ const unverifiableSources: [string, (f: Fixture) => void, string][] = [
   }, "product_brief_version_not_approved"]
 ];
 
-it.each(unverifiableSources)("blocks %s without a payload or writes", async (_name, mutate, reason) => {
+it.each(unverifiableSources)("blocks %s without a payload or domain changes", async (_name, mutate, reason) => {
   const f = await setup();
   try {
     mutate(f);
@@ -99,6 +107,7 @@ it("retains NOT_FOUND for an unknown requested brief and storage errors for fail
   try {
     const before = f.changes();
 
+    const observations = f.observations();
     const missing = await f.target.callTool({ name: "get_implementation_handoff",
       arguments: { ...f.command, implementation_brief_id: "missing" } });
     f.ports.repositoryContextSnapshots.findById = () => { throw new ApplicationError("STORAGE_ERROR", "Read failed"); };
@@ -106,6 +115,7 @@ it("retains NOT_FOUND for an unknown requested brief and storage errors for fail
 
     expect(JSON.parse((missing.content as { text: string }[])[0]!.text)).toMatchObject({ error: { code: "NOT_FOUND" } });
     expect(JSON.parse((failure.content as { text: string }[])[0]!.text)).toMatchObject({ error: { code: "STORAGE_ERROR" } });
+    expect(f.observations()).toEqual(observations);
     expect(f.changes()).toEqual(before);
   } finally { await f.close(); }
 });
