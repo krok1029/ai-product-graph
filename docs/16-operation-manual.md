@@ -15,7 +15,7 @@ ADR 是決策歷史，不是日常操作手冊。一般使用時不需要逐篇�
 
 ## 目前可用程度
 
-Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project、Idea、Product Brief Version approval、Graph Draft Batch／Graph Revision reconciliation、Ticket Revision approval、Implementation Brief approval／handoff 與 audit log workflows。Build、兩套 typecheck、tests、application smoke 與 MCP client end-to-end 驗證均已通過。
+Repository 已提供完整本機主路徑：Project／Repository／Idea、Product Brief、Graph reconciliation、Ticket Revision、Implementation Brief／handoff、Evidence／Result submission、Result Acceptance／Revocation。另有 trace、MCP resources／prompts 與 Markdown export。`pnpm test` 的 stdio workflow 測試從空白 SQLite 開始，只透過 MCP 建立使用者資料，再驗證重啟後 receipt replay 與資料完整性。
 
 目前已實作的 tools：
 
@@ -31,6 +31,7 @@ Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite sche
 - `create_graph_draft_batch`
 - `approve_graph_draft_batch`
 - `get_graph_context`
+- `get_node_trace`
 - `create_ticket_draft_batch`
 - `create_ticket_revision_draft`
 - `approve_ticket_revision`
@@ -38,15 +39,15 @@ Repository 目前已建立並驗證 TypeScript MCP scaffold、完整 SQLite sche
 - `create_implementation_brief_draft`
 - `approve_implementation_brief`
 - `get_implementation_handoff`
+- `record_observed_evidence`
+- `submit_implementation_result`
+- `accept_implementation_result`
+- `revoke_result_acceptance`
+- `export_markdown_draft`
 
-其餘章節描述的是已定案但尚未完整實作的操作契約。
+開始 repository-backed 工作前，以 `create_repository` 建立 Project 範圍內的 Repository identity；可用 `list_repositories` 查詢既有 identity。此操作只保存 metadata，不掃描本機檔案，也不驗證遠端存取權。後續 Ticket targets、handoff 與 evidence 都使用回傳的 `repository.id`。
 
-Repository provisioning 已可透過 MCP 完成：
-
-- 建立 Project 後，用 `create_repository` 提供 `project_id`、Project 內唯一 `slug` 與 `name`；可附 `root_path`、`remote_url` 作為 metadata。
-- 保存回傳的 `repository.id`，供 Ticket implementation targets 與 Observed Evidence 使用。重新開啟 server 後可透過 `list_repositories` 找回相同 identity。
-- 重複 slug 會回傳 conflict；先查詢既有 identity，勿以新的 slug 重複登記同一次操作。查詢包含 archived 歷史資料，新的 Target 只能引用 active Repository。
-- 此操作不掃描 local repository 或呼叫 provider；Repository context 與 baseline 仍由 client 於建立 Implementation Brief 時提供。
+現有功能與邊界驗收以 GitHub Issues／PR 為準；本機主要流程可用，不代表外部整合已提供。
 
 外部 Plane／GitHub 同步目前只有資料模型與 durable outbox contract，尚未提供完整的使用者操作 tools。
 

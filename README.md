@@ -46,7 +46,9 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## Repository 狀態
 
-目前這個 repository 已建立並驗證 TypeScript MCP scaffold、完整 SQLite schema migrations，以及 Project、Idea、Product Brief Version approval、Graph Draft Batch／Graph Revision reconciliation 與 audit log workflows。Build、TypeScript 7／TypeScript 6 typecheck、Vitest、application smoke 與 MCP client end-to-end 驗證均已通過。
+目前已實作本機 stdio MCP、SQLite 持久化，以及 Project／Repository／Idea → Product Brief → Graph → Ticket Revision → Implementation Brief／handoff → Observed Evidence／Implementation Result → Result Acceptance／Revocation 的主流程。另提供 6 個 client-side prompts、9 個 resources、node trace 與三種 artifact 的 Markdown 匯出。
+
+`pnpm test` 包含真實 stdio server、全新暫存資料庫、跨重啟 receipt replay 與 SQLite integrity 的端到端驗證；`pnpm smoke` 驗證 application 主路徑到 Result submission。TypeScript 7／6 typechecks 與 build 也是交付檢查。這些檢查涵蓋目前可驗證路徑；其他規格邊界由 GitHub Issues 持續追蹤。
 
 日常操作與文件閱讀入口請先看 [`docs/16-operation-manual.md`](docs/16-operation-manual.md)。欄位級 MCP 契約與 storage 細節再分別查 `docs/12-mcp-tool-spec.md`、`docs/13-sqlite-schema.md`。
 
@@ -92,7 +94,13 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## 建議下一步
 
-下一個實作切片是 Ticket Revision draft／approval。日常產品操作請閱讀 `docs/16-operation-manual.md`；不需要從頭逐篇閱讀所有 `docs/` 文件。第一個實作版本採用：
+從 [GitHub Issues](https://github.com/krok1029/ai-product-graph/issues) 的 `ready-for-agent` 功能票繼續。每張票具備獨立驗收、commit 與 PR，通過獨立 spec／coding standards review 後 merge。Spec 彙總：
+
+- [Local delivery acceptance loop](https://github.com/krok1029/ai-product-graph/issues/16)
+- [MCP planning and provenance reading](https://github.com/krok1029/ai-product-graph/issues/18)
+- [Human review Markdown exports](https://github.com/krok1029/ai-product-graph/issues/19)
+
+第一個實作版本採用：
 
 ```text
 本機 MCP server + Node.js + TypeScript + SQLite

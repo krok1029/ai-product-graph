@@ -68,18 +68,11 @@ try {
     const graphContext = app.service.getGraphContext({
       projectId: project.project.id
     });
-    const repository = {
-      id: "01SMOKEREPOSITORY000000001",
+    const repository = app.service.createRepository({
       projectId: project.project.id,
       slug: "app",
-      name: "Smoke App Repository",
-      rootPath: null,
-      remoteUrl: null,
-      lifecycleStatus: "active" as const,
-      createdAt: "2026-07-28T00:00:00.000Z",
-      updatedAt: "2026-07-28T00:00:00.000Z"
-    };
-    createSqlitePorts(app.database).repositories.insert(repository);
+      name: "Smoke App Repository"
+    }).repository;
     const graphNodeId = graphContext.nodes[0]?.id;
     assert(graphNodeId !== undefined, "Expected one GraphNode.");
     const ticketDraft = app.service.createTicketDraftBatch({
@@ -155,6 +148,35 @@ try {
         dirtyStateFingerprint: null
       }
     });
+    const evidence = app.service.recordObservedEvidence({
+      projectId: project.project.id,
+      repositoryId: repository.id,
+      evidenceType: "test_execution",
+      idempotencyKey: "smoke-evidence",
+      payload: {
+        schema_version: 1, command: "pnpm smoke", status: "passed", exit_code: 0,
+        started_at: "2026-09-27T00:00:00.000Z", completed_at: "2026-09-27T00:00:01.000Z"
+      }
+    });
+    const implementationResult = app.service.submitImplementationResult({
+      implementationBriefId: implementationBriefApproval.implementationBrief.id,
+      observedEvidenceIds: [evidence.observedEvidence.id],
+      summary: "Smoke path preserved the planning and implementation chain.",
+      criterionVerdicts: ticketApproval.revision.specification.acceptance_criteria.map(criterion => ({
+        acceptanceCriterionId: criterion.id,
+        verdict: "satisfied",
+        reason: "The smoke execution verified the approved workflow.",
+        evidenceIds: [evidence.observedEvidence.id]
+      })),
+      unfinishedItems: []
+    });
+    assert(implementationResult.implementationResult.lifecycleStatus === "active",
+      "Implementation Result should be a reviewable active draft.");
+    assert(app.database.pragma("foreign_keys", { simple: true }) === 1,
+      "Foreign key enforcement should be enabled.");
+    const foreignKeyViolations = app.database.pragma("foreign_key_check");
+    assert(Array.isArray(foreignKeyViolations) && foreignKeyViolations.length === 0,
+      "Persisted workflow must preserve foreign key integrity.");
     const auditLog = createSqlitePorts(app.database).auditLog.list();
 
     assert(projects.projects.length === 1, "Expected one project.");
@@ -192,7 +214,7 @@ try {
       handoff.freshness === "current",
       "Implementation handoff should be current."
     );
-    assert(auditLog.length === 10, "Expected ten audit entries.");
+    assert(auditLog.length === 13, "Expected thirteen audit entries.");
 
     console.log(
       JSON.stringify({
@@ -205,6 +227,7 @@ try {
         ticketRevisionId: ticketApproval.revision.id,
         implementationBriefId:
           implementationBriefApproval.implementationBrief.id,
+        implementationResultId: implementationResult.implementationResult.id,
         auditLogEntries: auditLog.length
       })
     );
