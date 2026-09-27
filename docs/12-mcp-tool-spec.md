@@ -1725,3 +1725,11 @@ Strict input：`{ mapping_id: string, reason: string }`，兩者 trim 後非空�
 有效且 active 的 Plane Ticket mapping 可以終止，不要求先有 failure；archived owner 或 external item 不阻擋。不存在回 `NOT_FOUND`，identity scope 不一致或已 archive 但沒有 termination 回 `CONFLICT`；重複終止回 `CONFLICT` 並包含 `details.termination_id`。這是停止未來排程的決策，無 provider call，不能撤銷已送出的外部請求。
 
 Terminated mapping 不再 enrollment 且從目前 Sync Health 排除，其他 mappings 與 Ticket canonical status 不變。原 create request 舊 key 仍 replay 原 request，原 processor replay 不呼叫 provider；使用 NEW key 可以明確首次 export 另一個 mapping，這是獨立重新 enrollment，並非 atomic replacement。Mapped operation execution 仍未啟用。
+
+### 查詢 mapping 終止歷史
+
+`get_mapping_termination({mapping_id})` 與 `product-graph://external-work-item-mappings/{mappingId}/termination` 回傳同一份唯讀 snapshot。有效 mapping 尚未終止時 `termination` 為 `null`；未知 mapping 回 `NOT_FOUND`，identity、Decision 或停止 membership 的 scope 不一致回 `CONFLICT`。輸入只接受 trim 後非空的 `mapping_id`。
+
+結果包含 `mapping_id` 與 `termination`。後者包含 `record`（`id`、`project_id`、`mapping_id`、`decision_id`、`stopped_sync_intent_ids`）、`decision`（`id`、`project_id`、`decision_type`、`summary`、`actor_id`、`created_at`），以及依 mapping sequence 排序的 `stopped_intents`。各 intent 沿用 `sync_intent`、`attempts`、`request_state` 格式；failed errors、started attempts 與 archived intents 原樣保留。成功 intents 與原始 manual create 不列入停止 membership；原始 create 可用既有 mapping sync history 查詢。
+
+Archived mapping 的 health `current`／`included:false` 代表它已退出目前同步義務。此歷史查詢說明使用者何時、為何終止，而不把失敗宣稱成同步成功。查詢不呼叫 provider、不改寫 audit／actor／receipt，也不需要完整 create proof 才能讀取合法的 termination 紀錄。Started attempt 仍可能有未確認的外部結果；停止未來排程不等於撤回已送出的請求。

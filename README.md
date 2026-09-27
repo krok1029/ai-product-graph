@@ -117,3 +117,5 @@ Hosted MCP server、Postgres 和 UI 都延後，等本機 MCP workflow 被證明
 同步義務可透過 `list_mapping_sync_intents` 查閱完整歷史，並以 `get_mapping_sync_health`／`get_ticket_sync_health` 取得衍生 health。沒有 enrollment 的 `current` 會明確標記 `not_enrolled`；health 不修改 approval 或 completion，詳見操作手冊。
 
 `terminate_sync_mapping({ mapping_id, reason })` 可明確停止某個 Plane mapping 的後續同步。操作原子保存 Decision 與未完成 obligations、archive mapping，並保留所有原始失敗及歷史；不修改遠端 item 或 Ticket canonical status。完整語意見 [操作手冊](docs/16-operation-manual.md)。
+
+`get_mapping_termination` 與 mapping termination resource 可查詢停止同步的 Decision、actor、理由、時間及停止前的原始 attempts／errors；archived health 的 `current` 不表示這些歷史失敗已成功。

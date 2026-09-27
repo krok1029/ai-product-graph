@@ -1416,3 +1416,9 @@ Attempt history 依 `started_at` 排序；相同時間的 execution attempts 以
 首次 create processor 成功時，External Work Item、active mapping、immutable snapshot、GraphNode／`traces_to`、Sync Attempt outcome 與 audit 同一 fenced transaction 提交。GraphNode ID 等於 external item ID，source/source_ref_type 固定 `external_work_item`，source_ref_id 為同一 ID，slug 為 `external_work_item:<ID>`，revision provenance 為 null；參見 ADR0038。產品意圖 graph 仍保留 mandatory revision provenance；null edge 僅新增允許具有同 Project mapping 的 external item → Ticket trace，不放寬其他 endpoints。
 
 Migration007 依 ADR0001／0036 的明確 rebuild exception 在 transaction 外暫停 FK，重建 graph_nodes 並保留相關 indexes/triggers，transaction 內完整 `foreign_key_check` 成功才 commit，finally 恢復 ON。它不推進 Graph Revision，也不偽造 provider snapshots。
+
+### Sync Mapping Termination（migration 009）
+
+`sync_mapping_terminations` 以 unique `mapping_id` 與 `decision_id` 保存一次性的明確停止決策；`sync_mapping_termination_intents` 保存停止當下未有 succeeded attempt 的 mapped intent membership，以 `termination_id`／`sync_intent_id` 關聯且每個 intent 最多屬於一份 termination。外鍵保護原始 identities，UPDATE／DELETE triggers 保護 termination、membership 與已引用的 Decision。
+
+停止 workflow 在同一 transaction 建立 Decision、membership、archive mapping 與 audit。歷史查詢在單一 transaction snapshot 讀取 Decision、membership 及原始 attempts，依 mapping sequence／ID 排序；application 另檢查 mapping、Decision、intent、attempt 的 scope 與 identity，避免只因外鍵存在便回傳其他 Project 的資料。讀取不更新狀態或修復歷史。
