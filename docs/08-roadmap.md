@@ -2,7 +2,7 @@
 
 ## Phase 0：規劃
 
-Status：目前階段。
+Status：規劃基線已建立；後續變更由 specs 與 GitHub Issues 追蹤。
 
 Deliverables：
 
@@ -14,6 +14,8 @@ Deliverables：
 - 整合策略。
 
 ## Phase 1：本機 MCP Prototype
+
+Status：本機主流程已落地；以完整 stdio demo 與各 ticket 的驗收維持可用程度。Phase 2 的 SQLite 持久化已提前包含於本階段。
 
 Goal：
 
@@ -34,6 +36,8 @@ Exit criteria：
 - 可以從 MCP client 跑完一條 idea-to-ticket workflow，而且不依賴外部整合。
 
 ## Phase 2：真實儲存
+
+Status：本機 SQLite、repository ports 與完整 schema 已在 Phase 1 落地；Postgres 仍延後。
 
 Goal：
 
@@ -105,6 +109,8 @@ Exit criteria：
 - 每個 Implementation Target 可以追溯到同一 Repository 的 issue、PR 和 changed files；Ticket 可聚合所有 targets 的工程追溯鏈。
 
 ## Phase 5：AI Implementation Loop
+
+Status：本機 handoff、evidence、Result acceptance／revocation 已提前實作；真實 coding agent／PR 整合仍依外部整合階段推進。
 
 Goal：
 
