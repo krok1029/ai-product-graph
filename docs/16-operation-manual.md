@@ -506,7 +506,7 @@ Integrity check 失敗時不可自動刪除或修復資料。
 
 取得 approved Ticket revision 與上述 container ID 後，呼叫 `request_plane_ticket_export({ticket_id, source_ticket_revision_id, external_container_id, idempotency_key})`。請保存此操作的 client key；網路中斷或 server 重啟時，以同 key／同 IDs 重送可取得原 intent 與 audit ID。此操作只排入本機 durable request，不代表 Plane work item 已建立。
 
-使用 `get_sync_intent({sync_intent_id})` 讀取 pinned payload、request state 與 attempt history；`list_ticket_export_requests({ticket_id})` 列出該 Ticket 的歷史需求。正式 stdio 不會自動啟動 provider processor，正常新增需求會維持 `pending`、attempts 為空。不要用新 key 繞過 pending 或 failed request：同 Ticket／container 的 outstanding create 會被拒絕。開發用首次 create execution 與 mapping enrollment 已可驗證，live Plane 與 update/status processor、雙向同步尚未交付。
+使用 `get_sync_intent({sync_intent_id})` 讀取 pinned payload、request state 與 attempt history；`list_ticket_export_requests({ticket_id})` 列出該 Ticket 的歷史需求。正式 stdio 不會自動啟動 provider processor，正常新增需求會維持 `pending`、attempts 為空。不要用新 key 繞過 pending 或 failed request：同 Ticket／container 的 outstanding create 會被拒絕。首次 create execution 與 mapping enrollment 已可驗證；下述明確 CLI 可連線 Plane，update/status processor 與雙向同步尚未交付。
 
 ### 查詢已保存的 Plane work item 歷史
 
@@ -514,15 +514,15 @@ Integrity check 失敗時不可自動刪除或修復資料。
 
 取得 item 的內部 `id` 後，使用 `get_external_work_item({external_work_item_id})` 讀取該 item 的全部有效 mappings，以及跨 mappings 依時間排序的 snapshot history。請使用此穩定 id，不要傳顯示名稱、外部 URL 或外部系統的 item id。Ticket 已 archive 仍可讀歷史；沒有 mapping 的已知 Ticket 回空列表，無有效 mapping 的 Plane item 不會帶入無 owner scope 的 snapshots。
 
-Snapshot 是當時保存的外部內容，包含 external status 與 concurrency token，並非目前 Ticket specification 或 live provider 狀態。讀取工具不連線 Plane、不建立 request／attempt／audit，也不改變內部 Ticket completion。此階段沒有 live Plane processor；排入 request 後只有 pending 需求而沒有 External Work Item 是正常結果。Mapping 與 snapshot 查詢、開發用首次 create execution 及自動 durable enrollment 已能獨立驗證；正式 live provider 仍未啟用。
+Snapshot 是當時保存的外部內容，包含 external status 與 concurrency token，並非目前 Ticket specification 或 live provider 狀態。讀取工具不連線 Plane、不建立 request／attempt／audit，也不改變內部 Ticket completion。排入 request 後須明確執行下述 CLI 才會連線 Plane；尚未執行時只有 pending 需求而沒有 External Work Item 是正常結果。Mapping 與 snapshot 查詢不連線外部，正式 stdio 不自動啟用 provider。
 
 ### 首次匯出執行核心（development API）
 
-開發呼叫端使用 `createPlaneCreateProcessor(ports, provider, options?)`；factory 必定組合 `PlaneMappingEnrollment`，透過注入的 provider port 與 durable claims 處理已存在的 request；正式 stdio entrypoint 不會自行啟動它，尚無 live Plane REST adapter 或 credentials 設定。每次 process 最多呼叫一次 create 或 reconciliation，每次皆有 durable attempt。
+開發呼叫端使用 `createPlaneCreateProcessor(ports, provider, options?)`；factory 必定組合 `PlaneMappingEnrollment`，透過注入的 provider port 與 durable claims 處理已存在的 request；正式 stdio entrypoint 不會自行啟動它；HTTP adapter 與 credentials 由下述 CLI 明確裝配。每次 process 最多呼叫一次 create 或 reconciliation，每次皆有 durable attempt。
 
 若 create 已可能送出，或外部成功後本機 commit 失敗，下一次必須先 reconciliation。`found` 可原子保存成功；`unknown` 保留 failure，不能盲目重建；只有 provider 能保證不存在且舊請求不會晚到的 `definitely_absent`，才允許後續另一個 attempt create。一般 404 不具備這項保證。Lease fencing 只保護本機 outcome commit，不能提供跨系統 exactly-once。
 
-成功會同時保存 item、mapping、snapshot、graph trace、attempt outcome 與 audit，並在同一 transaction 呼叫 enrollment port 補上目前 desired state。Enrolled update／close／reopen intents 已持久化，但仍為 pending；尚未實作處理這些 intents 的 processor 或 live activation，不能把 active mapping 或單次 create 成功視為目前內容已同步，也不能視為整個 Phase 3 完成。
+成功會同時保存 item、mapping、snapshot、graph trace、attempt outcome 與 audit，並在同一 transaction 呼叫 enrollment port 補上目前 desired state。Enrolled update／close／reopen intents 已持久化，但仍為 pending；尚未實作處理這些 intents 的 processor，不能把 active mapping 或單次 create 成功視為目前內容已同步，也不能視為整個 Phase 3 完成。
 
 
 ### Active mapping 的後續 outbox
@@ -535,3 +535,22 @@ Snapshot 是當時保存的外部內容，包含 external status 與 concurrency
 - 首次 create 的 provider 呼叫期間，若已核准新版或 Ticket 已完成，mapping 成功 transaction 會固定當前 revision 補入 update／close。外部成功而本機 outbox 失敗時，mapping/outcome 一起 rollback；重啟後必須 reconciliation，再補入當時的 desired state。
 
 開發驗證可執行 `pnpm exec vitest run src/application/plane-mapping-enrollment.test.ts src/application/plane-enrollment-catch-up.test.ts`。測試使用獨立 SQLite provider fixture，不需 credentials；正式 stdio 仍只提供本機 request 與 reads，沒有可偽造 provider success 的 mutation。
+
+### 單次 Plane 首次匯出 CLI
+
+先透過 MCP 註冊 External Container、明確呼叫 `request_plane_ticket_export` 並取得 `sync_intent.id`。Container 的 workspace identity 必須是 Plane workspace slug，container identity 是 Plane project ID。確認要匯出的既有 intent 後，在終端設定：
+
+```sh
+export AI_PRODUCT_GRAPH_DB_PATH=/absolute/path/to/ai-product-graph.sqlite
+export AI_PRODUCT_GRAPH_PLANE_BASE_URL=https://api.plane.so
+export AI_PRODUCT_GRAPH_PLANE_API_KEY='<your-api-key>'
+pnpm plane:export -- <sync-intent-id>
+```
+
+Plane Cloud API origin 依 [官方 create API](https://developers.plane.so/api-reference/issue/add-issue) 為上述網址。Base URL 只接受 HTTPS origin；自架 Plane 使用其 API origin，不附 `/api/v1` 或其他 path。HTTP 僅允許 loopback，供本機測試。API key 僅從當次環境取得，不寫入 SQLite。可先執行 `pnpm plane:export -- --help`，不需要 key、也不開啟資料庫。Build 後可執行 `node dist/plane-export.js <sync-intent-id>` 或 `pnpm plane:export:built -- <sync-intent-id>`。
+
+每次只接受一個既有 create intent，使用 15 秒 provider deadline 與 60 秒 lease。成功在 stdout 回 JSON 摘要，`succeeded`／`already_succeeded` exit 0；失敗 exit 1，參數或設定錯誤 exit 2。若 provider 已返回 failure，摘要包含 attempt ID，可用 `get_sync_intent` 查閱持久化原因。錯誤輸出不含原始 HTTP body、API key 或 stack。
+
+已成功的 intent 再執行不會建立第二個 work item。若程序在外部建立後中斷，請等待原 lease 過期後用相同 intent ID 再執行；它會以穩定 markers 查找既有項目。只有唯一、身分相符的結果才補寫本機成功。404、空結果、查詢不完整或多筆結果仍是 unknown，不能證明先前 create 未發生，因此不會自動再 POST。即使前次是認證錯誤，修復 key 後若查無結果也保留此保守限制；目前沒有強制重送、假成功或 manual absence override。
+
+此命令只交付首次 create／reconciliation。Mapping 的後續 update／close／reopen 會保存為 pending，CLI 不執行它們；stdout 的 create 成功不代表目前 revision 或 delivery status 已與 Plane 完全同步。一般 MCP server 啟動、Ticket approval 及 container 註冊都不會自動發送第一個外部 create。交付驗證使用 loopback HTTP，尚未對使用者的真實 Plane workspace 執行匯出。

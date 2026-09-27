@@ -14,7 +14,9 @@
     "typecheck": "tsgo --noEmit",
     "typecheck:ts6": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "smoke": "node --import tsx src/smoke.ts"
+    "smoke": "node --import tsx src/smoke.ts",
+    "plane:export": "node --import tsx src/plane-export.ts",
+    "plane:export:built": "node dist/plane-export.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

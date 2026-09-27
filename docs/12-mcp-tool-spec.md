@@ -1680,4 +1680,4 @@ Update payload 與首次 export 使用相同 version 1 canonical specification p
 
 首次 create 成功時，application factory `createPlaneCreateProcessor` 必定執行 mapping enrollment，補入 create 執行期間較新的 current revision 與 done state。Catch-up 的 source event 為 `plane_mapping.created`，source event ID 連回原 create request audit，payload 固定補入時的 current revision。原 create intent 與首次 mapping source revision 保持不變。
 
-所有 update／close／reopen 目前只持久化、保持 pending；create processor 拒絕執行這些 operations。`get_sync_intent` 可查已知 intent ID 的 request state，不能把它或 mapping lifecycle 當成 owner Sync Health。`list_ticket_export_requests` 仍只列首次 create requests，不擴張成所有 mapping intents。Live Plane REST、update/status processor、衍生 Sync Health 與雙向同步尚未交付。
+所有 update／close／reopen 目前只持久化、保持 pending；create processor 拒絕執行這些 operations。`get_sync_intent` 可查已知 intent ID 的 request state，不能把它或 mapping lifecycle 當成 owner Sync Health。`list_ticket_export_requests` 仍只列首次 create requests，不擴張成所有 mapping intents。明確單次 CLI 已可透過 Plane REST 執行首次 create／reconciliation；MCP stdio 不會自動啟動外部呼叫。Update/status processor、衍生 Sync Health 與雙向同步尚未交付。
