@@ -5,6 +5,7 @@
 // 交給專門的 workflow modules。
 
 import { ulid } from "ulid";
+import { ProjectReads } from "./project-reads.js";
 
 import { ApplicationError } from "../domain/errors.js";
 import type {
@@ -132,6 +133,14 @@ export class ProductGraphService {
     });
 
     return { project, auditLogId: audit.id };
+  }
+
+  getProjectBrief(projectId: string) {
+    return new ProjectReads(this.ports).getBrief(projectId);
+  }
+
+  getProjectTickets(projectId: string) {
+    return new ProjectReads(this.ports).getTickets(projectId);
   }
 
   listProjects() {

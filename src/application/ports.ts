@@ -146,6 +146,7 @@ export interface TicketDraftBatchRepository {
 }
 
 export interface TicketRepository {
+  listByProjectId(projectId: string): Ticket[];
   insert(ticket: Ticket): void;
   findById(id: string): Ticket | null;
   findBySlug(projectId: string, slug: string): Ticket | null;
