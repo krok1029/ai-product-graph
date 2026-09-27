@@ -43,6 +43,16 @@ export function createExternalWorkItemRepository(database: SqliteDatabase): Exte
     return rows.map(({ contentJson, ...row }) => ({ ...row, content: JSON.parse(contentJson) as unknown }));
   }
   return {
+    hasInvalidTicketMappings(ticketId) {
+      // 只診斷 active Plane 義務；一般 scoped reads 隱藏的損壞資料不能讓 health 變成 current。
+      const raw = database.prepare(`SELECT COUNT(*) AS count FROM external_work_item_mappings m
+        LEFT JOIN external_containers c ON c.id = m.external_container_id
+        LEFT JOIN external_work_items i ON i.id = m.external_work_item_id
+        WHERE m.internal_owner_type = 'ticket' AND m.internal_owner_id = ? AND m.lifecycle_status = 'active'
+          AND (c.provider = 'plane' OR i.provider = 'plane' OR c.id IS NULL OR i.id IS NULL)`)
+        .get(ticketId) as { count: number };
+      return raw.count !== mappings("t.id = ?", ticketId).filter(mapping => mapping.lifecycleStatus === "active").length;
+    },
     findById(id) {
       const row = database.prepare(`SELECT i.id, i.external_container_id AS externalContainerId,
         i.provider, i.external_id AS externalId, i.external_url AS externalUrl,

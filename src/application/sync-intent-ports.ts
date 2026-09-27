@@ -1,6 +1,7 @@
 import type { SyncAttempt, SyncIntent } from "../domain/sync-intent.js";
 
 export interface SyncIntentRepository {
+  hasInvalidTicketExportRequests(ticketId: string): boolean;
   findById(id: string): SyncIntent | null;
   findByIdempotencyKey(key: string): SyncIntent | null;
   insert(intent: SyncIntent): void;

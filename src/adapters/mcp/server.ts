@@ -1,3 +1,4 @@
+import { registerTicketSyncHealthTools } from "./ticket-sync-health-tools.js";
 import { registerSyncHealthTools } from "./sync-health-tools.js";
 import { registerMappingSyncTools } from "./mapping-sync-tools.js";
 import { registerExternalWorkItemTools } from "./external-work-item-tools.js";
@@ -47,6 +48,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
 
   registerMappingSyncTools(server, service);
   registerSyncHealthTools(server, service);
+  registerTicketSyncHealthTools(server, service);
   registerExternalWorkItemTools(server, service);
   registerExternalContainerTools(server, service);
   registerRepositoryTools(server, service);

@@ -113,3 +113,5 @@ Hosted MCP server、Postgres 和 UI 都延後，等本機 MCP workflow 被證明
 ## Plane 首次匯出
 
 已排入的 Plane create Sync Intent 可透過 `pnpm plane:export -- <sync-intent-id>` 明確執行。連線參數、重試限制及 built command 見 [操作手冊](docs/16-operation-manual.md#單次-plane-首次匯出-cli)。一般 stdio 啟動不會自動匯出；後續 update／close／reopen execution 與雙向同步仍待完成。
+
+同步義務可透過 `list_mapping_sync_intents` 查閱完整歷史，並以 `get_mapping_sync_health`／`get_ticket_sync_health` 取得衍生 health。沒有 enrollment 的 `current` 會明確標記 `not_enrolled`；health 不修改 approval 或 completion，詳見操作手冊。

@@ -46,3 +46,11 @@ Done Ticket 必須有最後一筆 close；create 本身不代表 close。非 don
 | `mapping_archived` | Mapping 已封存，`included: false` |
 
 真正不存在的 mapping 回傳 `NOT_FOUND`；已存在但損壞的 history 不會被誤報為 current。Health 是目前觀測，不應寫入不可變 Operation Receipt。Acceptance 或 Revocation 之後需使用 read API 查詢，不改寫它們的歷史 response。
+
+## Ticket 聚合
+
+`get_ticket_sync_health` 與 `product-graph://tickets/{ticketId}/sync-health` 將 active mappings 與 outstanding manual exports 放在同一 read snapshot 聚合，優先順序仍是 failed > pending > current。Mapping failure 不會被另一筆成功匯出掩蓋；成功 create 已有對應 mapping 時只算一次。未有 mapping 的 failed create 仍為 failed，未開始／執行中為 pending；無法驗證的 request 或成功後缺少 mapping proof 則為 pending 診斷。
+
+回傳每筆 mapping health、outstanding export request state、兩類計數及附 `mapping_id`／`intent_id` 的 reasons。Owner 額外 reason codes 為 `not_enrolled`（尚未建立任何同步義務）、`outstanding_export`（未完成首次匯出）、`invalid_obligation`（無效 request）與 `incomplete_history`（缺少 proof 或有被 scope filter 排除的異常紀錄）。僅註冊 container 的 Ticket 為 current + not_enrolled。
+
+Ticket 與 Ticket-context resources 暴露頂層 `sync_health`；approval 的健康度在 enrollment 提交後計算。原有 failed lifecycle obligation 可使新版 approval 回 approved + failed，並不阻止規格核准；正常新 update 則立即回 pending。Acceptance／Revocation 仍維持原本 receipt bytes，請另查此唯讀投影。

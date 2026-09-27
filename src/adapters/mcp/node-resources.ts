@@ -20,12 +20,13 @@ export function registerNodeResources(server: McpServer, service: ProductGraphSe
   })))));
 
   register("ticket", "tickets/{ticketId}", "ticketId", ticketId => ({
-    ticket: serializeTicket(service.getTicket(ticketId).ticket)
+    ticket: serializeTicket(service.getTicket(ticketId).ticket),
+    sync_health: service.getTicketSyncHealth(ticketId).syncHealth
   }));
   register("ticket-context", "tickets/{ticketId}/context", "ticketId", ticketId => {
     const result = service.getTicketContext({ ticketId });
     return {
-      ticket: serializeTicket(result.ticket), revision: serializeTicketRevision(result.revision),
+      ticket: serializeTicket(result.ticket), sync_health: service.getTicketSyncHealth(ticketId).syncHealth, revision: serializeTicketRevision(result.revision),
       related_nodes: result.relatedNodes.map(serializeGraphNode),
       related_edges: result.relatedEdges.map(serializeGraphEdge),
       traced_ticket: result.tracedTicket ? serializeTicket(result.tracedTicket) : null,
