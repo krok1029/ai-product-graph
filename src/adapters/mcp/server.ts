@@ -1,3 +1,4 @@
+import { registerPlaneExportTools } from "./plane-export-tools.js";
 import { registerSyncIntentTools } from "./sync-intent-tools.js";
 import { registerExternalContainerTools } from "./external-container-tools.js";
 // MCP server 註冊入口。
@@ -44,6 +45,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
   registerExternalContainerTools(server, service);
   registerRepositoryTools(server, service);
   registerSyncIntentTools(server, service);
+  registerPlaneExportTools(server, service);
   registerPlanningPrompts(server);
 
   server.registerTool(

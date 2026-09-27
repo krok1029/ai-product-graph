@@ -501,3 +501,9 @@ Integrity check 失敗時不可自動刪除或修復資料。
 使用 `list_external_containers({})` 或 `list_external_containers({provider: "plane"})` 查詢註冊結果，順序依建立時間與 id。Container 是全域資料，不需要 Project id；重啟 server 後仍可查到。
 
 目前這一步只保存本機 identity，並不驗證 Plane 連線或建立外部 work item，也不啟用自動同步。後續 export 必須另行明確提出 request。
+
+### 明確排入 Plane 首次匯出需求
+
+取得 approved Ticket revision 與上述 container ID 後，呼叫 `request_plane_ticket_export({ticket_id, source_ticket_revision_id, external_container_id, idempotency_key})`。請保存此操作的 client key；網路中斷或 server 重啟時，以同 key／同 IDs 重送可取得原 intent 與 audit ID。此操作只排入本機 durable request，不代表 Plane work item 已建立。
+
+使用 `get_sync_intent({sync_intent_id})` 讀取 pinned payload、request state 與 attempt history；`list_ticket_export_requests({ticket_id})` 列出該 Ticket 的歷史需求。現階段沒有 provider processor，正常新增需求會維持 `pending`、attempts 為空。不要用新 key 繞過 pending 或 failed request：同 Ticket／container 的 outstanding create 會被拒絕。後續 provider execution、mapping enrollment 與雙向同步尚未交付。

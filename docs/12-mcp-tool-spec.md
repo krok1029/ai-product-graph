@@ -1599,3 +1599,46 @@ Input：`{ "ticket_id": "<Ticket ID>" }`。Output data：`{ "requests": [] }`；
 Requests 依 `created_at`、`id` 升冪排序，包含 archived intents／Ticket／revision 的歷史。Existing Ticket 尚無 request 回傳空陣列；unknown Ticket 回傳 `NOT_FOUND`。
 
 兩個工具皆只讀，不新增 audit、不變更 domain state、不啟動 processor 或呼叫 provider。重啟後應得到相同的 pinned request 與完整 attempts；查詢成功不表示外部 work item 已建立。
+
+### `request_plane_ticket_export`
+
+明確排入 Plane 首次匯出需求。此 preparation 功能只保存本機 Sync Intent，不呼叫 provider、不建立 External Work Item／mapping／snapshot／attempt，也不表示 export 成功。
+
+封閉 input：
+
+```json
+{
+  "ticket_id": "01...",
+  "source_ticket_revision_id": "01...",
+  "external_container_id": "01...",
+  "idempotency_key": "client-generated-request-key"
+}
+```
+
+所有文字欄位 trim 後必須非空。Actor、timestamp、payload/hash 均由 server 決定，不接受 client 覆寫。首次執行要求 active Project／Ticket、該 Ticket 的 current active approved revision，以及已註冊的 Plane container。舊版、draft、跨 Ticket revision 回 `CONFLICT`；不存在的 Ticket／container 回 `NOT_FOUND`。Ticket approval 不會自動觸發首次匯出。
+
+成功 data 為 `{ "sync_intent": <完整 immutable intent> }`，envelope 的 `audit_log_id` 為原始 audit identity。Intent serialization 同 `get_sync_intent`；mutable `request_state` 應由 read tools 查詢，不包含在 mutation response。
+
+Pinned payload version 1：
+
+```json
+{
+  "schema_version": 1,
+  "owner": { "type": "ticket", "id": "01..." },
+  "source_ticket_revision_id": "01...",
+  "specification": {
+    "title": "Approved title",
+    "user_story": "Approved user story",
+    "scope": [],
+    "acceptance_criteria": [{ "id": "01...", "text": "Criterion" }],
+    "non_goals": [],
+    "implementation_notes": []
+  }
+}
+```
+
+此 payload 為 provider-neutral specification projection，不含 labels、assignees、comments 或 Plane REST DTO。SQLite 保存 RFC 8785 canonical JSON，`payload_hash` 為該 UTF-8 bytes 的 SHA-256。Intent 的 `mapping_id`、`sequence_number`、`supersedes_sync_intent_id` 皆 null；`operation=create`、`lifecycle_status=active`、`source_event_type=plane_ticket_export_requested`、`source_event_id=原始 audit ID`。
+
+Idempotency key 由 server 對 Project ID、Local Actor ID、operation 及 trimmed client key 的 canonical JSON 做 SHA-256，使用 `plane-ticket-export:` namespace。先以 Ticket identity 取得 Project scope，再查 durable intent。同 key、同三個 command IDs 回放原 intent／audit，不寫入額外 audit，即使來源已 archive 或 revision 已 supersede；同 key 不同 command 回 `CONFLICT`。跨 Project／Actor 的 key scope 獨立。此流程不使用 Result Acceptance／Revocation 專用的 Operation Receipt。
+
+不同 key／Actor 對同 Ticket／container 的 outstanding create（包含 failed attempt）回 `CONFLICT`；存在 active mapping 亦拒絕。已有 succeeded attempt 的 create 不再 outstanding，但 active mapping 仍阻擋。Actor、intent、audit 在同一 transaction 內保存，SQLite trigger 同時保護重複需求；失敗全部 rollback，原 key 可重新嘗試。既有 Ticket／approval／Graph／Result 不變。

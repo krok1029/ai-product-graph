@@ -1,3 +1,4 @@
+import { canonicalizeJson } from "../../application/canonical-json.js";
 import type { ApplicationPorts } from "../../application/ports.js";
 import type { SyncAttempt, SyncIntent } from "../../domain/sync-intent.js";
 import type { SqliteDatabase } from "./database.js";
@@ -23,6 +24,35 @@ export function createSyncIntentRepositories(database: SqliteDatabase): Pick<App
       findById(id) {
         const row = database.prepare(`SELECT ${intentColumns} FROM sync_intents i WHERE i.id = ?`).get(id) as IntentRow | undefined;
         return row ? mapIntent(row) : null;
+      },
+      findByIdempotencyKey(key) {
+        const row = database.prepare(`SELECT ${intentColumns} FROM sync_intents i WHERE i.idempotency_key = ?`).get(key) as IntentRow | undefined;
+        return row ? mapIntent(row) : null;
+      },
+      insert(intent) {
+        database.prepare(`INSERT INTO sync_intents (id, project_id, mapping_id, external_container_id,
+          sequence_number, operation, source_event_type, source_event_id, source_ticket_revision_id,
+          payload_hash, payload_json, idempotency_key, supersedes_sync_intent_id, lifecycle_status, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+          intent.id, intent.projectId, intent.mappingId, intent.externalContainerId, intent.sequenceNumber,
+          intent.operation, intent.sourceEventType, intent.sourceEventId, intent.sourceTicketRevisionId,
+          intent.payloadHash, canonicalizeJson(intent.payload), intent.idempotencyKey,
+          intent.supersedesSyncIntentId, intent.lifecycleStatus, intent.createdAt
+        );
+      },
+      hasActiveTicketMapping(ticketId, containerId) {
+        return Boolean(database.prepare(`SELECT 1 FROM external_work_item_mappings
+          WHERE internal_owner_type = 'ticket' AND internal_owner_id = ?
+            AND external_container_id = ? AND lifecycle_status = 'active' LIMIT 1`).get(ticketId, containerId));
+      },
+      hasOutstandingTicketCreate(ticketId, containerId) {
+        return Boolean(database.prepare(`SELECT 1 FROM sync_intents i
+          JOIN ticket_revisions r ON r.id = i.source_ticket_revision_id
+          WHERE r.ticket_id = ? AND i.external_container_id = ?
+            AND i.source_event_type = 'plane_ticket_export_requested' AND i.operation = 'create'
+            AND i.lifecycle_status = 'active' AND NOT EXISTS (
+              SELECT 1 FROM sync_attempts a WHERE a.sync_intent_id = i.id AND a.result_status = 'succeeded'
+            ) LIMIT 1`).get(ticketId, containerId));
       },
       listByTicketId(ticketId) {
         const rows = database.prepare(`SELECT ${intentColumns} FROM sync_intents i

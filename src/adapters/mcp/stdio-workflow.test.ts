@@ -108,6 +108,39 @@ it("completes acceptance and revocation through stdio and replays original recei
   expect(inspectStorage()).toEqual(firstDomainAudits);
 }, 25_000);
 
+it("queues manual Plane export through stdio and preserves the request after restart", async () => {
+  // 前置：從空資料庫透過 MCP 建立 approved Ticket 與外部 container。
+  const context = await createHandoff();
+  expect(await call("list_ticket_export_requests", { ticket_id: context.ticketId })).toEqual({ requests: [] });
+  const registered = await call<{ external_container: Identity }>("register_external_container", {
+    provider: "plane", workspace_identity: "demo-workspace", container_identity: "demo-project"
+  });
+  const command = { ticket_id: context.ticketId, source_ticket_revision_id: context.ticketRevisionId,
+    external_container_id: registered.external_container.id, idempotency_key: "stdio-plane-export" };
+
+  // 操作：明確排入匯出需求，關閉後以同一 SQLite 重啟。
+  const requested = await envelope<{ sync_intent: Identity }>("request_plane_ticket_export", command);
+  await target.close();
+  target = await connect(databasePath);
+
+  // 驗證：回放保留 identity／audit；read tools 顯示尚未執行的同一份需求。
+  expect(await envelope("request_plane_ticket_export", command)).toEqual(requested);
+  const details = await call("get_sync_intent", { sync_intent_id: requested.data.sync_intent.id });
+  expect(details).toEqual({ sync_intent: requested.data.sync_intent, attempts: [], request_state: "pending" });
+  expect(await call("list_ticket_export_requests", { ticket_id: context.ticketId })).toEqual({ requests: [details] });
+  await target.close();
+  const database = openDatabase(databasePath);
+  try {
+    expect(database.pragma("foreign_key_check")).toEqual([]);
+    expect(database.prepare("SELECT count(*) AS count FROM sync_intents").get()).toEqual({ count: 1 });
+    expect(database.prepare("SELECT count(*) AS count FROM audit_log WHERE action = 'plane_ticket_export.requested'").get())
+      .toEqual({ count: 1 });
+    for (const table of ["external_work_items", "external_work_item_mappings", "external_work_item_snapshots", "sync_attempts"]) {
+      expect(database.prepare(`SELECT count(*) AS count FROM ${table}`).get()).toEqual({ count: 0 });
+    }
+  } finally { database.close(); }
+}, 25_000);
+
 async function createHandoff() {
   const project = await call<{ project: Identity }>("create_project", { name: "Complete local demo" });
   const projectId = project.project.id;
