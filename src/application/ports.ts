@@ -1,3 +1,4 @@
+import type { SyncIntentRepository } from "./sync-intent-ports.js";
 import type { Decision, OperationReceipt, ResultRevocation, ResultAcceptance, ResultAcceptanceCriterionOutcome } from "../domain/result-acceptance.js";
 import type {
   AuditLogEntry,
@@ -286,6 +287,7 @@ export interface OperationReceiptRepository {
 }
 
 export type ApplicationPorts = {
+  syncIntents: SyncIntentRepository;
   resultAcceptances: ResultAcceptanceRepository;
   resultRevocations: ResultRevocationRepository;
   decisions: DecisionRepository;
