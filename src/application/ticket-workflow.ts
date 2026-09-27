@@ -7,7 +7,6 @@
 import { ApplicationError } from "../domain/errors.js";
 import type {
   AuditLogEntry,
-  GraphEdge,
   GraphNode,
   ImplementationTarget,
   Repository,
@@ -21,7 +20,6 @@ import {
   isRecord,
   normalizeRequiredString,
   normalizeStringArray,
-  renderTicketMarkdown,
   slugify,
   ticketBaseConflict,
   validationError
@@ -368,49 +366,6 @@ export class TicketWorkflow {
         auditLogId: audit.id
       };
     });
-  }
-
-  getContext(input: { ticketId: string; includeMarkdown?: boolean }) {
-    const ticket = this.requireActiveTicket(input.ticketId);
-    if (!ticket.currentApprovedRevisionId) {
-      throw new ApplicationError(
-        "CONFLICT",
-        "Ticket has no approved revision.",
-        { ticketId: ticket.id }
-      );
-    }
-    const revision = this.ports.ticketRevisions.findById(
-      ticket.currentApprovedRevisionId
-    );
-    if (!revision) {
-      throw new ApplicationError(
-        "STORAGE_ERROR",
-        "Ticket current approved revision pointer is inconsistent.",
-        { ticketId: ticket.id }
-      );
-    }
-    const relatedNodeIds =
-      this.ports.ticketRevisions.listGraphNodeIds(revision.id);
-    const relatedNodes = relatedNodeIds
-      .map(nodeId => this.ports.graphNodes.findById(nodeId))
-      .filter((node): node is GraphNode => node !== null);
-    const relatedNodeSet = new Set(relatedNodes.map(node => node.id));
-    const relatedEdges = this.ports.graphEdges
-      .list(ticket.projectId,"active")
-      .filter(
-        edge =>
-          relatedNodeSet.has(edge.sourceNodeId)&&
-          relatedNodeSet.has(edge.targetNodeId)
-      );
-    return {
-      ticket,
-      revision,
-      relatedNodes,
-      relatedEdges,
-      markdown: input.includeMarkdown
-        ? renderTicketMarkdown(ticket, revision, relatedNodes, relatedEdges)
-        :null
-    };
   }
 
   private normalizeTicketSpecInput(
