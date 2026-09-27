@@ -15,19 +15,28 @@
 
 ```json
 {
+  "project_id": "<project id>",
+  "source_graph_revision_id": "<current graph revision id>",
+  "source_node_ids": ["<source node id>"],
   "tickets": [
     {
-      "title": "",
-      "user_story": "",
+      "title": "<可獨立驗證的功能>",
+      "user_story": "<使用情境>",
       "scope": [],
-      "acceptance_criteria": [],
+      "acceptance_criteria": ["<可驗證結果>"],
       "non_goals": [],
-      "related_graph_nodes": [],
+      "related_graph_node_ids": ["<source node id>"],
+      "dependencies": [],
+      "implementation_targets": [
+        { "repository_id": "<repository id>", "scope": ["<repository 範圍>"] }
+      ],
       "implementation_notes": []
     }
   ]
 }
 ```
+
+輸出為 `create_ticket_draft_batch` 的 arguments；所有 `<...>` 須替換為真實來源或生成內容，不能把 placeholder 提交為 identity。
 
 ## Rules
 
