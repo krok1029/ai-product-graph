@@ -24,7 +24,11 @@ export function registerResultTools(server: McpServer, service: ProductGraphServ
         repository_id: z.string().min(1),
         evidence_type: observedEvidenceTypeSchema,
         idempotency_key: z.string().min(1),
-        payload: z.record(z.unknown())
+        // 保留原始欄位交給 closed-schema 驗證，避免 parser 靜默移除 __proto__。
+        payload: z.unknown().refine(
+          value => typeof value === "object" && value !== null && !Array.isArray(value),
+          "payload must be an object."
+        )
       }).strict()
     },
     async ({

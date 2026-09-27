@@ -272,6 +272,14 @@ it("runs the Graph reconciliation workflow through MCP", async () => {
       ...evidenceInput, payload: { ...evidenceInput.payload, criterion_verdict: "satisfied" }
     } });
     expect(JSON.parse((invalidPayload.content as Array<{ text: string }>)[0]!.text)).toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
+    // JSON.parse 會建立 own property，不能使用會改變 prototype 的 object literal。
+    const prototypePayload = JSON.parse(JSON.stringify(evidenceInput.payload).slice(0, -1) +
+      ',"__proto__":{"unexpected":true}}');
+    const prototypeRejected = await client.callTool({ name: "record_observed_evidence", arguments: {
+      ...evidenceInput, payload: prototypePayload
+    } });
+    expect(JSON.parse((prototypeRejected.content as Array<{ text: string }>)[0]!.text))
+      .toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
     const recorded = toolData(await client.callTool({ name: "record_observed_evidence", arguments: evidenceInput }));
     const evidence = recorded.observed_evidence as { id: string; payload_hash: string };
     expect(recorded.created).toBe(true);
