@@ -1,14 +1,16 @@
+import type { PlaneObservationProviderPort, PlaneReadOutcome, PlaneReadRequest } from "../../application/plane-observation-ports.js";
 import type {
   PlaneCreateOutcome, PlaneCreateRequest, PlaneItemObservation, PlaneProviderPort, PlaneReconcileOutcome
 } from "../../application/plane-provider-port.js";
 import { canonicalizeJson } from "../../application/canonical-json.js";
+import { planeKnownItemObservation } from "./known-item-observation.js";
 import { planeCreateFields, planeItemObservation } from "./fields.js";
 import { PlaneHttpError, PlaneHttpInvocation, planeHttpConfig, type PlaneHttpConfig } from "./http-transport.js";
 
 export type { PlaneHttpConfig } from "./http-transport.js";
 
-// Adapter 不啟動 background work；每次 method 僅執行呼叫者已持久化的 invocation。
-export class PlaneHttpProvider implements PlaneProviderPort {
+// Adapter 不啟動 background work；每次 method 僅執行呼叫者明確要求的 invocation。
+export class PlaneHttpProvider implements PlaneProviderPort, PlaneObservationProviderPort {
   private readonly config;
   constructor(config: PlaneHttpConfig) { this.config = planeHttpConfig(config); }
 
@@ -76,15 +78,23 @@ export class PlaneHttpProvider implements PlaneProviderPort {
     finally { invocation.close(); }
   }
 
-  private endpoint(request: PlaneCreateRequest): URL {
+  async readKnownItem(request: PlaneReadRequest): Promise<PlaneReadOutcome> {
+    let url: URL;
+    try { url = new URL(`${this.endpoint(request)}${pathSegment(request.externalId)}/`); }
+    catch { return unknown("INVALID_PLANE_REQUEST"); }
+    const invocation = new PlaneHttpInvocation(this.config);
+    try {
+      const response = await invocation.request(url);
+      if (!response.ok) return unknown("PLANE_HTTP_REJECTED", response.status);
+      const item = planeKnownItemObservation(await invocation.json(response), request);
+      return item ? { status: "observed", item } : unknown("INVALID_PLANE_RESPONSE");
+    } catch (error) { return transportFailure(error); }
+    finally { invocation.close(); }
+  }
+
+  private endpoint(request: Pick<PlaneCreateRequest, "container">): URL {
     if (request.container.provider !== "plane") throw new PlaneHttpError("INVALID_PLANE_REQUEST");
-    const segment = (value: string) => {
-      if (typeof value !== "string" || !value.trim() || value === "." || value === "..") {
-        throw new PlaneHttpError("INVALID_PLANE_REQUEST");
-      }
-      return encodeURIComponent(value);
-    };
-    return new URL(`/api/v1/workspaces/${segment(request.container.workspaceIdentity)}/projects/${segment(request.container.containerIdentity)}/work-items/`, this.config.origin);
+    return new URL(`/api/v1/workspaces/${pathSegment(request.container.workspaceIdentity)}/projects/${pathSegment(request.container.containerIdentity)}/work-items/`, this.config.origin);
   }
 }
 
@@ -98,4 +108,11 @@ function unknown(code: string, httpStatus?: number) {
 
 function transportFailure(error: unknown) {
   return unknown(error instanceof PlaneHttpError ? error.code : "PLANE_TRANSPORT_ERROR");
+}
+
+function pathSegment(value: string): string {
+  if (typeof value !== "string" || !value.trim() || value === "." || value === "..") {
+    throw new PlaneHttpError("INVALID_PLANE_REQUEST");
+  }
+  return encodeURIComponent(value);
 }
