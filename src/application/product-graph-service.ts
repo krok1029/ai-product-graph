@@ -1,3 +1,4 @@
+import { MappingSyncPlanReads } from "./mapping-sync-plan-reads.js";
 import { MappingTerminationReads } from "./mapping-termination-reads.js";
 import { SyncMappingTerminationWorkflow, type TerminateSyncMappingInput } from "./sync-mapping-termination-workflow.js";
 import { TicketSyncHealthReads } from "./ticket-sync-health-reads.js";
@@ -155,6 +156,10 @@ export class ProductGraphService {
 
   getMappingTermination(mappingId: string) {
     return new MappingTerminationReads(this.ports).get(mappingId);
+  }
+
+  getMappingSyncPlan(mappingId: string) {
+    return new MappingSyncPlanReads(this.ports).get(mappingId);
   }
 
   getTicketSyncHealth(ticketId: string) {
