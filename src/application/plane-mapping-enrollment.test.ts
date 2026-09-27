@@ -31,9 +31,9 @@ it("pins an independent update and monotonic sequence for each active Plane mapp
   f.database.prepare("UPDATE external_work_items SET lifecycle_status = 'archived' WHERE id = ?").run(archivedItem.externalWorkItemId);
   const approved = approveReplacement();
   const intents = allIntents();
-  expect(intents).toHaveLength(2);
-  expect(new Set(intents.map(intent => intent.mappingId))).toEqual(new Set([first.id, second.id]));
-  expect(new Set(intents.map(intent => intent.idempotencyKey)).size).toBe(2);
+  expect(intents).toHaveLength(3);
+  expect(new Set(intents.map(intent => intent.mappingId))).toEqual(new Set([first.id, second.id, archivedItem.id]));
+  expect(new Set(intents.map(intent => intent.idempotencyKey)).size).toBe(3);
   expect(new Set(approved.createdSyncIntentIds)).toEqual(new Set(intents.map(intent => intent.id)));
   for (const intent of intents) {
     expect(intent).toMatchObject({ operation: "update", sequenceNumber: 1, sourceTicketRevisionId: approved.revision.id,
@@ -44,12 +44,14 @@ it("pins an independent update and monotonic sequence for each active Plane mapp
     expect(f.ports.syncIntents.listAttempts(intent.id)).toEqual([]);
   }
   const newer = approveReplacement();
-  expect(allIntents().filter(intent => intent.sourceTicketRevisionId === newer.revision.id).map(intent => intent.sequenceNumber)).toEqual([2, 2]);
+  expect(allIntents().filter(intent => intent.sourceTicketRevisionId === newer.revision.id).map(intent => intent.sequenceNumber)).toEqual([2, 2, 2]);
 });
 
-it("queues close/reopen exactly once across acceptance and revocation receipt replay", () => {
-  mapping("first");
-  mapping("second");
+it("queues close/reopen exactly once across receipt replay even when the active mapping item is archived", () => {
+  const first = mapping("first");
+  const archivedItem = mapping("archived-item");
+  mapping("archived-mapping", "archived");
+  f.database.prepare("UPDATE external_work_items SET lifecycle_status = 'archived' WHERE id = ?").run(archivedItem.externalWorkItemId);
   const result = f.submit().implementationResult;
   const input = { implementationResultId: result.id, idempotencyKey: "accept" };
   const accepted = f.service.acceptImplementationResult(input);
@@ -62,6 +64,7 @@ it("queues close/reopen exactly once across acceptance and revocation receipt re
   expect(f.service.revokeResultAcceptance(revokeInput)).toEqual(revoked);
   const reopened = allIntents().filter(intent => intent.operation === "reopen");
   expect(reopened).toHaveLength(2);
+  expect(new Set(allIntents().map(intent => intent.mappingId))).toEqual(new Set([first.id, archivedItem.id]));
   for (const intent of reopened) {
     expect(intent).toMatchObject({ sequenceNumber: 2, sourceEventType: "result_acceptance.revoked", sourceEventId: revoked.auditLogId });
     expect(intent.payload).toMatchObject({ delivery_status: "blocked", source_ticket_revision_id: f.revision.id });

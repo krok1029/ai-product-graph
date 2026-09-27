@@ -44,9 +44,9 @@ export class PlaneMappingEnrollment {
   }
 
   private activeMappings(ticketId: string) {
+    // Mapping 本身是 enrollment 邊界；外部 item 封存不能靜默解除既有同步義務。
     return this.ports.externalWorkItems.listTicketMappings(ticketId).filter(mapping =>
-      mapping.lifecycleStatus === "active" &&
-      this.ports.externalWorkItems.findById(mapping.externalWorkItemId)?.lifecycleStatus === "active");
+      mapping.lifecycleStatus === "active");
   }
 
   private requireCurrentRevision(ticket: Ticket, requireActive = true): TicketRevision {
