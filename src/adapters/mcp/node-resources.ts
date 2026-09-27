@@ -27,7 +27,10 @@ export function registerNodeResources(server: McpServer, service: ProductGraphSe
     return {
       ticket: serializeTicket(result.ticket), revision: serializeTicketRevision(result.revision),
       related_nodes: result.relatedNodes.map(serializeGraphNode),
-      related_edges: result.relatedEdges.map(serializeGraphEdge), markdown: result.markdown
+      related_edges: result.relatedEdges.map(serializeGraphEdge),
+      traced_ticket: result.tracedTicket ? serializeTicket(result.tracedTicket) : null,
+      trace_edge: result.traceEdge ? serializeGraphEdge(result.traceEdge) : null,
+      markdown: result.markdown
     };
   });
   register("node", "nodes/{nodeId}", "nodeId", nodeId => ({
