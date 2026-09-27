@@ -7,6 +7,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerProjectResources } from "./project-resources.js";
 import { z } from "zod";
+import { registerMarkdownTools } from "./markdown-tools.js";
 
 import type { ProductGraphService } from "../../application/product-graph-service.js";
 import {
@@ -638,6 +639,8 @@ export function createMcpServer(service: ProductGraphService): McpServer {
   );
 
   registerProjectResources(server, service);
+
+  registerMarkdownTools(server, service);
 
   return server;
 }

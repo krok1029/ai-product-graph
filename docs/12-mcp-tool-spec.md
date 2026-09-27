@@ -1387,6 +1387,14 @@ Output：
 }
 ```
 
+Product Brief Version 匯出驗收：
+
+- `entity_type = product_brief_version` 時，依指定的 Version ID 讀取 structured data，不能改用 current version。
+- 只允許 active draft 或 approved version；不存在回傳 `NOT_FOUND`，archived 回傳 `CONFLICT`，不支援的 entity type 回傳 validation error。
+- 必須包含 ProductBriefJson 所有欄位、Version／Project identity 與 review status。空集合明示 `None`，來源中的 Markdown／HTML 視為文字。
+- `suggested_filename` 為 `product-brief-{version_id}-v{version_number}.md`，identity 中非英數、底線、連字號字元轉為連字號。
+- 匯出不寫入檔案、不修改 structured data、approval 或 audit history。
+
 ## MVP Resources
 
 ```text

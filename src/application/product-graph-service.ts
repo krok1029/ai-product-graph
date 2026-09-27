@@ -5,6 +5,7 @@
 // 交給專門的 workflow modules。
 
 import { ulid } from "ulid";
+import { MarkdownExport, type MarkdownExportInput } from "./markdown-export.js";
 import { ProjectReads } from "./project-reads.js";
 
 import { ApplicationError } from "../domain/errors.js";
@@ -133,6 +134,10 @@ export class ProductGraphService {
     });
 
     return { project, auditLogId: audit.id };
+  }
+
+  getMarkdownExportArtifact(input: MarkdownExportInput) {
+    return new MarkdownExport(this.ports).readArtifact(input);
   }
 
   getProjectBrief(projectId: string) {
