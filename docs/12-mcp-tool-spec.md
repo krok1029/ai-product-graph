@@ -790,9 +790,13 @@ Output：
   "revision": {},
   "related_nodes": [],
   "related_edges": [],
+  "traced_ticket": null,
+  "trace_edge": null,
   "markdown": ""
 }
 ```
+
+目前 lineage 由持久化且 active 的 canonical `traces_to` edge 決定：`trace_edge` 回傳完整 edge，`traced_ticket` 回傳原 Ticket（包含 archived 歷史來源）。沒有關係時兩者皆為 `null`。未核准的 replacement draft 不改目前關係。相同欄位也由 Ticket context resource 提供；讀取不修改任何資料。原 Ticket archived 時仍可由 context 查看，但 `get_node_trace` 維持 active-only traversal，不展開 archived node。
 
 ### create_implementation_brief_draft
 

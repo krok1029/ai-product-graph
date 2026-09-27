@@ -167,6 +167,8 @@ export function registerTicketTools(server: McpServer, service: ProductGraphServ
           revision: serializeTicketRevision(result.revision),
           related_nodes: result.relatedNodes.map(serializeGraphNode),
           related_edges: result.relatedEdges.map(serializeGraphEdge),
+          traced_ticket: result.tracedTicket ? serializeTicket(result.tracedTicket) : null,
+          trace_edge: result.traceEdge ? serializeGraphEdge(result.traceEdge) : null,
           markdown: result.markdown
         });
       })

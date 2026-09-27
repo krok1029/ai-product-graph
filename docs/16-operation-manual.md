@@ -366,6 +366,8 @@ Idempotency：
 
 以上情況應建立 Follow-up Ticket，並以 `traces_to` 連回原 Ticket。
 
+核准後可透過 `get_ticket_context` 或 Ticket context resource 的 `traced_ticket`、`trace_edge` 查看目前正式關係；未核准 replacement draft 不會改變它。原 Ticket 即使 archived 仍會顯示於 context；一般 `get_node_trace` 則只遍歷 active nodes。
+
 ## 常見錯誤處理
 
 | Error | 常見原因 | 操作 |
