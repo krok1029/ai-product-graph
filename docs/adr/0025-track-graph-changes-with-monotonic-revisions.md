@@ -93,3 +93,7 @@ Graph Revision 不是完整 snapshot，也不是 event sourcing。Audit log 仍�
 - Graph Draft Batch 套用失敗時，不得建立 Graph Revision 或增加 sequence number。
 - Graph Draft Batch approval 必須比較 base 與 current Graph Revision，避免舊 batch 覆蓋後續變更。
 - Ticket 與 handoff validation 必須以 Graph Revision sequence 比較來源是否仍有效。
+
+## Ticket ownership clarification（ADR 0036）
+
+本 ADR 的 created-in／last-changed Graph Revision 要求適用於 Product Brief 擁有的產品意圖 entities。Ticket-owned canonical nodes／edges 使用 Ticket 生命週期，不偽造 Graph Revision provenance，也不得被 Graph Draft Batch 修改。其 nullable provenance 與穩定 identity 規則見 [ADR 0036](0036-project-ticket-identity-without-product-intent-revisions.md)。

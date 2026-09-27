@@ -151,7 +151,7 @@ function findTicketSourceProblem(
         details: { ticketRevisionId: revision.id, graphNodeId: node.id }
       };
     }
-    const changedAfterSource = isGraphRevisionAfter(
+    const changedAfterSource = node.lastChangedInGraphRevisionId === null ? null : isGraphRevisionAfter(
       ports,
       node.lastChangedInGraphRevisionId,
       revision.sourceGraphRevisionId

@@ -92,3 +92,7 @@ Product Brief 萃取只能修改產品規劃範圍內的 graph entities。Reposi
 - 未解決的 identity conflict 會使整個 batch 無法核准。
 - Audit log 必須記錄 batch 套用的新增、更新與封存結果。
 - Product Intent Reconciliation pending 期間必須阻擋 handoff；完成後必須依實際 scoped changes 判斷受影響的 Ticket Revisions。
+
+## Ticket ownership clarification（ADR 0036）
+
+本 ADR 的 created-in／last-changed Graph Revision 要求適用於 Product Brief 擁有的產品意圖 entities。Ticket-owned canonical nodes／edges 使用 Ticket 生命週期，不偽造 Graph Revision provenance，也不得被 Graph Draft Batch 修改。其 nullable provenance 與穩定 identity 規則見 [ADR 0036](0036-project-ticket-identity-without-product-intent-revisions.md)。

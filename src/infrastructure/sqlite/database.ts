@@ -82,14 +82,22 @@ function runMigrations(
     }
 
     const sql = readFileSync(`${migrationsDirectory}/${file}`, "utf8");
-    database.transaction(() => {
-      database.exec(sql);
-      database
-        .prepare(
-          "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)"
-        )
-        .run(file, new Date().toISOString());
-    })();
+    const rebuild = sql.startsWith("-- rebuild-with-integrity-check\n");
+    // SQLite 表重建須在 transaction 外暫停 FK；提交前檢查，失敗時整筆回滾。
+    if (rebuild) database.pragma("foreign_keys = OFF");
+    try {
+      database.transaction(() => {
+        database.exec(sql);
+        assertReferentialIntegrity(database);
+        database
+          .prepare(
+            "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)"
+          )
+          .run(file, new Date().toISOString());
+      })();
+    } finally {
+      if (rebuild) enableForeignKeys(database);
+    }
   }
 }
 

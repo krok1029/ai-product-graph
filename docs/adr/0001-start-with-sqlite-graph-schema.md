@@ -52,3 +52,7 @@ Trade-offs：
 - Graph traversal 變慢或難維護。
 - 使用者需要複雜 path queries。
 - Graph analytics 成為核心功能。
+
+## Forward rebuild exception（ADR 0036）
+
+Connection 初始化與日常操作仍須啟用並驗證 foreign keys。僅明確標記的 referenced-table rebuild migration 可依 [ADR 0036](0036-project-ticket-identity-without-product-intent-revisions.md) 在 transaction 外暫停 enforcement，transaction 內通過完整 integrity check 後才 commit，失敗 rollback，finally 恢復 ON；不得讓未驗證的 connection 進入 repository workflow。

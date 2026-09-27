@@ -631,6 +631,9 @@ Output：
 Validation：
 
 - `title` required。
+- 在同一 creation transaction 建立 ID 等於 Ticket ID 的 canonical Ticket node；node 投影 aggregate title／lifecycle。Replacement revision draft 不更新 node，approval 才同步 title。
+- Ticket writes 不建立 Graph Revision、不推進 Project reconciliation pointers；既有 Graph Draft Batch 不因 Ticket creation 或 approval 而 stale。
+- `source_node_ids` 與 `related_graph_node_ids` 只能引用同 Project active product-intent ownership nodes，不能引用 Ticket projection。
 - `acceptance_criteria` 至少一項。
 - `traces_to_ticket_id` 若存在，必須指向同一 Project 中的 active 或 archived Ticket；建立後以 `traces_to` edge 保存關係。
 - `source_graph_revision_id` 必須是 Project 目前的 Graph Revision。

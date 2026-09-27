@@ -332,13 +332,20 @@ CREATE TABLE graph_nodes (
   source_ref_id TEXT,
   external_ref TEXT,
   lifecycle_status TEXT NOT NULL,
-  created_in_graph_revision_id TEXT NOT NULL,
-  last_changed_in_graph_revision_id TEXT NOT NULL,
+  created_in_graph_revision_id TEXT,
+  last_changed_in_graph_revision_id TEXT,
   metadata_json TEXT NOT NULL DEFAULT '{}',
   embedding_ref TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   archived_at TEXT,
+  CHECK (
+    (type = 'ticket' AND source = 'ticket' AND source_ref_type IS 'ticket'
+      AND source_ref_id IS id AND created_in_graph_revision_id IS NULL
+      AND last_changed_in_graph_revision_id IS NULL)
+    OR (type <> 'ticket' AND created_in_graph_revision_id IS NOT NULL
+      AND last_changed_in_graph_revision_id IS NOT NULL)
+  ),
   FOREIGN KEY (project_id) REFERENCES projects(id),
   FOREIGN KEY (created_in_graph_revision_id) REFERENCES graph_revisions(id),
   FOREIGN KEY (last_changed_in_graph_revision_id) REFERENCES graph_revisions(id)
@@ -365,12 +372,14 @@ CREATE TABLE graph_edges (
   relation_type TEXT NOT NULL,
   confidence REAL,
   lifecycle_status TEXT NOT NULL,
-  created_in_graph_revision_id TEXT NOT NULL,
-  last_changed_in_graph_revision_id TEXT NOT NULL,
+  created_in_graph_revision_id TEXT,
+  last_changed_in_graph_revision_id TEXT,
   metadata_json TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   archived_at TEXT,
+  CHECK ((created_in_graph_revision_id IS NULL) =
+    (last_changed_in_graph_revision_id IS NULL)),
   FOREIGN KEY (project_id) REFERENCES projects(id),
   FOREIGN KEY (source_node_id) REFERENCES graph_nodes(id),
   FOREIGN KEY (target_node_id) REFERENCES graph_nodes(id),
@@ -1379,3 +1388,9 @@ src/infrastructure/migrations/002_initial_indexes.sql
 - External Work Item mapping 的 active uniqueness 以 internal owner + External Container 判定。
 - Sync Intents 必須在 internal domain transaction 中 durable 寫入；外部 API calls 只能在 commit 後透過 Sync Attempts 執行。
 - 曾經 canonical 或被引用的 entities 不 hard delete；退出目前有效範圍一律 archive。
+
+### Ticket graph projection migration
+
+`003_ticket_graph_projection.sql` 是 forward migration：重建 graph tables 以允許 Ticket ownership 的 null provenance，完整複製既有欄位並重建 indexes。Ticket node 的 source identity 與 provenance 由 CHECK 約束；null-provenance edge 由 INSERT／UPDATE triggers 限制為同 Project 的 Ticket endpoints。Ticket INSERT 與 title／lifecycle UPDATE triggers 維護 node 投影，並 backfill 既有 active／archived Tickets；不建立 Graph Revision。
+
+SQLite 的 referenced-table rebuild 在 transaction 外暫停 foreign-key enforcement，在同一 migration transaction 內執行 `foreign_key_check`，只有無 violations 才記錄 migration version 並 commit；失敗則 rollback。Finally 恢復並驗證 `foreign_keys = ON`，啟動後仍執行 integrity check。舊 migration 檔案不修改。

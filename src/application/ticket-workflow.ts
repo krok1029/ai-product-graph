@@ -15,6 +15,7 @@ import type {
   TicketRevision,
   TicketSpecification
 } from "../domain/models.js";
+import { PRODUCT_INTENT_NODE_TYPES } from "./graph-workflow-helpers.js";
 import type { ApplicationPorts } from "./ports.js";
 import {
   isRecord,
@@ -589,7 +590,8 @@ export class TicketWorkflow {
       if (
         !node||
         node.projectId !== revision.projectId||
-        node.lifecycleStatus !== "active"
+        node.lifecycleStatus !== "active" ||
+        !PRODUCT_INTENT_NODE_TYPES.has(node.type)
       ) {
         throw new ApplicationError(
           "CONFLICT",
@@ -684,7 +686,8 @@ export class TicketWorkflow {
       if (
         !node||
         node.projectId !== projectId||
-        node.lifecycleStatus !== "active"
+        node.lifecycleStatus !== "active" ||
+        !PRODUCT_INTENT_NODE_TYPES.has(node.type)
       ) {
         throw new ApplicationError(
           "NOT_FOUND",
