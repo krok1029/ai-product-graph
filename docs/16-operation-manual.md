@@ -570,3 +570,9 @@ Active mapping 即使其 external item 已 archived，仍必須納入；只有 a
 `approve_ticket_revision` 的成功資料現在附 `sync_health`，既有 `created_sync_intent_ids` 保留。其他 mapping 的未解決 lifecycle failure 不會撤銷已完成 approval；成功 approval 可以同時回傳 failed health。若 approval 提交後的 health 讀取暫時不可用，回傳 pending，使用讀取工具重新確認。
 
 Acceptance／Revocation 的 immutable receipt response 維持原樣；重試會回放當時資料，請另呼叫 health tool 查看最新狀態。Health 不儲存為可手動設定的 Ticket 欄位，也不修改 Review／Lifecycle／Delivery Status。它只觀測目前 durable 義務，沒有呼叫 Plane 或檢查尚未觀測的外部內容 drift；update/status execution 與雙向同步仍未交付。
+
+## 明確終止 mapping
+
+不再需要同步某個 Plane item 時，可呼叫 `terminate_sync_mapping({ mapping_id, reason })`。Server 保存使用者 Decision、理由、時間與尚未完成的 mapped intents 清單，並在同一 transaction archive mapping。健康的 mapping 也可終止；failed／started outcomes 不會被改成成功，所有歷史與 errors 保留。
+
+終止只停止後續 enrollment／排程，不修改遠端 item 或 Ticket Delivery Status，也不代表已送出的外部請求被取消。其他 mappings 照常納入 Sync Health。之後可用 NEW key 明確要求首次 export；重送舊 key 仍取得原本 request，不會建立第二個 mapping。這與先建立 replacement 再原子切換的流程不同。

@@ -1,3 +1,4 @@
+import type { SyncMappingTerminationRepository } from "./sync-mapping-termination-ports.js";
 import type { ExternalWorkItemWriteRepository } from "./external-work-item-write-ports.js";
 import type { PlaneEnrollmentRepository } from "./plane-enrollment-ports.js";
 import type { SyncAttemptClaimRepository } from "./sync-attempt-claim-ports.js";
@@ -292,6 +293,7 @@ export interface OperationReceiptRepository {
 }
 
 export type ApplicationPorts = {
+  syncMappingTerminations: SyncMappingTerminationRepository;
   externalWorkItemWrites: ExternalWorkItemWriteRepository;
   planeEnrollment: PlaneEnrollmentRepository;
   syncClaims: SyncAttemptClaimRepository;

@@ -1,3 +1,4 @@
+import { createSyncMappingTerminationRepository } from "./sync-mapping-termination-repository.js";
 import { createExternalWorkItemWriteRepository } from "./external-work-item-write-repository.js";
 import { createPlaneEnrollmentRepository } from "./plane-enrollment-repository.js";
 import { createSyncAttemptClaimRepository } from "./sync-attempt-claim-repository.js";
@@ -22,6 +23,7 @@ import { createTicketRepositories } from "./ticket-repositories.js";
 
 export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
   return {
+    syncMappingTerminations: createSyncMappingTerminationRepository(database),
     externalWorkItemWrites: createExternalWorkItemWriteRepository(database),
     planeEnrollment: createPlaneEnrollmentRepository(database),
     syncClaims: createSyncAttemptClaimRepository(database),

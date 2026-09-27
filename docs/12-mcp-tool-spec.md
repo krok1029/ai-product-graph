@@ -1713,3 +1713,15 @@ Output data 為 `{ ticket_id, sync_health, active_mapping_count, outstanding_exp
 `product-graph://tickets/{ticketId}/sync-health` 提供相同完整結果。既有 Ticket 與 Ticket-context resources 增加頂層 `sync_health`。`approve_ticket_revision` 成功結果增加頂層 `sync_health`，由 post-enrollment 狀態計算，原 `created_sync_intent_ids` 不變；其他 mapping 的 failed obligation 不撤銷 approval。若提交後的 health read 暫時無法完成，approval 仍成功並保守回 pending，可透過 read tool 重查。
 
 Acceptance／Revocation 的 Operation Receipt 不新增 health 或改寫歷史 response；操作後透過此工具查目前健康度。所有 health reads 不呼叫 provider、不寫入 audit、attempt 或其他 durable data。
+
+### `terminate_sync_mapping`
+
+Strict input：`{ mapping_id: string, reason: string }`，兩者 trim 後非空。Actor、Project、Decision 與時間由 server 決定，不接受 override 或 idempotency key。
+
+成功 data 為 `{ mapping, termination, decision }`，envelope 提供 `audit_log_id`。Mapping 使用既有完整 serializer；termination 欄位為 `{ id, project_id, mapping_id, decision_id, stopped_sync_intent_ids }`；Decision 欄位為 `{ id, project_id, decision_type, summary, actor_id, created_at }`，type 固定 `sync_mapping_termination`。
+
+單一 transaction 建立 Local Actor、Decision、termination 與未履行 intents membership，archive mapping 並寫 audit。Decision.created_at 與 mapping.updated_at／archived_at 使用同一次 clock。所有沒有 succeeded attempt 的 mapped intents 都記入 membership，包括 archived、started 與 obsolete update；原始 null-mapping create 不列入。所有 intents、attempts、errors、snapshots、claims 與 acceptance／revocation receipts 原樣保留。
+
+有效且 active 的 Plane Ticket mapping 可以終止，不要求先有 failure；archived owner 或 external item 不阻擋。不存在回 `NOT_FOUND`，identity scope 不一致或已 archive 但沒有 termination 回 `CONFLICT`；重複終止回 `CONFLICT` 並包含 `details.termination_id`。這是停止未來排程的決策，無 provider call，不能撤銷已送出的外部請求。
+
+Terminated mapping 不再 enrollment 且從目前 Sync Health 排除，其他 mappings 與 Ticket canonical status 不變。原 create request 舊 key 仍 replay 原 request，原 processor replay 不呼叫 provider；使用 NEW key 可以明確首次 export 另一個 mapping，這是獨立重新 enrollment，並非 atomic replacement。Mapped operation execution 仍未啟用。

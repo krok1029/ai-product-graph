@@ -1,3 +1,4 @@
+import { SyncMappingTerminationWorkflow, type TerminateSyncMappingInput } from "./sync-mapping-termination-workflow.js";
 import { TicketSyncHealthReads } from "./ticket-sync-health-reads.js";
 import { MappingSyncHealthReads } from "./mapping-sync-health-reads.js";
 import { MappingSyncReads } from "./mapping-sync-reads.js";
@@ -117,6 +118,12 @@ export class ProductGraphService {
       idFactory: this.idFactory,
       clock: this.clock
     });
+  }
+
+  terminateSyncMapping(input: TerminateSyncMappingInput) {
+    return new SyncMappingTerminationWorkflow(this.ports, {
+      idFactory: this.idFactory, clock: this.clock, actor: this.actor
+    }).terminate(input);
   }
 
   revokeResultAcceptance(input: RevokeResultAcceptanceInput) {
