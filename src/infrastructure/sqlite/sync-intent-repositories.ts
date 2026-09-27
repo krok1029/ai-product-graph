@@ -68,6 +68,11 @@ export function createSyncIntentRepositories(database: SqliteDatabase): Pick<App
             intent.payload.source_ticket_revision_id === intent.sourceTicketRevisionId;
         });
       },
+      listByMappingId(mappingId) {
+        const rows = database.prepare(`SELECT ${intentColumns} FROM sync_intents i
+          WHERE i.mapping_id = ? ORDER BY i.sequence_number, i.id`).all(mappingId) as IntentRow[];
+        return rows.map(mapIntent);
+      },
       listAttempts(syncIntentId) {
         const rows = database.prepare(`SELECT a.id, a.sync_intent_id AS syncIntentId,
           a.external_work_item_id AS externalWorkItemId, a.operation, a.idempotency_key AS idempotencyKey,
