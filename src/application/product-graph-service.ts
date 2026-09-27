@@ -1,3 +1,4 @@
+import { MappingSyncHealthReads } from "./mapping-sync-health-reads.js";
 import { MappingSyncReads } from "./mapping-sync-reads.js";
 import { ExternalWorkItemReads } from "./external-work-item-reads.js";
 import { validateProductBrief } from "./product-brief-validation.js";
@@ -141,6 +142,10 @@ export class ProductGraphService {
 
   getSyncIntent(syncIntentId: string) {
     return new SyncIntentReads(this.ports).get(syncIntentId);
+  }
+
+  getMappingSyncHealth(mappingId: string) {
+    return new MappingSyncHealthReads(this.ports).get(mappingId);
   }
 
   listMappingSyncIntents(mappingId: string) {

@@ -1680,7 +1680,7 @@ Update payload 與首次 export 使用相同 version 1 canonical specification p
 
 首次 create 成功時，application factory `createPlaneCreateProcessor` 必定執行 mapping enrollment，補入 create 執行期間較新的 current revision 與 done state。Catch-up 的 source event 為 `plane_mapping.created`，source event ID 連回原 create request audit，payload 固定補入時的 current revision。原 create intent 與首次 mapping source revision 保持不變。
 
-所有 update／close／reopen 目前只持久化、保持 pending；create processor 拒絕執行這些 operations。`get_sync_intent` 可查已知 intent ID 的 request state，不能把它或 mapping lifecycle 當成 owner Sync Health。`list_ticket_export_requests` 仍只列首次 create requests，不擴張成所有 mapping intents。明確單次 CLI 已可透過 Plane REST 執行首次 create／reconciliation；MCP stdio 不會自動啟動外部呼叫。Update/status processor、衍生 Sync Health 與雙向同步尚未交付。
+所有 update／close／reopen 目前只持久化、保持 pending；create processor 拒絕執行這些 operations。`get_sync_intent` 可查已知 intent ID 的 request state，不能把它或 mapping lifecycle 當成 owner Sync Health。`list_ticket_export_requests` 仍只列首次 create requests，不擴張成所有 mapping intents。明確單次 CLI 已可透過 Plane REST 執行首次 create／reconciliation；MCP stdio 不會自動啟動外部呼叫。Mapping 衍生 Sync Health 可透過 `get_mapping_sync_health` 查詢；Update/status processor 與雙向同步尚未交付。
 
 ### `list_mapping_sync_intents`
 
@@ -1693,3 +1693,11 @@ Output data：`{ "mapping": <完整 mapping>, "create_request": <SyncIntentDetai
 實際不存在的 mapping 回 `NOT_FOUND`；已存在但 provenance 不一致、缺少 create proof 或 sequence 歷史不完整回 `CONFLICT`，details.reason 為 `invalid_obligation` 或 `incomplete_history`。目前可驗證的 response 必有 `create_request`；nullable shape 保留給後續明確定義的 historical mapping 來源，不以 null 掩蓋缺失 proof。
 
 這是唯讀歷史查詢，不寫 audit、intent、attempt 或 receipt，不呼叫 provider、不執行 recovery，也不將 `request_state` 改解釋為 Sync Health。
+
+### `get_mapping_sync_health`
+
+Strict input：`{ mapping_id: string }`，trim 後必須非空；不接受額外欄位。
+
+回傳 `{ sync_health, included, required_intent_ids, ignored_content_intent_ids, reasons }`；reason 為 `{ code, intent_id? }`。在同一 SQLite read transaction 計算 Ticket 的 current desired content/status 與 mapping 的 durable obligations，無 provider call 或寫入。優先順序 failed > pending > current；已成功 create 不代表新版 revision 或 close 已同步。
+
+Archived mapping 明確回傳 `included: false`。Active mapping 的 archived intents 與 archived external item 仍計入；缺失或損壞的 history 回 pending 診斷，真正不存在的 mapping 回 `NOT_FOUND`。完整語意及 reason codes 見 [Mapping Sync Health](19-sync-health.md)。
