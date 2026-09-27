@@ -255,6 +255,64 @@ it("runs the Graph reconciliation workflow through MCP", async () => {
 
     expect(briefApproval.review_status).toBe("approved");
     expect((handoff as { freshness: string }).freshness).toBe("current");
+    const evidenceInput = {
+      project_id: project.id, repository_id: repository.id,
+      evidence_type: "test_execution", idempotency_key: "mcp-test-result",
+      payload: {
+        schema_version: 1, command: "pnpm test", status: "passed", exit_code: 0,
+        started_at: "2026-07-28T00:00:00.000Z",
+        completed_at: "2026-07-28T00:00:00.000Z"
+      }
+    };
+    for (const extra of [{ payload_hash: "sha256:client" }, { implementation_target_id: implementationTargetId }]) {
+      const rejected = await client.callTool({ name: "record_observed_evidence", arguments: { ...evidenceInput, ...extra } });
+      expect(rejected.isError).toBe(true);
+    }
+    const invalidPayload = await client.callTool({ name: "record_observed_evidence", arguments: {
+      ...evidenceInput, payload: { ...evidenceInput.payload, criterion_verdict: "satisfied" }
+    } });
+    expect(JSON.parse((invalidPayload.content as Array<{ text: string }>)[0]!.text)).toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
+    const recorded = toolData(await client.callTool({ name: "record_observed_evidence", arguments: evidenceInput }));
+    const evidence = recorded.observed_evidence as { id: string; payload_hash: string };
+    expect(recorded.created).toBe(true);
+    expect(evidence.payload_hash).toMatch(/^sha256:[a-f0-9]{64}$/);
+    expect(toolData(await client.callTool({ name: "record_observed_evidence", arguments: evidenceInput })).created).toBe(false);
+    const conflict = await client.callTool({ name: "record_observed_evidence", arguments: {
+      ...evidenceInput, payload: { ...evidenceInput.payload, command: "pnpm smoke" }
+    } });
+    expect(JSON.parse((conflict.content as Array<{ text: string }>)[0]!.text)).toMatchObject({ ok: false, error: { code: "CONFLICT" } });
+
+    const revision = ports.ticketRevisions.findById(ticketRevisionId)!;
+    const resultInput = {
+      implementation_brief_id: briefApproval.id, observed_evidence_ids: [evidence.id],
+      summary: "Preset controls implemented and tested", unfinished_items: [],
+      criterion_verdicts: revision.specification.acceptance_criteria.map(criterion => ({
+        acceptance_criterion_id: criterion.id, verdict: "satisfied", reason: "Preset controls pass the test",
+        evidence_ids: [evidence.id]
+      }))
+    };
+    for (const verdictExtra of [{ verdict: "waived" }, { waiver_decision_id: "claim" }]) {
+      const rejected = await client.callTool({ name: "submit_implementation_result", arguments: {
+        ...resultInput, criterion_verdicts: resultInput.criterion_verdicts.map(verdict => ({ ...verdict, ...verdictExtra }))
+      } });
+      expect(rejected.isError).toBe(true);
+    }
+    expect((await client.callTool({ name: "submit_implementation_result", arguments: {
+      ...resultInput, waivers: []
+    } })).isError).toBe(true);
+    const result = toolData(await client.callTool({ name: "submit_implementation_result", arguments: resultInput }));
+    expect(result.implementation_result).toMatchObject({
+      review_status: "draft", lifecycle_status: "active", stale_at_submission: false,
+      submission_disposition: "reviewable"
+    });
+    expect(result.observed_evidence_ids).toEqual([evidence.id]);
+    ports.implementationTargets.archive(implementationTargetId, "2026-07-28T01:00:00.000Z");
+    const stale = toolData(await client.callTool({ name: "submit_implementation_result", arguments: resultInput }));
+    expect(stale.implementation_result).toMatchObject({
+      review_status: "draft", lifecycle_status: "archived", stale_at_submission: true,
+      submission_disposition: "stale_archived", stale_reasons: ["implementation_target_archived"]
+    });
+    expect(ports.tickets.findById(ticketId)?.deliveryStatus).toBe("planned");
   } finally {
     await Promise.allSettled([client.close(), server.close()]);
     database.close();

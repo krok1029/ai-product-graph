@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import {
   implementationBriefSchema,
+  implementationResultVerdictSchema,
   repositoryContextSchema,
   ticketSpecificationSchema
 } from "./schemas.js";
@@ -54,5 +55,16 @@ export function toImplementationBriefInput(
     testStrategy: input.test_strategy,
     risks: input.risks,
     prSummaryDraft: input.pr_summary_draft
+  };
+}
+
+export function toImplementationResultVerdictInput(
+  input: z.infer<typeof implementationResultVerdictSchema>
+) {
+  return {
+    acceptanceCriterionId: input.acceptance_criterion_id,
+    verdict: input.verdict,
+    reason: input.reason,
+    evidenceIds: input.evidence_ids
   };
 }

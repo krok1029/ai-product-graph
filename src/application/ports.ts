@@ -5,11 +5,14 @@ import type {
   GraphEdge,
   GraphNode,
   GraphRevision,
+  AcceptanceCriterionVerdict,
   ImplementationBrief,
+  ImplementationResult,
   ImplementationTarget,
   Idea,
   LifecycleStatus,
   LocalActor,
+  ObservedEvidence,
   Project,
   ProductBrief,
   ProductBriefVersion,
@@ -210,6 +213,27 @@ export interface ImplementationBriefRepository {
   archive(implementationBriefId: string, archivedAt: string): void;
 }
 
+export interface ObservedEvidenceRepository {
+  insert(evidence: ObservedEvidence, canonicalPayloadJson: string): void;
+  findById(id: string): ObservedEvidence | null;
+  findByProjectIdempotencyKey(
+    projectId: string,
+    idempotencyKey: string
+  ): ObservedEvidence | null;
+}
+
+export interface ImplementationResultRepository {
+  insert(
+    result: ImplementationResult,
+    observedEvidenceIds: string[],
+    verdicts: AcceptanceCriterionVerdict[]
+  ): void;
+  findById(id: string): ImplementationResult | null;
+  findActiveApprovedByTargetId(
+    implementationTargetId: string
+  ): ImplementationResult | null;
+}
+
 export interface ImplementationArtifactRepository {
   archiveActiveForTicketRevision(
     ticketRevisionId: string,
@@ -246,6 +270,8 @@ export type ApplicationPorts = {
   implementationTargets: ImplementationTargetRepository;
   repositoryContextSnapshots: RepositoryContextSnapshotRepository;
   implementationBriefs: ImplementationBriefRepository;
+  observedEvidence: ObservedEvidenceRepository;
+  implementationResults: ImplementationResultRepository;
   implementationArtifacts: ImplementationArtifactRepository;
   auditLog: AuditLogRepository;
   transactions: TransactionRunner;
