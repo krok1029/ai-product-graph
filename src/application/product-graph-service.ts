@@ -1,3 +1,4 @@
+import { MappingSyncReads } from "./mapping-sync-reads.js";
 import { ExternalWorkItemReads } from "./external-work-item-reads.js";
 import { validateProductBrief } from "./product-brief-validation.js";
 import { PlaneExportWorkflow } from "./plane-export-workflow.js";
@@ -140,6 +141,10 @@ export class ProductGraphService {
 
   getSyncIntent(syncIntentId: string) {
     return new SyncIntentReads(this.ports).get(syncIntentId);
+  }
+
+  listMappingSyncIntents(mappingId: string) {
+    return new MappingSyncReads(this.ports).get(mappingId);
   }
 
   listTicketExportRequests(ticketId: string) {

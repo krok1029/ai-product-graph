@@ -1,3 +1,4 @@
+import { ApplicationError } from "../../domain/errors.js";
 import type { ExternalWorkItemRepository } from "../../application/external-work-item-ports.js";
 import type { ExternalWorkItem, ExternalWorkItemMapping, ExternalWorkItemSnapshot } from "../../domain/external-work-item.js";
 import type { SqliteDatabase } from "./database.js";
@@ -50,6 +51,16 @@ export function createExternalWorkItemRepository(database: SqliteDatabase): Exte
         FROM external_work_items i JOIN external_containers c ON c.id = i.external_container_id
         WHERE i.id = ? AND i.provider = 'plane' AND c.provider = i.provider`).get(id) as ItemRow | undefined;
       return row ? mapMetadata(row) : null;
+    },
+    findMappingById(mappingId) {
+      const mapping = mappings("m.id = ?", mappingId)[0];
+      if (mapping) return mapping;
+      if (database.prepare("SELECT 1 FROM external_work_item_mappings WHERE id = ?").get(mappingId)) {
+        throw new ApplicationError("CONFLICT", "Plane mapping has invalid identity provenance.", {
+          mappingId, reason: "invalid_obligation"
+        });
+      }
+      return null;
     },
     listTicketMappings: ticketId => mappings("t.id = ?", ticketId),
     listItemMappings: itemId => mappings("i.id = ?", itemId),
