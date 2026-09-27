@@ -25,21 +25,36 @@ export class MappingSyncReads {
         sequences.add(sequence);
       }
       if (sequences.size !== mapping.nextSequenceNumber - 1) invalid(mapping, "incomplete_history");
-      const linkedId = record(mapping.metadata)?.created_by_sync_intent_id;
-      if (typeof linkedId !== "string" || !this.ports.syncIntents.findById(linkedId)) invalid(mapping, "incomplete_history");
-      const createRequest = reads.get(linkedId);
-      this.validate(createRequest, mapping, true);
-      const snapshots = this.ports.externalWorkItems.listMappingSnapshots(mapping.id);
-      const item = this.ports.externalWorkItems.findById(mapping.externalWorkItemId);
-      const proven = createRequest.attempts.some(attempt => {
-        const response = record(attempt.response);
-        return attempt.resultStatus === "succeeded" && attempt.externalWorkItemId === mapping.externalWorkItemId &&
-          response?.mapping_id === mapping.id && response.external_id === item?.externalId &&
-          snapshots.some(snapshot => snapshot.id === response.snapshot_id);
-      });
-      if (!proven) invalid(mapping, "incomplete_history", linkedId);
+      const createRequest = this.originalCreate(mapping);
       return { mapping, createRequest, intents };
     });
+  }
+
+  getCreateRequest(mappingId: string): { mapping: ExternalWorkItemMapping; createRequest: SyncIntentDetails } {
+    // Explicit observation 只需要原始 create proof，不依賴後續 outbound obligation history。
+    return this.ports.transactions.run(() => {
+      const mapping = this.ports.externalWorkItems.findMappingById(mappingId);
+      if (!mapping) throw new ApplicationError("NOT_FOUND", "Plane mapping was not found.", { mappingId });
+      return { mapping, createRequest: this.originalCreate(mapping) };
+    });
+  }
+
+  private originalCreate(mapping: ExternalWorkItemMapping): SyncIntentDetails {
+    const reads = new SyncIntentReads(this.ports);
+    const linkedId = record(mapping.metadata)?.created_by_sync_intent_id;
+    if (typeof linkedId !== "string" || !this.ports.syncIntents.findById(linkedId)) invalid(mapping, "incomplete_history");
+    const createRequest = reads.get(linkedId);
+    this.validate(createRequest, mapping, true);
+    const snapshots = this.ports.externalWorkItems.listMappingSnapshots(mapping.id);
+    const item = this.ports.externalWorkItems.findById(mapping.externalWorkItemId);
+    const proven = createRequest.attempts.some(attempt => {
+      const response = record(attempt.response);
+      return attempt.resultStatus === "succeeded" && attempt.externalWorkItemId === mapping.externalWorkItemId &&
+        response?.mapping_id === mapping.id && response.external_id === item?.externalId &&
+        snapshots.some(snapshot => snapshot.id === response.snapshot_id);
+    });
+    if (!proven) invalid(mapping, "incomplete_history", linkedId);
+    return createRequest;
   }
 
   private validate(details: SyncIntentDetails, mapping: ExternalWorkItemMapping, original: boolean) {
