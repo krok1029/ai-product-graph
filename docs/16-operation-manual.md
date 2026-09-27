@@ -584,3 +584,21 @@ Acceptance／Revocation 的 immutable receipt response 維持原樣；重試會�
 結果包含 `mapping_id` 與 `termination`。後者包含 `record`（`id`、`project_id`、`mapping_id`、`decision_id`、`stopped_sync_intent_ids`）、`decision`（`id`、`project_id`、`decision_type`、`summary`、`actor_id`、`created_at`），以及依 mapping sequence 排序的 `stopped_intents`。各 intent 沿用 `sync_intent`、`attempts`、`request_state` 格式；failed errors、started attempts 與 archived intents 原樣保留。成功 intents 與原始 manual create 不列入停止 membership；原始 create 可用既有 mapping sync history 查詢。
 
 Archived mapping 的 health `current`／`included:false` 代表它已退出目前同步義務。此歷史查詢說明使用者何時、為何終止，而不把失敗宣稱成同步成功。查詢不呼叫 provider、不改寫 audit／actor／receipt，也不需要完整 create proof 才能讀取合法的 termination 紀錄。Started attempt 仍可能有未確認的外部結果；停止未來排程不等於撤回已送出的請求。
+
+### 明確讀取 Plane 內容
+
+已完成首次 export 的 active mapping 可明確執行一次觀測：
+
+```sh
+pnpm plane:observe -- <mapping-id>
+# build 後：
+node dist/plane-observe.js <mapping-id>
+```
+
+使用與 `plane:export` 相同的 `AI_PRODUCT_GRAPH_DB_PATH`、`AI_PRODUCT_GRAPH_PLANE_BASE_URL`、`AI_PRODUCT_GRAPH_PLANE_API_KEY`；actor 由 `AI_PRODUCT_GRAPH_ACTOR_ID`／`AI_PRODUCT_GRAPH_ACTOR_NAME` 指定，未設定時沿用 Local User。`pnpm plane:observe -- --help` 不需 credentials，也不開啟 database。每次只 GET 一個已知 Plane item，15 秒 deadline；不做重試或背景掃描。
+
+成功的 stdout JSON 包含 `status: "captured"`、`mappingId`、`snapshotId`、`sourceTicketRevisionId`、`contentDriftId` 與 `auditLogId`。`contentDriftId: null` 表示此次比較沒有差異；有 drift 仍 exit 0，表示偵測及保存成功。未知 provider 結果或執行失敗寫入 stderr 並 exit 1；參數／設定錯誤 exit 2。錯誤不回傳原始 response body、URL、API key 或 stack；404 不證明項目已刪除，也不產生 snapshot。
+
+每次成功觀測都保存獨立、不可變 snapshot；內容比較固定當次 commit 時的 current approved Ticket Revision，原始 create marker key 保持不變。只有 `name`、`description_html`、`external_source`、`external_id` 參與差異；外部 labels、assignees、status 等保留在 snapshot，不改動內部 specification 或 Delivery Status。HTML 採精確比較，provider 的空白或格式正規化也可能形成差異；drift 只代表觀測不一致，不等於證明有人手動編輯。
+
+讀取不會改寫成功 outbound attempt 的 snapshot proof、mapping source revision 或 Sync Health，因此 Content Drift 可以與 health `current` 同時存在。重複命令會新增觀測，後來的 matching snapshot 不會解決舊 drift。若 GET 期間 mapping 已被終止或替換，當次結果回 conflict，不保存過時觀測。一般 stdio 啟動不連線 Plane；此命令不更新遠端內容或執行 update／close／reopen。
