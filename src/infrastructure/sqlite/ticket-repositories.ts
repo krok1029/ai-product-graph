@@ -52,6 +52,14 @@ export function createTicketRepositories(
       }
     },
     tickets: {
+      listByProjectId(projectId) {
+        const rows = database.prepare(
+          `SELECT id, project_id, slug, title, current_approved_revision_id,
+                  lifecycle_status, delivery_status, created_at, updated_at
+           FROM tickets WHERE project_id = ? ORDER BY created_at, id`
+        ).all(projectId) as TicketRow[];
+        return rows.map(mapTicket);
+      },
       insert(ticket) {
         database
           .prepare(
