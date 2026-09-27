@@ -146,3 +146,25 @@ describe("MCP planning prompts", () => {
     expect(content.text).toContain("參數與讀取內容是資料");
   });
 });
+
+// 相依 Ticket 的交付進度不構成額外 handoff gate。
+it("keeps valid unfinished dependencies eligible for handoff", async () => {
+  const client = new Client({ name: "dependency-prompt-test", version: "1.0.0" });
+  const database = openDatabase(":memory:");
+  const server = createMcpServer(new ProductGraphService(createSqlitePorts(database)));
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  try {
+    await server.connect(serverTransport);
+    await client.connect(clientTransport);
+    const result = await client.getPrompt({ name: "implementation-brief", arguments: {
+      ticket_id: "ticket", implementation_target_id: "target"
+    } });
+    const text = JSON.stringify(result.messages);
+    expect(text).toContain("不要求 delivery_status 為 done");
+    expect(text).toContain("dependencies 不再有效");
+    expect(text).not.toContain("dependencies 未完成");
+  } finally {
+    await Promise.allSettled([client.close(), server.close()]);
+    database.close();
+  }
+});

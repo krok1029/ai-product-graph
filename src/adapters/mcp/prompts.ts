@@ -139,7 +139,7 @@ client 檢查 Repository 與 relevant files，先產生 implementation plan，�
 repo_context 必須包含真實 repository_name、baseline_commit_sha；has_uncommitted_changes 為 true 時另需 dirty_state_fingerprint。缺少 baseline 可討論 draft，但不可核准或 handoff。
 替代既有 brief 時提供 supersedes_implementation_brief_id，保留舊 artifact。
 明確 approve_implementation_brief 後，執行 get_implementation_handoff，提交當前 commit_sha 與 dirty_state_fingerprint；只有 freshness 檢查通過才可實作。
-product_intent_unreconciled、來源 graph nodes 變更、Ticket Revision 被替代或 dependencies 未完成時，停止 handoff 並修復來源，不得繞過 STALE_HANDOFF。
+product_intent_unreconciled、來源 graph nodes 變更、Ticket Revision 被替代或 dependencies 不再有效（非 active、缺少 current approved revision 或來源已 stale）時，停止 handoff 並修復來源，不得繞過 STALE_HANDOFF。相依 Ticket 只要仍有效即可，不要求 delivery_status 為 done。
 計畫包含 files、test strategy、risks 與連回 Ticket、graph nodes、Implementation Brief 的 PR summary。`, [
     ticketContext(args.ticket_id),
     {
