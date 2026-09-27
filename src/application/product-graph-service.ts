@@ -1,4 +1,6 @@
 import { SyncIntentReads } from "./sync-intent-reads.js";
+import { ExternalContainerWorkflow, type RegisterExternalContainerInput } from "./external-container-workflow.js";
+import type { ExternalContainerProvider } from "../domain/external-container.js";
 import { ResultRevocationWorkflow, type RevokeResultAcceptanceInput } from "./result-revocation-workflow.js";
 import { ResultAcceptanceWorkflow, type AcceptImplementationResultInput } from "./result-acceptance-workflow.js";
 // Product graph service facade。
@@ -124,6 +126,18 @@ export class ProductGraphService {
 
   listTicketExportRequests(ticketId: string) {
     return new SyncIntentReads(this.ports).listTicketExportRequests(ticketId);
+  }
+
+  registerExternalContainer(input: RegisterExternalContainerInput) {
+    return new ExternalContainerWorkflow(this.ports, {
+      idFactory: this.idFactory, clock: this.clock, actor: this.actor
+    }).register(input);
+  }
+
+  listExternalContainers(provider?: ExternalContainerProvider) {
+    return new ExternalContainerWorkflow(this.ports, {
+      idFactory: this.idFactory, clock: this.clock, actor: this.actor
+    }).list(provider);
   }
 
   createRepository(input: CreateRepositoryInput) {

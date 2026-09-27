@@ -481,3 +481,23 @@ Integrity check 失敗時不可自動刪除或修復資料。
 4. [Knowledge Graph Model](./04-knowledge-graph-model.md)。
 
 追查某項決策原因時才閱讀 `docs/adr/`。
+
+
+## Plane container identity
+
+先用 `register_external_container` 保存 Plane workspace 與 project 的穩定 identity：
+
+```json
+{
+  "provider": "plane",
+  "workspace_identity": "your-workspace-identity",
+  "container_identity": "your-project-identity",
+  "display_name": "Delivery"
+}
+```
+
+不要提供 token 或 credentials。Identity 字串會 trim，且區分大小寫；不同 workspace 中同名的 container 分別保存。相同 identity 再次註冊會回傳原物件及 `created: false`，不同 display name 不會覆寫首次值。
+
+使用 `list_external_containers({})` 或 `list_external_containers({provider: "plane"})` 查詢註冊結果，順序依建立時間與 id。Container 是全域資料，不需要 Project id；重啟 server 後仍可查到。
+
+目前這一步只保存本機 identity，並不驗證 Plane 連線或建立外部 work item，也不啟用自動同步。後續 export 必須另行明確提出 request。

@@ -1436,6 +1436,53 @@ Ticket Revision 與 Implementation Brief 匯出驗收：
 - 建議檔名為 `ticket-revision-{revision_id}-r{revision_number}.md` 與 `implementation-brief-{brief_id}.md`；identity 字元規則與 Product Brief 相同。
 - 空集合明示 `None`、來源 Markdown／HTML 視為文字；不寫入檔案、不修改 canonical data、approval、current pointers 或 audit history。
 
+## External Integration Preparation
+
+### register_external_container
+
+只在本機註冊 Plane 的穩定 External Container identity，供後續明確 export 使用。這個操作不驗證外部連線、不保存 credentials、不建立 External Work Item、mapping、Sync Intent 或 Sync Attempt，也不 enrollment 自動同步。
+
+Input（closed schema）：
+
+```ts
+{
+  provider: "plane";
+  workspace_identity: string;
+  container_identity: string;
+  display_name?: string;
+}
+```
+
+Identity fields trim 後必須非空，保留大小寫；`provider` 必須精確為 `plane`。Optional `display_name` 提供時也必須是 trim 後非空的字串，省略時保存 `null`。未知欄位、null 與不支援的 provider 都拒絕，且不產生任何寫入。
+
+Success data：
+
+```ts
+{
+  external_container: {
+    id: string; // ULID
+    provider: "plane";
+    workspace_identity: string;
+    container_identity: string;
+    display_name: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+  created: boolean;
+}
+```
+
+- `(provider, workspace_identity, container_identity)` 為全域唯一 identity，不附屬 Project。
+- 首次註冊 `created: true`，回傳 `audit_log_id`；container、當前 Local Actor 首次初始化與一筆 `external_container.registered` audit 在同一 transaction 提交。Audit 的 `project_id` 是 `null`，保存 server-configured actor 與時間；失敗全部 rollback。
+- 同 identity 重送回傳原 object 與 `created: false`，保留首次 display name、id 與 timestamps，不新增 audit，也不回傳新的 `audit_log_id`。
+- 不同 workspace 或不同大小寫的 identity 各自保存。資料於 server 重啟後保留。
+
+### list_external_containers
+
+Input（closed schema）：`{ provider?: "plane" }`。
+
+Success data：`{ external_containers: ExternalContainer[] }`，每項沿用上方 snake_case object。以 `created_at`、`id` 升冪排序，可用 provider filter；空集合回傳 `[]`。這是全域唯讀查詢，不呼叫 provider，也不建立 audit。
+
 ## MVP Resources
 
 ```text
