@@ -33,6 +33,12 @@ export function evaluateImplementationFreshness(
 ): ImplementationStaleReason | null {
   const project = ports.projects.findById(ticket.projectId);
   const productBrief = ports.productBriefs.findByProjectId(ticket.projectId);
+  if (project && project.lifecycleStatus !== "active") {
+    return { reason: "project_archived", details: { projectId: project.id } };
+  }
+  if (productBrief && productBrief.lifecycleStatus !== "active") {
+    return { reason: "product_brief_archived", details: { productBriefId: productBrief.id } };
+  }
   if (
     !project ||
     !productBrief ||
@@ -117,6 +123,7 @@ function findTicketSourceProblem(
   visitedTicketIds.add(ticket.id);
   if (
     revision.ticketId !== ticket.id ||
+    revision.projectId !== ticket.projectId ||
     revision.reviewStatus !== "approved" ||
     revision.lifecycleStatus !== "active"
   ) {

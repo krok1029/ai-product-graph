@@ -911,7 +911,9 @@ Validation：
 - 綁定的 Ticket Revision 必須仍是 Ticket 的 current approved revision。
 - 綁定的 Product Brief Version 只作為生成 provenance；reconciliation 完成後，不得僅因 current Product Brief pointer 不同而判定 stale。
 - Ticket Revision 引用的產品意圖 nodes 必須仍是 active，且 `last_changed_in_graph_revision_id` 不得晚於 Ticket Revision 的 `source_graph_revision_id`；dependencies 必須仍有效。
-- 所有來源 entities 必須是 active。
+- 所有具有 Lifecycle Status 的來源 entities 必須是 active，包括 Project、Product Brief aggregate/version、Ticket/Revision、Implementation Target、Repository、Implementation Brief 與引用的 graph nodes。
+- 不具有 Lifecycle Status 的 Repository Context Snapshot 與 Graph Revision 必須存在且可驗證；snapshot 必須屬於同一 Project/Repository 並具有可核准 baseline，graph provenance 與 reconciliation record 必須符合來源 Project/Version。來源 identity、revision ownership 與 required target membership 也必須一致。
+- 不存在的 requested Implementation Brief 回傳 `NOT_FOUND`；已存在 brief 的來源缺失、不符或無法驗證回傳 `STALE_HANDOFF`，details 包含 reason 與來源識別。Storage read failures 保留原錯誤；此 read 不寫入資料。
 - Commit SHA 與 dirty-state fingerprint 必須符合 Repository Context Snapshot。
 - 任一條件不符或無法驗證時回傳 `STALE_HANDOFF`，且不得輸出 handoff payload。
 
