@@ -79,7 +79,7 @@ export const ticketSpecificationSchema = z
         })
         .strict()
     ),
-    implementation_notes: z.array(z.string())
+    implementation_notes: z.array(z.string()).default([])
   })
   .strict();
 
