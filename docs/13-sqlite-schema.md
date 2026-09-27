@@ -1410,3 +1410,9 @@ Backfill 優先採 current approved revision，沒有 current approved pointer �
 Claim 以 `BEGIN IMMEDIATE` 原子保存 attempt／claim／audit。到期接手保留原 attempt 的 failed/interrupted outcome，新 token fence 拒絕舊 worker 寫入。Provider invocation stage 在呼叫外部服務前 commit；不確定性跨失敗與 restart 繼承，只有已執行 reconciliation 且 provider 保證沒有延遲請求的 definitive absence 才可解除。Success completion port 要求既有 transaction 與 matching item／mapping／snapshot，供 processor 一起提交成果。詳見 [ADR 0037](adr/0037-durable-sync-claims-and-reconciliation.md)。
 
 Attempt history 依 `started_at` 排序；相同時間的 execution attempts 以 claim `sequence` 排序，沒有 claim 的舊 history 保留 ID tie-break。所有 claim 時間使用 canonical UTC 毫秒，lease 在 `now == expires_at` 已失效。
+
+### External Work Item graph projection（migration 007）
+
+首次 create processor 成功時，External Work Item、active mapping、immutable snapshot、GraphNode／`traces_to`、Sync Attempt outcome 與 audit 同一 fenced transaction 提交。GraphNode ID 等於 external item ID，source/source_ref_type 固定 `external_work_item`，source_ref_id 為同一 ID，slug 為 `external_work_item:<ID>`，revision provenance 為 null；參見 ADR0038。產品意圖 graph 仍保留 mandatory revision provenance；null edge 僅新增允許具有同 Project mapping 的 external item → Ticket trace，不放寬其他 endpoints。
+
+Migration007 依 ADR0001／0036 的明確 rebuild exception 在 transaction 外暫停 FK，重建 graph_nodes 並保留相關 indexes/triggers，transaction 內完整 `foreign_key_check` 成功才 commit，finally 恢復 ON。它不推進 Graph Revision，也不偽造 provider snapshots。

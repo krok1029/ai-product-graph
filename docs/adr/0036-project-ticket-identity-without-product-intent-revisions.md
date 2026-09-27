@@ -7,3 +7,5 @@ Ticket 是 canonical graph entity，但 Graph Revision 記錄的是 Product Brie
 拒絕為 Ticket writes 製造 Graph Revision，因其會錯誤使產品意圖 drafts stale；也拒絕把當前 Graph Revision 填作 Ticket provenance，因其並非建立 Ticket 的事件。獨立 Ticket-only graph tables 雖可保持既有欄位必填，但會把同一 canonical graph 拆成兩套讀取與 traversal。接受 nullable provenance 與 SQLite triggers 的明確儲存契約，換取單一 canonical graph 與不可分割的 aggregate projection。未來其他 adapter 必須提供同等 transaction 保證。
 
 Forward migration 依 SQLite rebuild 流程，在 transaction 外暫停 FK、transaction 內完整搬移 graph tables 並執行 foreign_key_check，失敗 rollback，finally 恢復 FK ON；既有 indexes、外部引用與歷史資料必須保留。此決策不建立 Follow-up edge；lineage workflow 另行實作。
+
+後續 [ADR0038](0038-project-external-items-without-product-intent-revisions.md) 將此窄例外延伸到 canonical External Work Item node 及具有一致 mapping 的 item → Ticket trace。Ticket projection 規則與產品意圖 provenance 要求不變。

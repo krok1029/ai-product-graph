@@ -57,7 +57,7 @@ Exit criteria：
 
 ## Phase 3：Plane Integration
 
-目前已交付首次匯出 preparation（Spec #45）：container 註冊、durable manual create request、intent／attempt 查詢及 stdio 重啟驗證。尚未實作 provider processor／外部建立／enrollment／雙向同步，因此本 Phase 尚未完成。
+目前已交付首次匯出 preparation（Spec #45）：container 註冊、durable manual create request、intent／attempt 查詢及 stdio 重啟驗證。另已提供可注入 provider port 的首次 create 執行核心；正式 entrypoint 尚未啟用 live provider，完整 enrollment／update/status execution／雙向同步仍未完成，因此本 Phase 尚未完成。
 
 Goal：
 
