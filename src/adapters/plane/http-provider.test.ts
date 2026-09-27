@@ -62,7 +62,10 @@ describe("Plane HTTP provider", () => {
     expect(query.get("external_source")).toBe("ai-product-graph");
   });
 
-  it.each(["http://plane.example", "https://user:pass@plane.example", "https://plane.example/path", "https://plane.example/a/..", "https://plane.example?", "https://plane.example#", "file:///tmp/plane"])("rejects unsafe origin %s", baseUrl => {
+  it.each(["http://plane.example", "https://user:pass@plane.example", "https://plane.example/path", "https://plane.example/a/..", "https://plane.example?", "https://plane.example#", "file:///tmp/plane",
+    "https://plane.example\\path", "https://plane.example\\", "https://plane.example/\t",
+    "https://plane.example\n", "https://plane.example\r", "https://plane.example\0",
+    "https://plane.example\x7f", " https://plane.example", "https://plane.example "])("rejects unsafe origin %s", baseUrl => {
     expect(() => new PlaneHttpProvider({ baseUrl, apiKey: secret })).toThrow("INVALID_PLANE_CONFIG");
   });
   it.each(["", " ", "key\r\nHeader: injected", "key\0", "中文"])("rejects invalid credentials", apiKey => {

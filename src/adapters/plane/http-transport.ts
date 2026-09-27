@@ -16,7 +16,8 @@ export function planeHttpConfig(config: PlaneHttpConfig) {
   const invalid = () => { throw new PlaneHttpError("INVALID_PLANE_CONFIG"); };
   let base: URL;
   try { base = new URL(config.baseUrl); } catch { return invalid(); }
-  if (!/^https?:\/\/[^/?#]+\/?$/.test(config.baseUrl) || base.username || base.password ||
+  if (!/^https?:\/\/[^/?#]+\/?$/.test(config.baseUrl) || /[\s\\\x00-\x1f\x7f]/u.test(config.baseUrl) ||
+      base.pathname !== "/" || base.search || base.hash || base.username || base.password ||
       (base.protocol !== "https:" && !(base.protocol === "http:" &&
         ["localhost", "127.0.0.1", "[::1]"].includes(base.hostname)))) invalid();
   if (typeof config.apiKey !== "string" || !config.apiKey.trim() || /[\x00-\x1f\x7f-\uffff]/.test(config.apiKey)) invalid();
