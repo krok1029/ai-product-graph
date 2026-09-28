@@ -934,7 +934,7 @@
   },
   "hash_method": "Python json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(comma, colon)) UTF-8 bytes; not RFC 8785.",
   "query_limitations": [
-    "New task reported that formal queries did not expose separate Acceptance record IDs or exact acceptance times, nor per-criterion evidence payloads and test start/end times.",
+    "The queries and responses used by this new task did not expose separate Acceptance record IDs or exact acceptance times, nor per-criterion evidence payloads and test start/end times. This is not a claim that the complete API lacks such capabilities.",
     "Result updated_at is not acceptance time. Structured accepted_result/review_status takes precedence over residual waiting text in summaries.",
     "Per-query wall timestamps and raw new-task MCP payloads were not captured by read_thread markers."
   ],

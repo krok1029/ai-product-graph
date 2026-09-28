@@ -54,10 +54,10 @@
 
 總耗時、有效工作、等待、重複確認、人工修正與全歷史重複 artifacts 在 [JSON](2026-09-28-workflow-fresh-handoff.json) 保持 null。已知 turn duration **168,248 ms** 單獨列出，不推算上述成本。逐次查詢的牆鐘時間未保存；正式資料的 `updated_at` 不是查詢時間。
 
-新任務如實指出正式查詢未提供獨立 Acceptance record ID／精確接受時間，以及逐條 evidence payload 和測試起訖。Result 更新時間不能冒充接受時間；摘要殘留「等待接受」文字時，以結構化 `accepted_result`／`review_status` 為準。MCP 實際載入版本仍未驗證，主專案 PR base 不是 runtime 來源證據。
+本次新任務所用查詢與回傳未提供獨立 Acceptance record ID／精確接受時間，以及逐條 evidence payload 和測試起訖；這是本次取得資料的範圍，不宣稱整個 API 不支援。Result 更新時間不能冒充接受時間；摘要殘留「等待接受」文字時，以結構化 `accepted_result`／`review_status` 為準。MCP 實際載入版本仍未驗證，主專案 PR base 不是 runtime 來源證據。
 
 ## 證據保存與核對
 
 13 份本機來源位於 `/tmp/apg-delivery-current/scenario-c/`，另有 bytes 相同的保留副本 `/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-continuation/scenario-c/`；後者為忽略目錄，並非 PR 附帶的公開原始證據包。JSON 保存必要投影、完整新任務 final、tool markers、各原檔 bytes hash、decoded hash 及四組前後 data hashes。decoded hash 使用 Python `json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'))` 的 UTF-8 bytes，非 RFC 8785；原始新任務 MCP payload 未由 markers 提供，不能從公開投影還原。
 
-本票僅新增兩份文件，核對 13 份原始及保留副本 hashes、四組 decoded data 相等、具體 identities、13 個 MCP markers 與完整 final，另通過 JSON 格式及差異檢查；未為文件變更重跑主專案完整測試。JSON bytes SHA-256：`d793d4583c886baed4f0ddee3f8cc5220430c60443c8a31d769721116b7cd10f`。
+本票僅新增兩份文件，核對 13 份原始及保留副本 hashes、四組 decoded data 相等、具體 identities、13 個 MCP markers 與完整 final，另通過 JSON 格式及差異檢查；未為文件變更重跑主專案完整測試。JSON bytes SHA-256：`80a497688613d84a300af19791afb029038742dd29e5f3b554372bce589d7bf1`。
