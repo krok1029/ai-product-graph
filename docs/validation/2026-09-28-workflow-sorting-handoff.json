@@ -1,0 +1,1012 @@
+{
+  "schema_version": 1,
+  "run_id": "workflow-sorting-handoff-20260928",
+  "issue": 111,
+  "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+  "status": "reviewable_sorting_result_saved_awaiting_user_acceptance",
+  "engineering_base_commit": "7d834d03d04454de15d503b0d66dc33f94c57021",
+  "product_repository": {
+    "id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+    "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+    "slug": "workflow-checklist",
+    "name": "workflow-checklist",
+    "root_path": "/Users/limingfeng/Project/workflow-checklist",
+    "remote_url": null,
+    "lifecycle_status": "active",
+    "created_at": "2026-09-28T02:38:24.446Z",
+    "updated_at": "2026-09-28T02:38:24.446Z",
+    "baseline_commit_sha": "583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9",
+    "baseline_has_uncommitted_changes": false,
+    "implementation_commit_sha": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+    "implementation_working_tree_status": ""
+  },
+  "approved_product_brief": {
+    "id": "01M3KA12FFGP6P112NQ93N7WDT",
+    "version_number": 3,
+    "base_approved_version_id": "01M3K8XHPM0PX5T79GHKCBBP04",
+    "review_status": "approved",
+    "approved_at": "2026-09-28T06:13:40.985Z",
+    "created_at": "2026-09-28T06:07:55.887Z",
+    "brief_sha256": "65845f917d38883e608ea815559af7211e5a8e8a0e27e362153b406b633de77b",
+    "scope": "未完成優先，各狀態組內新到舊；三種篩選沿用順序；獨立說明不變。",
+    "user_approval_source": "Conversation reply 同意 v3 與調整後拆票; message timestamp not recorded."
+  },
+  "replacement": {
+    "before": {
+      "source_file": "bChecklistBeforeReplacement.json",
+      "delivery": {
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "delivery_status": "done",
+        "approved_revision_id": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+        "source_freshness": "stale",
+        "source_problem": {
+          "reason": "graph_node_changed",
+          "details": {
+            "ticketRevisionId": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+            "graphNodeId": "01M3JY3DHYFY20WX92JYBQJNPG",
+            "sourceGraphRevisionId": "01M3JY3JVH3D2EPE6ZNAM7H071",
+            "lastChangedInGraphRevisionId": "01M3KADF6D4SX07MBAPXY3QT5H"
+          }
+        },
+        "dependency_ticket_ids": [],
+        "blocking_dependency_ids": [],
+        "next_action": "reconcile_sources",
+        "targets": [
+          {
+            "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "approved_brief_id": "01M3JZTV0R0RYXD1ZF6CAVRVB3",
+            "accepted_result_id": "01M3K093HMFYYMCPV98D747EV2",
+            "pending_result_id": null,
+            "criteria_without_evidence": [],
+            "unsatisfied_criterion_ids": []
+          }
+        ]
+      },
+      "revision": {
+        "id": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+        "revision_number": 1,
+        "source_graph_revision_id": "01M3JY3JVH3D2EPE6ZNAM7H071",
+        "review_status": "approved",
+        "lifecycle_status": "active"
+      }
+    },
+    "draft": {
+      "source_file": "bChecklistReplacementDraft.json",
+      "revision": {
+        "id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "ticket_draft_batch_id": null,
+        "revision_number": 2,
+        "base_approved_revision_id": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+        "source_graph_revision_id": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "specification": {
+          "source_spec_id": "01M3JY3DHYFY20WX92JYBQJNPG",
+          "traces_to_ticket_id": null,
+          "user_story": "作為單人使用者，我希望先處理未完成待辦，各完成狀態組內仍按新增先後由新到舊，並保留原資料。",
+          "scope": [
+            "原新增、完成切換與 localStorage 保存",
+            "全部檢視未完成優先，各狀態組內新到舊；切換狀態立即調整所在組",
+            "三種篩選與新排序整合、資料及錯誤保護回歸"
+          ],
+          "acceptance_criteria": [
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac1",
+              "text": "本機繁體中文桌面頁面可新增非空白待辦，標題去除前後空白並以純文字顯示，原空清單與讀寫失敗提示維持有效。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac2",
+              "text": "全部檢視先未完成、再已完成；各組依新增先後由新到舊，同毫秒或時鐘倒退不改新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac3",
+              "text": "勾選或取消完成立即移至正確狀態組；保留 identity、文字與原建立次序，不影響其他項目的相對新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac4",
+              "text": "新增項目為未完成，出現在未完成組最前；重新整理後身份、文字、完成狀態與分組排序保持一致，持久資料格式不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac5",
+              "text": "未完成／已完成篩選只含對應狀態且組內新到舊，動態移出與焦點維持正常，重新整理回全部；獨立說明內容與行為不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac6",
+              "text": "提供新排序、跨組切換、篩選、新增與持久化／錯誤回歸測試，以及本機桌面操作紀錄，保存真實新 Result 供使用者接受。"
+            }
+          ],
+          "non_goals": [
+            "使用者自選排序、優先級、到期日、搜尋、刪除",
+            "修改獨立說明、篩選記憶",
+            "雲端部署、登入、手機驗證"
+          ],
+          "related_graph_node_ids": [
+            "01M3JY3DHYFY20WX92JYBQJNPG",
+            "01M3JY37R2X5SCFQY52DDYNN2Y",
+            "01M3JY14RZ5CYZCQNJZVERVJTC"
+          ],
+          "dependencies": [],
+          "implementation_notes": [
+            "沿用本機產品583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9，保留新增先後的原始資料，僅派生顯示排序。",
+            "對應主專案#111：獨立review後本機提交，新Result先保留待接受供#104新任務查詢；不自動接受。",
+            "清單維持本機、不建立remote；#111主專案PR只保存真實驗證紀錄。"
+          ]
+        },
+        "required_targets": [
+          {
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "scope": [
+              "清單分組排序、原資料保護與篩選整合驗證"
+            ]
+          }
+        ],
+        "review_status": "draft",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": null,
+        "approved_at": null,
+        "created_at": "2026-09-28T06:17:23.016Z",
+        "updated_at": "2026-09-28T06:17:23.016Z"
+      },
+      "proposed_implementation_targets": [
+        {
+          "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+          "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "scope": [
+            "清單分組排序、原資料保護與篩選整合驗證"
+          ],
+          "identity_action": "reuse"
+        }
+      ]
+    },
+    "approval": {
+      "source_file": "bChecklistReplacementApproval.json",
+      "ticket": {
+        "id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "完成本機待辦清單的新增-完成切換與保存",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "current_approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+        "lifecycle_status": "active",
+        "delivery_status": "planned",
+        "created_at": "2026-09-28T02:40:20.068Z",
+        "updated_at": "2026-09-28T06:24:24.855Z"
+      },
+      "revision": {
+        "id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "ticket_draft_batch_id": null,
+        "revision_number": 2,
+        "base_approved_revision_id": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+        "source_graph_revision_id": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "specification": {
+          "source_spec_id": "01M3JY3DHYFY20WX92JYBQJNPG",
+          "traces_to_ticket_id": null,
+          "user_story": "作為單人使用者，我希望先處理未完成待辦，各完成狀態組內仍按新增先後由新到舊，並保留原資料。",
+          "scope": [
+            "原新增、完成切換與 localStorage 保存",
+            "全部檢視未完成優先，各狀態組內新到舊；切換狀態立即調整所在組",
+            "三種篩選與新排序整合、資料及錯誤保護回歸"
+          ],
+          "acceptance_criteria": [
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac1",
+              "text": "本機繁體中文桌面頁面可新增非空白待辦，標題去除前後空白並以純文字顯示，原空清單與讀寫失敗提示維持有效。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac2",
+              "text": "全部檢視先未完成、再已完成；各組依新增先後由新到舊，同毫秒或時鐘倒退不改新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac3",
+              "text": "勾選或取消完成立即移至正確狀態組；保留 identity、文字與原建立次序，不影響其他項目的相對新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac4",
+              "text": "新增項目為未完成，出現在未完成組最前；重新整理後身份、文字、完成狀態與分組排序保持一致，持久資料格式不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac5",
+              "text": "未完成／已完成篩選只含對應狀態且組內新到舊，動態移出與焦點維持正常，重新整理回全部；獨立說明內容與行為不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac6",
+              "text": "提供新排序、跨組切換、篩選、新增與持久化／錯誤回歸測試，以及本機桌面操作紀錄，保存真實新 Result 供使用者接受。"
+            }
+          ],
+          "non_goals": [
+            "使用者自選排序、優先級、到期日、搜尋、刪除",
+            "修改獨立說明、篩選記憶",
+            "雲端部署、登入、手機驗證"
+          ],
+          "related_graph_node_ids": [
+            "01M3JY3DHYFY20WX92JYBQJNPG",
+            "01M3JY37R2X5SCFQY52DDYNN2Y",
+            "01M3JY14RZ5CYZCQNJZVERVJTC"
+          ],
+          "dependencies": [],
+          "implementation_notes": [
+            "沿用本機產品583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9，保留新增先後的原始資料，僅派生顯示排序。",
+            "對應主專案#111：獨立review後本機提交，新Result先保留待接受供#104新任務查詢；不自動接受。",
+            "清單維持本機、不建立remote；#111主專案PR只保存真實驗證紀錄。"
+          ]
+        },
+        "required_targets": [
+          {
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "scope": [
+              "清單分組排序、原資料保護與篩選整合驗證"
+            ]
+          }
+        ],
+        "review_status": "approved",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": "00000000000000000000000001",
+        "approved_at": "2026-09-28T06:24:24.855Z",
+        "created_at": "2026-09-28T06:17:23.016Z",
+        "updated_at": "2026-09-28T06:24:24.855Z"
+      },
+      "implementation_targets": [
+        {
+          "id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+          "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "lifecycle_status": "active",
+          "identity_action": "reused",
+          "created_at": "2026-09-28T03:08:48.592Z",
+          "updated_at": "2026-09-28T03:08:48.592Z"
+        }
+      ],
+      "archived_implementation_target_ids": [],
+      "archived_implementation_brief_ids": [
+        "01M3JZTV0R0RYXD1ZF6CAVRVB3"
+      ],
+      "archived_implementation_result_ids": [
+        "01M3K093HMFYYMCPV98D747EV2"
+      ],
+      "archived_stale_revision_ids": [],
+      "created_sync_intent_ids": [],
+      "sync_health": "current"
+    },
+    "user_decision": {
+      "text": "同意 r2 並授權實作",
+      "message_timestamp_utc": null
+    },
+    "acceptance_history": {
+      "old_acceptance_id": "01M3K8JDVSHXTB7G39EMDZD97E",
+      "old_result_id": "01M3K093HMFYYMCPV98D747EV2",
+      "acceptance_requeried": false,
+      "revocation_performed": false,
+      "meaning": "Replacement approval response archives the old Result. The prior Acceptance identity comes from scenario A; no full Acceptance history was requeried."
+    }
+  },
+  "implementation_handoff": {
+    "draft_source_file": "bImplementationDraft.json",
+    "start_source_file": "bStart.json",
+    "freshness": "current",
+    "implementation_brief": {
+      "id": "01M3KB12V4HT2WH5W4814544P2",
+      "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+      "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+      "ticket_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+      "product_brief_version_id": "01M3KA12FFGP6P112NQ93N7WDT",
+      "repository_context_snapshot_id": "01M3KB12V4NDY3ZKMY0C8JT5GN",
+      "supersedes_implementation_brief_id": "01M3JZTV0R0RYXD1ZF6CAVRVB3",
+      "slug": "implementation-brief-phymp3s2-20260928t062524835z",
+      "brief": {
+        "implementation_plan": [
+          "在清單snapshot分成未完成／已完成兩組，每組保持原新增先後；資料存取与identity不變。",
+          "更新頁面排序提示及README，篩選仍沿用清單順序；原獨立操作說明不改。",
+          "更新舊排序預期並加入混合狀態、跨組完成切換、同時間與倒退時間、重讀、篩選以及資料保護回歸。",
+          "完成本機桌面實测與獨立Spec/Standardsreview，本機commit並提交真實Result；先不接受，供新任務只讀接手。"
+        ],
+        "suggested_files_to_inspect": [
+          "src/checklist.js",
+          "src/filter.js",
+          "src/app.js",
+          "index.html",
+          "test/checklist.test.js",
+          "test/filter.test.js"
+        ],
+        "test_strategy": [
+          "Node20內建測試驗證完整清單、篩選及伺服器模組載入，保存起訖與退出碼。",
+          "真實桌面混合完成狀態、新增、勾選／取消、三種篩選、重整與身份比對。",
+          "兩位獨立agent審查最終確切版本，修復問題後複查。"
+        ],
+        "risks": [
+          "不可直接排序保存陣列，否則完成狀態往返會遺失原新增順序。",
+          "已接受的篩選Ticket仍需後續來源修復，本次程式整合不自動代表它的新規格已接受。"
+        ],
+        "pr_summary_draft": "本機清單加入未完成優先排序；主專案#111記錄有效replacement、實作證據及真實待接受接手檢查點。"
+      },
+      "review_status": "approved",
+      "lifecycle_status": "active",
+      "approved_by_actor_id": "00000000000000000000000001",
+      "approved_at": "2026-09-28T06:25:31.498Z",
+      "created_at": "2026-09-28T06:25:24.835Z",
+      "updated_at": "2026-09-28T06:25:31.498Z"
+    },
+    "repository_context_snapshot": {
+      "id": "01M3KB12V4NDY3ZKMY0C8JT5GN",
+      "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+      "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+      "baseline_commit_sha": "583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9",
+      "dirty_state_fingerprint": null,
+      "context": {
+        "repository_name": "workflow-checklist",
+        "summary": "本機篩選版已接受，HEAD583e301且乾淨；資料陣列保留新增先後，snapshot目前依此顯示，filterItems保留傳入順序。",
+        "file_list": [
+          "src/checklist.js",
+          "src/filter.js",
+          "src/app.js",
+          "index.html",
+          "README.md",
+          "test/checklist.test.js",
+          "test/filter.test.js",
+          "test/server.test.js"
+        ],
+        "module_notes": [
+          "只在snapshot派生未完成優先的穩定分組，不改持久化資料格式或陣列新增順序。",
+          "原篩選helper不排序，直接沿用新snapshot順序；更新頁面排序提示和README，獨立help保持原文。"
+        ],
+        "has_uncommitted_changes": false
+      },
+      "is_approvable": true,
+      "created_at": "2026-09-28T06:25:24.835Z"
+    },
+    "implementation_target": {
+      "id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+      "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+      "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+      "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+      "lifecycle_status": "active",
+      "created_at": "2026-09-28T03:08:48.592Z",
+      "updated_at": "2026-09-28T03:08:48.592Z"
+    },
+    "request_provenance": "Actual baseline and clean state supplied by root; raw files preserve responses only.",
+    "start_query_time_utc": null
+  },
+  "snapshots": [
+    {
+      "label": "after_replacement_before_implementation_brief",
+      "source_file": "bAfterReplacementGraph.json",
+      "query_time_utc": null,
+      "graph_revision_id": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+      "planning": {
+        "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+        "stale_node_ids": [],
+        "affected_ticket_ids": [
+          "01M3K93WX6A48WS4YZMPW88CMQ"
+        ]
+      },
+      "delivery": {
+        "scope": "active_project_tickets",
+        "summary": {
+          "total": 3,
+          "done": 2,
+          "stale": 1,
+          "blocked": 1,
+          "awaiting_acceptance": 0
+        },
+        "tickets": [
+          {
+            "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+            "title": "完成本機待辦清單的新增、完成切換與保存",
+            "delivery_status": "planned",
+            "approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+            "source_freshness": "current",
+            "source_problem": null,
+            "dependency_ticket_ids": [],
+            "blocking_dependency_ids": [],
+            "next_action": "implement",
+            "targets": [
+              {
+                "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+                "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+                "approved_brief_id": null,
+                "accepted_result_id": null,
+                "pending_result_id": null,
+                "criteria_without_evidence": [
+                  "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac1",
+                  "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac2",
+                  "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac3",
+                  "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac4",
+                  "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac5",
+                  "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac6"
+                ],
+                "unsatisfied_criterion_ids": []
+              }
+            ]
+          },
+          {
+            "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+            "title": "提供可獨立使用的操作說明與資料限制",
+            "delivery_status": "done",
+            "approved_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+            "source_freshness": "current",
+            "source_problem": null,
+            "dependency_ticket_ids": [],
+            "blocking_dependency_ids": [],
+            "next_action": "done",
+            "targets": [
+              {
+                "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+                "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+                "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+                "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+                "pending_result_id": null,
+                "criteria_without_evidence": [],
+                "unsatisfied_criterion_ids": []
+              }
+            ]
+          },
+          {
+            "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+            "title": "在本機清單加入完成狀態篩選",
+            "delivery_status": "done",
+            "approved_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+            "source_freshness": "stale",
+            "source_problem": {
+              "reason": "graph_node_changed",
+              "details": {
+                "ticketRevisionId": "01M3K93WX6B1YF53VWM7V87HCQ",
+                "graphNodeId": "01M3K932Y5QHE8WGSKQG4R0HC3",
+                "sourceGraphRevisionId": "01M3K932Y50ZPDAT76R7SHYRPW",
+                "lastChangedInGraphRevisionId": "01M3KAEJYTHYBPHDWSHD0R3XDQ"
+              }
+            },
+            "dependency_ticket_ids": [
+              "01M3JY4YK7TQWT4A4X03W2CF4Y"
+            ],
+            "blocking_dependency_ids": [
+              "01M3JY4YK7TQWT4A4X03W2CF4Y"
+            ],
+            "next_action": "reconcile_sources",
+            "targets": [
+              {
+                "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+                "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+                "approved_brief_id": "01M3K9CMW3NQTY07S5BK4D1HHB",
+                "accepted_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+                "pending_result_id": null,
+                "criteria_without_evidence": [],
+                "unsatisfied_criterion_ids": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "implementation_evidence": {
+    "tests": {
+      "source_file": "sorting-tests.json",
+      "command": "PATH=/Users/limingfeng/.nvm/versions/node/v20.19.0/bin:$PATH npm test",
+      "cwd": "/Users/limingfeng/Project/workflow-checklist",
+      "node_version": "v20.19.0",
+      "started_at": "2026-09-28T06:27:35.271466+00:00",
+      "ended_at": "2026-09-28T06:27:35.594182+00:00",
+      "exit_code": 0,
+      "baseline_commit": "583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9",
+      "help_markup_unchanged": true,
+      "help_markup_sha256": "927db8c71ca082d180da7f6c5924ce7e654774d1b00b7f0894776298e80e028e",
+      "diff_check_exit_code": 0,
+      "diff_check_output": "",
+      "tested_commit": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+      "tracked_files": [
+        {
+          "path": ".gitignore",
+          "sha256": "3ee2b1561e02ce97e389a8c7cc83d481c16af61a88f0e36186abf1e7e9f1ce98"
+        },
+        {
+          "path": "README.md",
+          "sha256": "21909db70ab530a7c62c475a8246c0645e760647bb07bedbd8e6d10f32a66128"
+        },
+        {
+          "path": "index.html",
+          "sha256": "858bd3a519051d28f86b1c48854233552411299d471fa7f846c7c5a3a2ebacd9"
+        },
+        {
+          "path": "package.json",
+          "sha256": "a55562566eac9af8259a12693b5bd16e22db6967c99374ff742c2207d96f160c"
+        },
+        {
+          "path": "server.mjs",
+          "sha256": "76dbbbc2908f642f994424fdfcad7646755bd7e9b2794933cdef9f6857b09b2c"
+        },
+        {
+          "path": "src/app.js",
+          "sha256": "f035a3ad2b3567e60eaf2d39732cc3bc4c8d784c8ded53ae487c82c71b0ab852"
+        },
+        {
+          "path": "src/checklist.js",
+          "sha256": "7d845cfa71489693bcd7c3062ce12fcdf61b30fa694571d7327d6d8b9fc424f9"
+        },
+        {
+          "path": "src/filter.js",
+          "sha256": "a17842e7491260df16d68785d9cdd81a67ea3cd1a1abe7ca248912d456ab4057"
+        },
+        {
+          "path": "styles.css",
+          "sha256": "a0b8f5693869765ac77423c3847fcd1192585e534061527d7824e0440f741dab"
+        },
+        {
+          "path": "test/checklist.test.js",
+          "sha256": "667df7b0c3c1c7bcc43124c12b9c546e38a0b07449df0bec74ac7708e21893a9"
+        },
+        {
+          "path": "test/filter.test.js",
+          "sha256": "cbe21dbf966ee07e1f0ce5164e486c91d75e86e2b18b223a7880abd7e8b7ad8c"
+        },
+        {
+          "path": "test/server.test.js",
+          "sha256": "34d94d064c5bd1dace204a892919f7538303b3e6b3814f853fc659703e6b6cb4"
+        }
+      ],
+      "working_tree_status": "",
+      "passed": 20,
+      "failed": 0,
+      "stdout_sha256": "93ed3f2731b481a672fc2e8d3eac5e781c41a18a9accdfb9c4b14f3d9a48689d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "browser": {
+      "source_file": "sorting-browser.json",
+      "kind": "manual_desktop_browser_verification",
+      "tool": "cua_repl",
+      "origin": "http://127.0.0.1:4178/",
+      "started_at": "2026-09-28T06:28:04.425Z",
+      "finished_at": "2026-09-28T06:29:48.247Z",
+      "commit": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+      "steps": [
+        "重新載入顯示「未完成優先，各組新到舊」，保留原3筆資料",
+        "將較新的「篩選驗證｜新增待辦」勾選完成，移到未完成項目之後、舊已完成項目之前",
+        "新增「排序驗證｜新增未完成」，出現在未完成組最前",
+        "取消篩選驗證項目完成狀態，回到其原新增次序，位於最新新增之後、較舊未完成之前",
+        "未完成篩選順序正確；勾選最新項目後即時移出，焦點回未完成按鈕",
+        "已完成篩選显示最新完成項目在舊已完成之前；全部依狀態分組且每組新到舊",
+        "從已完成重新整理回全部，DOM identity／文字／狀態／分組排序與重整前JSON相等",
+        "原3項的identity／文字／狀態保留；操作說明點選展開及Enter收合不改項目JSON"
+      ],
+      "new_item_id": "8c081bbe-2f94-4f6f-9eff-582c39fb9854",
+      "assertions": {
+        "identity_state_grouping_preserved": true,
+        "original_items_preserved": true,
+        "help_unchanged_items": true
+      },
+      "limitations": [
+        "瀏覽器沒有注入損壞或拒絕儲存；錯誤邊界以Node回歸測試驗證",
+        "此為實際工具觀察整理，不是自動化E2E程式"
+      ]
+    },
+    "reviews": {
+      "source_file": "sorting-review.json",
+      "base": "583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9",
+      "head": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+      "source": "collaboration agent reports",
+      "reviews": [
+        {
+          "agent": "sorting_spec_review",
+          "findings": 0,
+          "independent_tests_passed": 20
+        },
+        {
+          "agent": "sorting_standards_review",
+          "findings": 0,
+          "independent_tests_passed": 20
+        }
+      ],
+      "acceptance": "pending, not implied by review"
+    }
+  },
+  "pending_result": {
+    "source_file": "bSortingResult.json",
+    "implementation_result": {
+      "id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+      "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+      "implementation_brief_id": "01M3KB12V4HT2WH5W4814544P2",
+      "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+      "ticket_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+      "supersedes_implementation_result_id": null,
+      "result": {
+        "summary": "排序r2已實作：未完成優先，各組新到舊，保留原身份、建立次序與資料格式。20項測試、桌面實測及獨立Spec/Standards review通過；先保留待接受結果供新任務接手。",
+        "unfinished_items": [],
+        "submission_disposition": "reviewable"
+      },
+      "review_status": "draft",
+      "lifecycle_status": "active",
+      "submission_disposition": "reviewable",
+      "stale_at_submission": false,
+      "stale_reasons": [],
+      "created_at": "2026-09-28T06:31:16.570Z",
+      "updated_at": "2026-09-28T06:31:16.570Z",
+      "archived_at": null
+    },
+    "observed_evidence_ids": [
+      "01M3KBBTAPYJCY9D68QW8HW04K",
+      "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+      "01M3KBBTASFV3BPYGZP098GZ9W"
+    ],
+    "criterion_verdicts": [
+      {
+        "id": "01M3KBBTAVK392GZ8VSSQQBV58",
+        "implementation_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+        "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac1",
+        "verdict": "satisfied",
+        "reason": "原新增、純文字、空白拒絕與讀寫保護測試通過；新排序僅修改snapshot顯示。",
+        "evidence_ids": [
+          "01M3KBBTAPYJCY9D68QW8HW04K",
+          "01M3KBBTASFV3BPYGZP098GZ9W"
+        ],
+        "created_at": "2026-09-28T06:31:16.570Z"
+      },
+      {
+        "id": "01M3KBBTAVMEZFBEB6JHPQVJ4P",
+        "implementation_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+        "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac2",
+        "verdict": "satisfied",
+        "reason": "20項測試含混合分組、同毫秒／時鐘倒退，桌面確認未完成優先且各組新到舊。",
+        "evidence_ids": [
+          "01M3KBBTAPYJCY9D68QW8HW04K",
+          "01M3KBBTASFCTF8QC3GQ4ZN3H3"
+        ],
+        "created_at": "2026-09-28T06:31:16.570Z"
+      },
+      {
+        "id": "01M3KBBTAV7TQ5SNSPMB1VRP86",
+        "implementation_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+        "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac3",
+        "verdict": "satisfied",
+        "reason": "桌面完成後移至後組、取消後回原新增次序，測試核對identity與createdAt不變。",
+        "evidence_ids": [
+          "01M3KBBTAPYJCY9D68QW8HW04K",
+          "01M3KBBTASFCTF8QC3GQ4ZN3H3"
+        ],
+        "created_at": "2026-09-28T06:31:16.570Z"
+      },
+      {
+        "id": "01M3KBBTAVHQ1J76871FJXD98J",
+        "implementation_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+        "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac4",
+        "verdict": "satisfied",
+        "reason": "桌面新增進未完成最前，重新整理後DOM身份文字狀態與分組排序完全一致；儲存陣列及v1格式測試不變。",
+        "evidence_ids": [
+          "01M3KBBTAPYJCY9D68QW8HW04K",
+          "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+          "01M3KBBTASFV3BPYGZP098GZ9W"
+        ],
+        "created_at": "2026-09-28T06:31:16.570Z"
+      },
+      {
+        "id": "01M3KBBTAVKPBPJF66QWE8FNR7",
+        "implementation_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+        "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac5",
+        "verdict": "satisfied",
+        "reason": "三种篩選、動態移出與焦點、重整回全部皆實測；help markup byte相同且展開收合不改資料。",
+        "evidence_ids": [
+          "01M3KBBTAPYJCY9D68QW8HW04K",
+          "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+          "01M3KBBTASFV3BPYGZP098GZ9W"
+        ],
+        "created_at": "2026-09-28T06:31:16.570Z"
+      },
+      {
+        "id": "01M3KBBTAVNNKK1XPW246KNSVX",
+        "implementation_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+        "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac6",
+        "verdict": "satisfied",
+        "reason": "真實20項測試紀錄、桌面操作及12檔程式指紋已保存，無未完成項目；結果先供接手，尚未接受。",
+        "evidence_ids": [
+          "01M3KBBTAPYJCY9D68QW8HW04K",
+          "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+          "01M3KBBTASFV3BPYGZP098GZ9W"
+        ],
+        "created_at": "2026-09-28T06:31:16.570Z"
+      }
+    ],
+    "acceptance_created": false
+  },
+  "final_checkpoint": {
+    "source_file": "bHandoffCheckpointGraph.json",
+    "query_time_utc": null,
+    "graph_revision_id": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+    "planning": {
+      "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+      "stale_node_ids": [],
+      "affected_ticket_ids": [
+        "01M3K93WX6A48WS4YZMPW88CMQ"
+      ]
+    },
+    "delivery": {
+      "scope": "active_project_tickets",
+      "summary": {
+        "total": 3,
+        "done": 2,
+        "stale": 1,
+        "blocked": 1,
+        "awaiting_acceptance": 1
+      },
+      "tickets": [
+        {
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "title": "完成本機待辦清單的新增、完成切換與保存",
+          "delivery_status": "planned",
+          "approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [],
+          "blocking_dependency_ids": [],
+          "next_action": "review_result",
+          "targets": [
+            {
+              "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3KB12V4HT2WH5W4814544P2",
+              "accepted_result_id": null,
+              "pending_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        {
+          "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+          "title": "提供可獨立使用的操作說明與資料限制",
+          "delivery_status": "done",
+          "approved_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [],
+          "blocking_dependency_ids": [],
+          "next_action": "done",
+          "targets": [
+            {
+              "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+              "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+              "pending_result_id": null,
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        {
+          "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+          "title": "在本機清單加入完成狀態篩選",
+          "delivery_status": "done",
+          "approved_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+          "source_freshness": "stale",
+          "source_problem": {
+            "reason": "graph_node_changed",
+            "details": {
+              "ticketRevisionId": "01M3K93WX6B1YF53VWM7V87HCQ",
+              "graphNodeId": "01M3K932Y5QHE8WGSKQG4R0HC3",
+              "sourceGraphRevisionId": "01M3K932Y50ZPDAT76R7SHYRPW",
+              "lastChangedInGraphRevisionId": "01M3KAEJYTHYBPHDWSHD0R3XDQ"
+            }
+          },
+          "dependency_ticket_ids": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "blocking_dependency_ids": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "next_action": "reconcile_sources",
+          "targets": [
+            {
+              "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3K9CMW3NQTY07S5BK4D1HHB",
+              "accepted_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+              "pending_result_id": null,
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        }
+      ]
+    },
+    "meaning": "Frozen response after the new Result was submitted; separate source/dependency/delivery dimensions must not be summed."
+  },
+  "deferred_verification": {
+    "new_conversation": "User authorized #104; not started at this checkpoint. It must query progress without full conversation history and must not accept the Result.",
+    "result_acceptance": "Reserved for #105; no new Acceptance created in #111.",
+    "filter_repair": "Filter source is still stale and dependency blocked; its replacement and acceptance remain later work.",
+    "stale_acceptance": "No rejection claim. Verification against a genuinely pending Result remains in #105."
+  },
+  "costs": {
+    "total_elapsed_seconds": null,
+    "active_work_seconds": null,
+    "waiting_seconds": null,
+    "repeated_confirmations": null,
+    "manual_corrections": null,
+    "duplicate_artifacts": null,
+    "query_timestamps": null,
+    "observed_decisions": [
+      "Exact checklist Ticket r2 approved and implementation authorized"
+    ],
+    "known_server_event_interval": {
+      "start_utc": "2026-09-28T06:17:23.016Z",
+      "end_utc": "2026-09-28T06:31:16.570Z",
+      "meaning": "Replacement draft creation through Result creation only; not full scenario duration, active work, or waiting."
+    },
+    "measurement_status": "Incomplete; unknown values are null, not zero.",
+    "test_interval_seconds": 0.322716,
+    "browser_observation_interval_seconds": 103.822
+  },
+  "runtime": {
+    "process_commit": null,
+    "loaded_module_version": null,
+    "limitation": "Connected MCP runtime provenance remains unverified as documented in scenario A; this PR base is not runtime evidence."
+  },
+  "source_files": [
+    {
+      "file": "bAfterReplacementGraph.json",
+      "bytes_sha256": "3500d44aee7c0f2e185976869350c2fb8a4e519fbe3123b0da3ca6e36c3e6348",
+      "decoded_envelope_sha256": "2ae3f7fbaf4aa3925f6d98e4346b4ac5dc6daee6d007f6d2d469e0d6c144f9b3",
+      "ok": true
+    },
+    {
+      "file": "bChecklistBeforeReplacement.json",
+      "bytes_sha256": "1ad35d098c88567cc7b7318b6d81b29d82a949e567ee6adddc7c56b81ce24206",
+      "decoded_envelope_sha256": "81b312d0ae4194dc841467291529218aa53cdf1a8df75741ad842d7bb1685699",
+      "ok": true
+    },
+    {
+      "file": "bChecklistReplacementApproval.json",
+      "bytes_sha256": "7bdd089878a2a4896b871e1f219a3c349b96ccc92e60a22ad4b99dcc1efb22e1",
+      "decoded_envelope_sha256": "59a2dbea1c520ab0626c324c60bb9d825a950bce0120b5c012d812b733505edf",
+      "ok": true
+    },
+    {
+      "file": "bChecklistReplacementDraft.json",
+      "bytes_sha256": "23953ca5d7db214c4bcd81b12ebce5fec46821d530361f23c15fb049f785d35d",
+      "decoded_envelope_sha256": "933390dcadf411307f35bde42c19d2a87b6aaae041ebf262ad136d8bee94535e",
+      "ok": true
+    },
+    {
+      "file": "bHandoffCheckpointGraph.json",
+      "bytes_sha256": "d3c9814c56cc0f1813a826fad33e37fe00da5394d5a0850b47bb5eb6e0e4796e",
+      "decoded_envelope_sha256": "502eac66172ff0d9063a91e915145c9204565a2ba8f237ca595826db56936c3a",
+      "ok": true
+    },
+    {
+      "file": "bImplementationDraft.json",
+      "bytes_sha256": "dd7eb310949f29d5d0d999ce442a8565960e1795fc6548cb77f97826265091a1",
+      "decoded_envelope_sha256": "9b6b75fa5168b1fc4b253326377d3c70149515033b8356d35ee41191101bbcfb",
+      "ok": true
+    },
+    {
+      "file": "bPreResultContext.json",
+      "bytes_sha256": "68cc2e545b6ec3022dcf00d838e8cd1b1eff7deab7a7ac74eb2e0e82a09a90e3",
+      "decoded_envelope_sha256": "279ca3eda2c581d7ee30615b0c7667fa1f511a71ccef164e8cb9cef23c1656a0",
+      "ok": true
+    },
+    {
+      "file": "bReplacementContext.json",
+      "bytes_sha256": "d49dc2d3d5f3e3a636773051fe978e1d55b075affe6f139366b22e8c0d9750a3",
+      "decoded_envelope_sha256": "f4af3a8272e6e1476b5a2b443360dde8806f81cc27522c49b08281c25dfcb1e4",
+      "ok": true
+    },
+    {
+      "file": "bSortingResult.json",
+      "bytes_sha256": "e10855d6cb61b320c0d3b2d6acbae6a1908d774b89601475710cc96251fb613d",
+      "decoded_envelope_sha256": "2b488714dfc4c823668dc62886924d82e12f299dbcf97234e94902b2e6567b3e",
+      "ok": true
+    },
+    {
+      "file": "bStart.json",
+      "bytes_sha256": "76a418ab1053ab7c0a0781c9448afb4dd10651ecdd86dc39d151e92ee8c7e109",
+      "decoded_envelope_sha256": "d52b0cd8777f29220740fcfdb12debc85cc9b93645f8e31cfd2ca598d9653a32",
+      "ok": true
+    },
+    {
+      "file": "sorting-browser.json",
+      "bytes_sha256": "81d7891278f732e1ec0893291ca0d766c2c413e8ece45441789ddbf8479bc480",
+      "decoded_document_sha256": "e90b3a6d36d610a26c250e5f9336c2cf4ff51b7aa59bfbb77afdaff0d9074510",
+      "kind": "local_record"
+    },
+    {
+      "file": "sorting-review.json",
+      "bytes_sha256": "47d0e40502bdbe12e07f0fcd5f43d21fe0ade38901c2cd493860d7ff8c3658e5",
+      "decoded_document_sha256": "8f2da8429bf16d43c4f52f6c2b217dbd4a5a7c789a793d49b260481398ba3c49",
+      "kind": "local_record"
+    },
+    {
+      "file": "sorting-tests.json",
+      "bytes_sha256": "0ac97334b3cd96f942a4b189cc43b7379bf9d090f23a342effdc744c55ccfafc",
+      "decoded_document_sha256": "2f1d224378860ebbbe370b37e5df3b4feaceaec6d748f793be5414127819fc2b",
+      "kind": "local_record"
+    }
+  ],
+  "hash_method": "Decoded envelopes use Python json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(comma, colon)) UTF-8 bytes; not RFC 8785. Public projections cannot reconstruct complete source responses.",
+  "delivery_identity_comparisons": [
+    {
+      "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+      "revision_unchanged": true,
+      "target_unchanged": true,
+      "before": {
+        "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": null,
+        "accepted_result_id": null,
+        "pending_result_id": null,
+        "criteria_without_evidence": [
+          "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac1",
+          "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac2",
+          "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac3",
+          "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac4",
+          "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac5",
+          "01M3JY4YK7TQWT4A4X03W2CF4Y:r2:ac6"
+        ],
+        "unsatisfied_criterion_ids": []
+      },
+      "after": {
+        "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3KB12V4HT2WH5W4814544P2",
+        "accepted_result_id": null,
+        "pending_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      }
+    },
+    {
+      "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+      "revision_unchanged": true,
+      "target_unchanged": true,
+      "before": {
+        "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+        "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      },
+      "after": {
+        "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+        "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      }
+    },
+    {
+      "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+      "revision_unchanged": true,
+      "target_unchanged": true,
+      "before": {
+        "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3K9CMW3NQTY07S5BK4D1HHB",
+        "accepted_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      },
+      "after": {
+        "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3K9CMW3NQTY07S5BK4D1HHB",
+        "accepted_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      }
+    }
+  ],
+  "raw_evidence_storage": {
+    "original_directory": "/tmp/apg-delivery-current/scenario-b-repair",
+    "retained_copy_directory": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-continuation",
+    "public_bundle": false,
+    "meaning": "Local ignored retention of raw scenario A/B/repair evidence; not a committed public artifact bundle."
+  }
+}
