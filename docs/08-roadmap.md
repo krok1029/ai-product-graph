@@ -25,7 +25,7 @@ GitHub Issues 是 Specs 與 Tickets 的正式追蹤來源；本文件定義階�
 範圍：
 
 - 統一 Product Brief → Milestone → Spec → Ticket → 實作 → 驗收。
-- 說清 core 23 tools／三個 skills、full 44 tools／六個舊 prompts 的用途。
+- 說清 core 23 tools／三個 skills、full 45 tools／六個舊 prompts 的用途。
 - 對齊圖譜自動保存、同範圍實作授權、獨立 Result Acceptance 及規劃內容版本。
 - 將舊 Phase 1／1A 文件標成歷史基線，保留有效 storage／transaction 約束。
 - 整理目前程式碼與驗證紀錄，區分已交付、尚未提交及未完成的能力。

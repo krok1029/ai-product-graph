@@ -11,7 +11,7 @@ AI Product Graph 以本機 stdio MCP 提供結構化產品資料，client agent 
 | 介面 | 責任 | 範圍 |
 | --- | --- | --- |
 | Skills | 對話、內容生成、程式碼檢查、來源重新比對、整理驗收 | 規劃／實作／驗收三個入口 |
-| MCP tools | 驗證、保存、核准及查詢正式資料 | core 23 個；full 44 個 |
+| MCP tools | 驗證、保存、核准及查詢正式資料 | core 23 個；full 45 個 |
 | MCP resources | 提供 Project、graph、Ticket 與 trace 等上下文 | 本機讀取入口 |
 | MCP prompts | 相容原有 workflow templates | 六個，僅 full 提供 |
 | Markdown export | 閱讀、分享或人工檢視 | 按需，非正式資料來源或必經步驟 |

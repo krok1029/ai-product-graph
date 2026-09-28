@@ -6,6 +6,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, it, vi } from "vitest";
+import { contentDriftAdoptionFixture } from "../../test-support/content-drift-adoption-fixture.js";
 import { planeObservationHistoryFixture } from "../../test-support/plane-observation-history-fixture.js";
 import { openDatabase } from "../../infrastructure/sqlite/database.js";
 import { createMcpServer } from "./server.js";
@@ -39,14 +40,16 @@ it("returns strict read-only DTOs and refuses unknown overrides without invoking
   } finally { network.mockRestore(); await target.close(); await server.close(); f.database.close(); }
 });
 
-it("preserves resolution and history serialization across stdio restart without database writes", async () => {
+it.each(["reject", "adopt"] as const)("preserves %s resolution and history across stdio restart without database writes", async kind => {
   const directory = mkdtempSync(join(tmpdir(), "apg-resolution-read-"));
   const databasePath = join(directory, "project.sqlite");
-  const f = await planeObservationHistoryFixture();
+  const f = await contentDriftAdoptionFixture();
   let target: Client | undefined;
   try {
     const captured = f.capture();
-    const rejected = f.service.rejectContentDrift({ contentDriftId: captured.drift!.id, reason: "外部尚未同步，保留本機內容" });
+    const reason = "外部尚未同步，保存此處置";
+    const resolved = kind === "reject" ? f.service.rejectContentDrift({ contentDriftId: captured.drift!.id, reason })
+      : f.service.adoptContentDrift({ ...f.command(captured.drift!.id), reason });
     f.replaceRevision();
     f.service.terminateSyncMapping({ mappingId: f.mapping.id, reason: "保留歷史" });
     await f.database.backup(databasePath);
@@ -59,13 +62,14 @@ it("preserves resolution and history serialization across stdio restart without 
 
     expect(result).toMatchObject({ ok: true, data: { content_drift_id: captured.drift!.id,
       evidence: { captured_source_ticket_revision_id: f.revision.id }, resolution: {
-        record: { kind: "reject", draft_ticket_revision_id: null }, draft: null,
-        decision: { id: rejected.resolution.decision.id, summary: "外部尚未同步，保留本機內容",
-          actor_id: rejected.resolution.decision.actorId, created_at: rejected.resolution.decision.createdAt }
+        record: { kind, draft_ticket_revision_id: resolved.resolution.record.draftTicketRevisionId },
+        draft: kind === "reject" ? null : expect.objectContaining({ review_status: "draft", lifecycle_status: "archived" }),
+        decision: { id: resolved.resolution.decision.id, summary: reason,
+          actor_id: resolved.resolution.decision.actorId, created_at: resolved.resolution.decision.createdAt }
       } } });
     expect(result).not.toHaveProperty("audit_log_id");
     expect(historyData.drifts[0].resolution).toEqual(result.data.resolution);
-    expect(historyData.drifts[0].resolution_decision_id).toBe(rejected.resolution.decision.id);
+    expect(historyData.drifts[0].resolution_decision_id).toBe(resolved.resolution.decision.id);
     expect(await resource(target, driftUri(captured.drift!.id))).toEqual(result.data);
     expect(await resource(target, `product-graph://external-work-item-mappings/${f.mapping.id}/content-drifts`)).toEqual(historyData);
     await target.close(); target = await connect(databasePath);
