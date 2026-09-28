@@ -54,6 +54,8 @@ it("exposes the stored resolution Decision reference without interpreting its de
   const captured = f.capture();
   f.ports.decisions.insert({ id: "future-resolution", projectId: f.project.id, actorId: captured.provenance.actorId,
     decisionType: "future_content_resolution", summary: "External decision", payload: {}, createdAt: "2026-09-27T13:00:00.000Z" });
+  // 模擬 migration 011 之前的 raw pointer；正式 workflow 已禁止此寫入。
+  f.database.exec("DROP TRIGGER content_drift_resolution_reference_immutable");
   f.database.prepare("UPDATE content_drifts SET resolution_decision_id = 'future-resolution' WHERE id = ?").run(captured.drift!.id);
 
   const result = f.service.getMappingContentDriftHistory(f.mapping.id);
@@ -104,6 +106,8 @@ it("rejects a real cross-project resolution Decision while preserving every row"
   const other = f.service.createProject({ name: "Other" }).project;
   f.ports.decisions.insert({ id: "foreign-resolution", projectId: other.id, actorId: captured.provenance.actorId,
     decisionType: "future_resolution", summary: "Foreign", payload: {}, createdAt: "2026-09-27T13:00:00.000Z" });
+  // 模擬 migration 011 之前的 raw pointer；正式 workflow 已禁止此寫入。
+  f.database.exec("DROP TRIGGER content_drift_resolution_reference_immutable");
   f.database.prepare("UPDATE content_drifts SET resolution_decision_id = 'foreign-resolution'").run();
   const before = f.allRows();
 

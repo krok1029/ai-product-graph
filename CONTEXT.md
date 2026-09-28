@@ -100,6 +100,10 @@ _Avoid_: silent skip、把 abandoned 標成 succeeded、刪除 failure history�
 External Work Item Snapshot 的 title、description、acceptance criteria 或其他 adapter-managed specification content，與其 internal owner 目前 approved Ticket Revision 不一致，或 outbound sync 無法證明外部內容自最後 snapshot 後未變時，建立的不可變偵測紀錄。Drift 本身不得修改 approved specification 或覆蓋外部內容。使用者若要採用外部修改，系統必須以最新 approved revision 為 base 建立新的 Ticket Revision Draft，保存來源 snapshot 與差異，再走正常 approval；若不採用，則記錄 Decision，之後才可依受保護的 outbound sync 規則重新同步 canonical content。是否尚未處理由有無 resolution Decision 衍生。
 _Avoid_: last-write-wins、直接修改 approved revision、從 stale base 建立 draft、忽略差異而不留決策
 
+**Content Drift Resolution**:
+使用者對一份已保存 Content Drift 作成的不可變處置，將該 drift 與一個 Decision 關聯。Reject 表示不採用所觀察到的外部規格變動；adopt 表示根據選定外部內容產生候選 Ticket Revision Draft。處置成立即表示 drift 已被處理，與候選 draft 後續是否核准或封存分開；不代表外部已同步或實作已驗收。
+_Avoid_: 改寫 drift 偵測紀錄、把處置當成 Ticket approval 或 Result Acceptance、因 draft 失效而默默重開處置、以無有效關聯的 Decision 猜測已處理
+
 **Sync Conflict**:
 外部工作項目狀態與內部權威語意不一致時建立的不可變偵測紀錄，例如內部 Ticket 已是 `done`，外部 work item 卻被重新開啟。Sync Conflict 必須保存 External Work Item、外部狀態、Ticket、內部 Delivery Status、偵測時間與來源事件；偵測本身不得自動降低內部狀態。使用者必須把原因分類為原 acceptance 無效、新增工作或外部誤操作，並分別執行 Result Revocation、建立 Follow-up Ticket，或維持內部 `done` 並重新執行 outbound close。解決選擇、Local Actor、時間與產生的 entity IDs 必須另以 Decision 與 audit event 保存；是否尚未解決由有無 resolution Decision 衍生。
 _Avoid_: last-write-wins、自動 reopen 內部 Ticket、覆蓋其中一端而不留紀錄、用可變 conflict record 改寫偵測歷史

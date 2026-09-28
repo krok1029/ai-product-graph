@@ -1,3 +1,4 @@
+import type { ContentDriftResolutionRepository } from "./content-drift-resolution-ports.js";
 import type { PlaneObservationReadRepository } from "./plane-observation-read-ports.js";
 import type { PlaneObservationWriteRepository } from "./plane-observation-ports.js";
 import type { SyncMappingTerminationRepository } from "./sync-mapping-termination-ports.js";
@@ -296,6 +297,7 @@ export interface OperationReceiptRepository {
 }
 
 export type ApplicationPorts = {
+  contentDriftResolutions: ContentDriftResolutionRepository;
   planeObservationReads: PlaneObservationReadRepository;
   planeObservationWrites: PlaneObservationWriteRepository;
   syncMappingTerminations: SyncMappingTerminationRepository;

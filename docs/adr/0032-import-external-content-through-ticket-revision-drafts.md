@@ -96,3 +96,9 @@ Content Drift 是否尚未處理由有無 resolution Decision 衍生，不以原
 - 每個 External Work Item 的同步與 retry 必須獨立且冪等；partial failure 不得造成跨系統 rollback。
 - Audit log 必須記錄 snapshot ingestion、drift detection、resolution、draft creation 與後續 approval。
 - Integration tests 必須驗證外部內容無法繞過 Ticket Revision approval。
+
+## 2026-09-28 補充：不可變處置關聯
+
+以新增 Content Drift Resolution 關聯作為 drift 與 Decision 的唯一處置權威，不回寫原始 drift 的 `resolution_decision_id`。選擇此方案是為保留偵測紀錄的完整歷史；代價是讀取時必須驗證關聯並衍生公開處置資訊。舊版非空 raw pointer 若沒有有效且一致的關聯，回報 conflict，不猜測其他 Decision 的用途。
+
+關聯及其 Decision 不可更新或刪除，一份 drift 僅能處置一次。Reject 保留有效歷史 Project／Ticket／mapping 的可處置性，不要求目前規劃來源仍新鮮。Adopt 保留產生的候選 draft 關係；後續正常 approval 或 stale archival 不改變原處置。處置不觸發遠端同步、不替代實作驗收。新增介面僅屬 full profile，保留 ADR0039–0041 的本機階層與權限邊界。

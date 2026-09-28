@@ -46,7 +46,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 ## Repository 狀態
 
-目前已實作本機 stdio MCP、SQLite 持久化，以及 Project／Repository／Idea → Product Brief → Milestone → Spec → Ticket Revision → Implementation Brief／handoff → Observed Evidence／Implementation Result → Result Acceptance／Revocation 的主流程。預設使用 23 個本機 tools 與規劃／實作／驗收三個 skills；保留本機 resources、node trace 與三種 artifact 的 Markdown 匯出。full 相容模式共提供 43 個 tools（包含原 39 個）與六個 prompts，詳見 [精簡工作流](docs/22-skill-led-workflows.md)。
+目前已實作本機 stdio MCP、SQLite 持久化，以及 Project／Repository／Idea → Product Brief → Milestone → Spec → Ticket Revision → Implementation Brief／handoff → Observed Evidence／Implementation Result → Result Acceptance／Revocation 的主流程。預設使用 23 個本機 tools 與規劃／實作／驗收三個 skills；保留本機 resources、node trace 與三種 artifact 的 Markdown 匯出。full 相容模式共提供 44 個 tools（包含原 39 個）與六個 prompts，詳見 [精簡工作流](docs/22-skill-led-workflows.md)。
 
 新增需求時，重新確認仍適用的既有 Spec 可保留原 Ticket 與驗收；只有實際內容或引用來源變更才使交付失效。圖譜查詢同時提供依賴阻塞、證據缺口、待接受結果與下一步。同範圍技術計畫沿用使用者明確的實作授權，降低重複確認；詳細規則見 [階層規劃與來源版本](docs/23-planning-hierarchy.md)。
 
