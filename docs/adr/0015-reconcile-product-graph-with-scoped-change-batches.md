@@ -1,5 +1,7 @@
 # ADR 0015：以具範圍的變更 Batch 協調 Product Graph
 
+> 後續調整：新階層規劃與自動圖譜同步依 [ADR0040](0040-planning-hierarchy-and-automatic-graph.md)，此處保留原決策歷史。
+
 ## Status
 
 Accepted

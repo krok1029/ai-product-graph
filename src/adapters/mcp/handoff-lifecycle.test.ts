@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { ApplicationError } from "../../domain/errors.js";
 import { acceptanceFixture } from "../../test-support/result-acceptance-fixture.js";
 import { domainSnapshot } from "../../test-support/domain-snapshot.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 
 type Fixture = ReturnType<typeof acceptanceFixture>;
 const archivedSources: [string, (f: Fixture) => string, string][] = [

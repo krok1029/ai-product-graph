@@ -15,6 +15,9 @@ import type { ApplicationPorts } from "./ports.js";
 import type { GraphChangeInput } from "./graph-workflow.js";
 
 export const PRODUCT_INTENT_NODE_TYPES = new Set<GraphNodeType>([
+  "product_brief",
+  "milestone",
+  "spec",
   "product_goal",
   "persona",
   "pain_point",
@@ -37,7 +40,9 @@ export const GRAPH_RELATION_TYPES = new Set<GraphRelationType>([
   "waives"
 ]);
 
-export function normalizeNodePayload(input: GraphChangeInput) {
+export const PLANNING_NODE_TYPES = new Set(["product_brief", "milestone", "spec"]);
+
+export function normalizeNodePayload(input: GraphChangeInput, planning = false) {
   assertAllowedKeys(
     input.payload,
     input.operation === "add"
@@ -49,7 +54,7 @@ export function normalizeNodePayload(input: GraphChangeInput) {
   if (input.operation === "archive") return {};
   if (input.operation === "add") {
     const type = requireString(input.payload.type,"node payload.type");
-    if (!PRODUCT_INTENT_NODE_TYPES.has(type as GraphNodeType)) {
+    if (!PRODUCT_INTENT_NODE_TYPES.has(type as GraphNodeType) || (!planning && PLANNING_NODE_TYPES.has(type))) {
       throw validationError(
         `GraphNode type '${type}' is outside Product Brief ownership.`
       );

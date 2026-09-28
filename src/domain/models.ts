@@ -83,6 +83,9 @@ export type ProductBriefVersion = {
 
 export type GraphNodeType =
   | "idea"
+  | "product_brief"
+  | "milestone"
+  | "spec"
   | "product_goal"
   | "persona"
   | "pain_point"
@@ -213,6 +216,7 @@ export type AcceptanceCriterion = {
 };
 
 export type TicketSpecification = {
+  source_spec_id?: string;
   traces_to_ticket_id: string | null;
   user_story: string;
   scope: string[];

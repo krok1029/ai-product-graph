@@ -21,31 +21,43 @@ Product Brief 內容的不可變版本，具有 Review Status 與 Lifecycle Stat
 _Avoid_: 原地修改 approved version、把 Product Brief aggregate 當成內容版本
 
 **Approval**:
-由使用者對特定 draft 版本執行的明確核准動作。Approval 必須記錄核准者、核准時間與版本；聊天中的肯定、後續操作或 agent 的判斷都不構成 Approval。已核准的 Product Brief 不可直接改寫，任何變更都必須產生新的 draft。
+由使用者對已展示且可明確辨識的 draft 版本表達同意的決策，包含對話中的「可以」「同意，就這版」；一次同意也可涵蓋已展示且範圍明確的多個 drafts，不需另一次正式確認。使用者明確授權實作已核准 Ticket 時，同範圍的具體 Implementation Brief 可沿用此授權；實質範圍、target 或風險改變仍須補足同意，且不延伸為新規格核准或 Result Acceptance。Approval 必須記錄核准者、核准時間與各版本；單純表示理解、指涉不清的肯定、未經核准的後續操作或 agent 自行判斷不構成 Approval，已核准的 Product Brief 仍不可直接改寫。
 _Avoid_: implicit approval, auto-approval, 修改 approved 版本
 
 **Review Status**:
-需要人類審查的內容所具有的狀態，只能是 `draft` 或 `approved`。Product Brief Version、AI interpretations、Graph Draft Batch、Ticket revisions、Implementation Brief 與 Implementation Result 等具有 Review Status；原始來源紀錄、穩定 aggregate identities 與 Observed Evidence 沒有 Review Status。
+需要人類審查的內容所具有的狀態，只能是 `draft` 或 `approved`。Product Brief Version、AI interpretations、Ticket revisions、Implementation Brief 與 Implementation Result 等具有 Review Status；原始來源紀錄、穩定 aggregate identities 與 Observed Evidence 沒有 Review Status。Graph Draft Batch 沿用此儲存狀態，但自動規劃路徑的 approved 僅代表已套用，automation actor 與 audit 必須明確區分。
 _Avoid_: archived、delivery progress、套用到所有 entities
 
 **Lifecycle Status**:
 所有 entities 是否仍在目前有效範圍內的狀態，只能是 `active` 或 `archived`。Lifecycle Status 與 Review Status、Delivery Status、Handoff Freshness 彼此獨立。
 _Avoid_: draft、approved、planned、done、stale
 
+**Milestone**:
+Product Brief 下的主要完成階段，描述成果、順序、範圍、退出條件與 non-goals，是正式 `milestone` GraphNode。父節點為穩定 `product_brief` graph root，metadata 保存結構化內容與來源 parent revision；每次保存自動同步圖譜與歷史，不另行圖譜核准。保存規劃不表示階段已完成。
+_Avoid_: Ticket 群組名稱代替階段成果、直接從 Brief 跳到 Tickets
+
+**Spec**:
+隸屬一個 Milestone 的能力規格，是正式 `spec` GraphNode。內容包含問題、方案、使用者故事、實作決策、測試決策、排除範圍及補充說明；Ticket 必須從 Spec 拆成可獨立驗證的垂直切片。使用 `belongs_to` 指向 Milestone，並固定規劃時的父內容版本。上游內容變動後必須重新比對；Spec 仍完整適用時保存相同內容以確認新來源，保留原內容版本。不能將未重新比對的 Spec 默認為仍符合新版本。
+_Avoid_: Product Brief 直接切 Ticket、水平層次工作清單代替可交付行為
+
+**Planning Content Revision**:
+Milestone／Spec 的內容最後真正改變時所對應的 Graph Revision。標題、描述、結構化內容或父歸屬改變時前進；只重新確認父來源時保留。完整來源鏈有效且來源 Spec 內容版本未變的 Ticket 可沿用既有交付，但額外引用及 dependencies 仍需有效。舊節點缺少此版本時採最後 Graph Revision，不猜測過去內容相等。
+_Avoid_: 每次保存都視為內容變更、以相似文字推論版本相同、用來源確認自動接受新結果
+
 **Graph Draft Batch**:
-由 AI 依據單一已核准 Product Brief 版本，在同一次萃取中產生的一組候選 graph 變更。每個 batch 固定生成時的 `base_graph_revision_id`；approval 時必須等於 Project 的 current Graph Revision，否則回傳 conflict，不得自動 merge。Graph 尚無 revision 時，第一個 batch 的 base 可以是 `null`。Review Status 屬於整個 batch；batch 內的 proposed nodes、edges 與 changes 不是各自具有 Review Status 的 canonical graph entities。對既有 canonical graph，batch 必須明確列出要新增、更新或封存的產品規劃 nodes 與 edges，不得整張替換或盲目追加；若比較後無須修改 graph，batch 可保留空 changes，但必須包含 `reconciliation_summary` 並由使用者明確核准。核准 Product Brief 不會自動核准 Graph Draft Batch；使用者必須審查並整批核准，確保變更以一致且完整的集合原子套用。核准後建立或更新的 canonical GraphNodes 與 GraphEdges 只具有 Lifecycle Status；no-op batch 核准不修改任何 GraphNode 或 GraphEdge。Repository、code file、pull request 等實作追蹤資料不屬於 Product Brief 萃取的修改範圍；無法確定實體身分時必須標示衝突，由使用者解決。
-_Avoid_: stale batch 套用、自動 merge、自動核准 AI 萃取結果、逐一核准 batch 內的變更、整張替換、盲目追加、自動合併身分不明的實體、沒有審查紀錄就解除 reconciliation pending
+固定 `base_graph_revision_id` 與來源 Product Brief Version 的原子變更集合，保存新增、修改與封存 payload。新階層規劃由 `save_planning_node` 驗證後自動套用，不另詢問使用者；actor 為 planning automation，audit 明確記錄 applied，內部 approved 狀態表示已套用而非人類核准。Milestone／Spec 與其關係只能經規劃 workflow 修改。Full 舊專案保留原手動 create／approve batch 與 no-op reconciliation。所有路徑仍拒絕 stale base、身分不明與 ownership 越界，並保留歷史，不能自動 merge 或整張替換。
+_Avoid_: 偽造人類核准、stale batch 套用、盲目追加、繞過規劃階層驗證
 
 **Graph Revision**:
-每次 Graph Draft Batch 成功原子套用後建立的不可變 graph application record，具有 Project 內單調遞增的 sequence number，並記錄該 batch 的 `source_product_brief_version_id`。No-op Graph Draft Batch 也會建立 Graph Revision，用來證明某個 Product Brief Version 已完成 graph reconciliation 但沒有 entity 變更。產品意圖 ownership 的 GraphNode 與 GraphEdge 記錄建立及最近變更所在的 Graph Revision；Ticket-owned graph entity 的變更屬於 Ticket 生命週期，不構成產品意圖 Graph Revision。Ticket Revision 記錄核准時的 source Graph Revision。若引用 entity 的 last-changed revision 晚於 Ticket Revision 的 source revision，該 Ticket Revision 的來源已變更。
+每次 Graph Draft Batch 成功原子套用後建立的不可變 graph application record，具有 Project 內單調遞增的 sequence number，並記錄該 batch 的 `source_product_brief_version_id`。No-op Graph Draft Batch 也會建立 Graph Revision，用來證明某個 Product Brief Version 已完成 graph reconciliation 但沒有 entity 變更。產品意圖 ownership 的 GraphNode 與 GraphEdge 記錄建立及最近變更所在的 Graph Revision；Ticket-owned graph entity 的變更屬於 Ticket 生命週期，不構成產品意圖 Graph Revision。Ticket Revision 記錄核准時的 source Graph Revision。一般引用 entity 的 last-changed revision 晚於 Ticket Revision 的 source revision 時，來源已變更。Milestone／Spec 使用 Planning Content Revision 判斷內容變更；完整 ancestry 已重新確認時，祖先的保存紀錄不單獨使 Ticket 失效。
 _Avoid_: 完整 graph snapshot、event sourcing、以 updated_at 推測變更順序
 
 **Product Intent Reconciliation**:
-Project 目前 approved Product Brief Version 與已核准 product-intent Graph Revision 之間的衍生對齊狀態。Project 保存 `last_reconciled_product_brief_version_id` 與 `product_intent_graph_revision_id`；只有前者等於 Product Brief current approved version pointer 時，狀態才是 `current`，否則為 `pending`。新版 Product Brief Version 核准後立即成為權威產品意圖，但不預先 archive 或重設所有衍生 Tickets；在對應 Graph Draft Batch 核准前，handoff 必須以 `STALE_HANDOFF`／`product_intent_unreconciled` 阻擋，Result submission 只能保存 evidence 與 archived stale Result，Result Acceptance 也必須拒絕。Graph reconciliation 可透過有變更 batch 或 no-op batch 完成；no-op batch 表示已比較且確認無須變更 graph。Graph reconciliation 完成後，仍 active 且自 Ticket Revision source Graph Revision 後未變更的 referenced nodes 不影響既有 Ticket Revision；被更新或 archived 的 referenced nodes 才要求建立 replacement Ticket Revision。
-_Avoid_: Product Brief approval 後仍交付未對齊 graph、只因 current pointer 改變就全面失效、在 graph reconciliation 前猜測受影響 Tickets
+目前 approved Product Brief Version 與產品意圖圖譜的衍生對齊狀態，Project 保存 `last_reconciled_product_brief_version_id` 與 `product_intent_graph_revision_id`。Core 或已採用階層的 project 在 Brief approval 同一 transaction 更新根節點並對齊 pointers；這只表示根節點已同步，不代表下游規格已重新檢視。Milestone／Spec 的 parent revision 與 Ticket 的完整 ancestry 會讓受影響下游被辨識為 stale，經重新比對後才可繼續實作與接受。Full 未採用階層之舊專案仍在 Brief approval 後為 pending，須完成手動 batch／no-op reconciliation。來源未對齊或 referenced nodes 變動時，既有 handoff、Result submission 與 Acceptance freshness 規則仍適用。
+_Avoid_: 把 root reconciliation current 當成所有下游已更新、自動改寫或撤銷既有 Ticket 結果
 
 **Ticket**:
-AI Product Graph 內部具有穩定 identity 的可執行規劃單位，也是 canonical graph entity；graph 中的 Ticket 與規劃 Ticket 是同一 identity，其 title 與 lifecycle 以 Ticket 為準。Ticket 只具有 Lifecycle Status 與 Delivery Status，不具有 Review Status；被審查的是 Ticket Revision。第一個 approved Ticket Revision 讓 Ticket 可用於規劃與 handoff。Ticket 必須能追溯到產品意圖，例如 product goal、pain point 或 workflow；它不等同於任何外部專案管理或程式碼託管系統中的工作項目。
+AI Product Graph 內部具有穩定 identity 的可執行規劃單位，也是 canonical graph entity；graph 中的 Ticket 與規劃 Ticket 是同一 identity，其 title 與 lifecycle 以 Ticket 為準。Ticket 只具有 Lifecycle Status 與 Delivery Status，不具有 Review Status；被審查的是 Ticket Revision。第一個 approved Ticket Revision 讓 Ticket 可用於規劃與 handoff。新階層的 Ticket 必須以 `source_spec_id` 指向 Spec，並保存 Spec → Milestone → Product Brief graph root 完整 ancestry；legacy Tickets 保留既有 product goal／pain point 來源。Ticket → Spec 關係隨首次建立及後續 revision approval 自動投影；它不等同於任何外部專案管理或程式碼託管系統中的工作項目。
 _Avoid_: GitHub Issue, Plane issue, external ticket
 
 **External Work Item**:
@@ -97,7 +109,7 @@ _Avoid_: last-write-wins、自動 reopen 內部 Ticket、覆蓋其中一端而�
 _Avoid_: 自動核准生成的 Tickets、強制整批核准、核准具有未滿足相依關係的 Ticket
 
 **Ticket Revision**:
-Ticket 規格內容的不可變版本，具有 Review Status 與 Lifecycle Status，並記錄建立時的 `base_approved_revision_id`。核准時 base 必須仍等於 Ticket 的 current approved revision pointer，否則回傳 conflict；第一版可使用 `null` base。Title、目標、acceptance criteria、dependencies、產品意圖連結，或 required Implementation Target membership／per-revision scope 變更時，必須建立 draft Ticket Revision；核准後沿用原 Ticket identity 並成為目前 approved revision，舊的 approved revisions 保留供追溯。任何 replacement revision 核准時，都必須在同一 transaction 把 Ticket Delivery Status 重設為 `planned`，並以 `source_revision_superseded` archive 綁定舊 revision 的 active Implementation Briefs 與 Implementation Results；舊 artifacts 的 Review Status、Acceptances、evidence 與歷史關係不變，但不再支撐目前 handoff 或 completion。新版 Product Brief 核准後，只要 Ticket Revision 引用的產品意圖 nodes 仍是 active 且未變更、相依關係仍有效，就可沿用同一 revision；若來源 node 被更新、archived 或產生衝突，則必須建立新 Ticket Revision。
+Ticket 規格內容的不可變版本，具有 Review Status 與 Lifecycle Status，並記錄建立時的 `base_approved_revision_id`。核准時 base 必須仍等於 Ticket 的 current approved revision pointer，否則回傳 conflict；第一版可使用 `null` base。Title、目標、acceptance criteria、dependencies、產品意圖連結，或 required Implementation Target membership／per-revision scope 變更時，必須建立 draft Ticket Revision；核准後沿用原 Ticket identity 並成為目前 approved revision，舊的 approved revisions 保留供追溯。任何 replacement revision 核准時，都必須在同一 transaction 把 Ticket Delivery Status 重設為 `planned`，並以 `source_revision_superseded` archive 綁定舊 revision 的 active Implementation Briefs 與 Implementation Results；舊 artifacts 的 Review Status、Acceptances、evidence 與歷史關係不變，但不再支撐目前 handoff 或 completion。新版 Product Brief 核准後，只要 Ticket Revision 引用的產品意圖 nodes 仍是 active 且未變更、相依關係仍有效，就可沿用同一 revision；若來源 node 的內容版本變更、被 archived 或產生衝突，則必須建立新 Ticket Revision；新階層先重新確認祖先來源，未變更的 Spec 不必因此替換 Ticket Revision。
 _Avoid_: 直接改寫 approved Ticket 規格、以新 Ticket identity 取代同一工作的修訂
 
 **Implementation Target**:
@@ -109,7 +121,7 @@ Ticket 相對於 current approved Ticket Revision 的執行進度，與規格的
 _Avoid_: 把 approved 當成 done、用規格核准流程更新一般執行進度、跨 revision 沿用 delivery status、撤銷驗收後仍維持 done
 
 **Implementation Brief**:
-交給 coding agent 的不可變 handoff artifact。每個 Implementation Brief 擁有獨立 identity、Review Status 與 Lifecycle Status，不另設 aggregate；它綁定特定 approved Ticket Revision 的 Implementation Target、Product Brief Version 與該 target Repository 的 Repository Context Snapshot。AI 產生後先是 draft，經使用者明確核准後才可用於實作。同一 Implementation Target 最多只能有一份 active approved brief；同 revision 核准替代版本時，必須用 `supersedes_implementation_brief_id` 指向並 archive 舊版。Replacement Ticket Revision approval 會以 `source_revision_superseded` 自動 archive 舊 revision 的 active briefs；新 brief 可選擇以 supersedes link 指向最近的 archived predecessor，僅表示 lineage，不會重新啟用舊 brief。
+交給 coding agent 的不可變 handoff artifact。每個 Implementation Brief 擁有獨立 identity、Review Status 與 Lifecycle Status，不另設 aggregate；它綁定特定 approved Ticket Revision 的 Implementation Target、Product Brief Version 與該 target Repository 的 Repository Context Snapshot。AI 產生後先是 draft，須依使用者授權保存核准後才可用於實作。明確授權實作 approved Ticket 可涵蓋同範圍技術計畫，保存具體 Brief 後不必另問一次；實質範圍、target 或風險改變則須補足同意。同一 Implementation Target 最多只能有一份 active approved brief；同 revision 核准替代版本時，必須用 `supersedes_implementation_brief_id` 指向並 archive 舊版。Replacement Ticket Revision approval 會以 `source_revision_superseded` 自動 archive 舊 revision 的 active briefs；新 brief 可選擇以 supersedes link 指向最近的 archived predecessor，僅表示 lineage，不會重新啟用舊 brief。
 _Avoid_: aggregate + version 雙層 identity、即時組合且無 identity 的 view、未核准便交付、悄悄更新既有 brief
 
 **Repository Context Snapshot**:
@@ -117,7 +129,7 @@ _Avoid_: aggregate + version 雙層 identity、即時組合且無 identity 的 v
 _Avoid_: live repository state、未記錄來源的 code context、缺少 baseline 的 approved handoff、把 snapshot 當成持續同步資料
 
 **Handoff Freshness**:
-Implementation Brief 在交給 coding agent 當下，相對於目前相關產品意圖與 repository state 的衍生有效性。只有 Product Intent Reconciliation 為 `current`、brief 本身與所有來源皆 active、綁定的 Ticket Revision 仍是 current approved、該 revision 引用的產品意圖 nodes 自其 `source_graph_revision_id` 後仍 active 且未變更、dependencies 仍有效，以及目前 commit 與 dirty-state fingerprint 符合 Repository Context Snapshot 時，freshness 才是 `current`；任一條件不符或無法驗證時即為 `stale`。Brief 綁定的 Product Brief Version 是生成時的 provenance；current Product Brief pointer 改變不會直接讓所有 Tickets stale，但在 Graph reconciliation 完成前會暫時阻擋所有 handoff。完成 reconciliation 後，未受影響的 Ticket 可繼續使用原 brief；受影響 Ticket 必須建立 replacement revision 與新 brief。Replacement Ticket Revision 會 archive 舊 brief，因此它成為 archived approved、freshness stale 的歷史 artifact。Stale brief 不得執行 handoff，必須建立並核准新的 Implementation Brief。
+Implementation Brief 在交給 coding agent 當下，相對於目前相關產品意圖與 repository state 的衍生有效性。只有 Product Intent Reconciliation 為 `current`、brief 本身與所有來源皆 active、綁定的 Ticket Revision 仍是 current approved、該 revision 引用的產品意圖 nodes 仍 active 且內容版本未超過其 `source_graph_revision_id`、完整規劃來源鏈已重新確認、dependencies 仍有效，以及目前 commit 與 dirty-state fingerprint 符合 Repository Context Snapshot 時，freshness 才是 `current`；任一條件不符或無法驗證時即為 `stale`。Brief 綁定的 Product Brief Version 是生成時的 provenance；current Product Brief pointer 改變不會直接讓所有 Tickets stale，但在 Graph reconciliation 完成前會暫時阻擋所有 handoff。完成 reconciliation 後，未受影響的 Ticket 可繼續使用原 brief；受影響 Ticket 必須建立 replacement revision 與新 brief。Replacement Ticket Revision 會 archive 舊 brief，因此它成為 archived approved、freshness stale 的歷史 artifact。Stale brief 不得執行 handoff。若只缺少祖先來源確認，重新確認後可驗證原 brief；來源內容或 repository baseline 確實改變時，須依原因修訂 Ticket 或建立並核准新的 Implementation Brief。
 _Avoid_: 只檢查 repository drift、只因 Product Brief pointer 改變就全面失效、忽略 referenced node changes、把 stale 當成 approval status、警告後強制執行、因來源改變而改寫舊 brief
 
 **Implementation Result**:

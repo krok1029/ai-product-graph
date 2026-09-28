@@ -8,7 +8,7 @@ Accepted
 
 ADR 0007 規定 AI 生成的 Product Brief 必須先成為 draft，經使用者 approve 後才能成為 canonical data；ADR 0008 規定 structured JSON 是 Product Brief 的 canonical source of truth。
 
-但既有決策尚未定義什麼行為構成核准，也未說明已核准內容後續如何修改。如果聊天中的肯定、後續操作或 agent 判斷可以隱含核准，系統無法可靠判定哪一版產品意圖曾被使用者確認。如果已核准版本可以原地修改，過去產生的 graph、tickets 與 implementation handoffs 也會失去可追溯的依據。
+但既有決策尚未定義什麼行為構成核准，也未說明已核准內容後續如何修改。如果未辨識同意的版本，就把一般聊天、後續操作或 agent 判斷當成核准，系統無法可靠判定哪一版產品意圖曾被使用者確認。如果已核准版本可以原地修改，過去產生的 graph、tickets 與 implementation handoffs 也會失去可追溯的依據。
 
 ## Options Considered
 
@@ -54,18 +54,20 @@ ADR 0007 規定 AI 生成的 Product Brief 必須先成為 draft，經使用者 
 
 採用選項 C：MVP 每個 Project 具有一個穩定 Product Brief aggregate identity；內容存放在不可變 Product Brief Versions。Product Brief aggregate 本身不具有 Review Status，只具有 Lifecycle Status，並保存目前 approved version pointer。
 
-Product Brief Version 只能透過使用者明確執行的 approval 動作，從特定 draft version 成為 approved version。
+Product Brief Version 只能根據使用者對特定 draft version 的明確核准，成為 approved version；使用者可在對話中核准，由 client 代為執行 approval tool。
 
 每個 draft Product Brief Version 必須記錄建立時的 `base_approved_version_id`。Approval 時若該 base 不再等於 Product Brief 的 current approved version，必須回傳 conflict，不得取代較新的 approved decision。
 
-聊天中的肯定、產生後續內容、執行其他 tool，或 agent 的判斷，都不構成 approval。每次 approval 必須記錄核准者、核准時間與版本。
+使用者對已展示、可辨識版本的對話同意構成 approval 授權，例如「可以」「同意，就這版」。Client 直接呼叫既有 approval tool 保存核准者、時間與版本，成功後才回報核准完成；不要求特殊口令或第二次正式確認。單純表示理解、指涉不清的肯定、產生後續內容或 agent 自行判斷不構成 approval。
+
+2026-09-27 修訂：依使用者要求，取代先前全面排除聊天肯定的規則。明確對話同意也可涵蓋已展示、範圍清楚的多個 drafts；client 逐一保存各版本的 approval，並分別回報成功或失敗，不宣稱跨 tools 的原子核准。對話授權不延伸到之後生成或修改的版本，也不取消版本衝突檢查。此互動規則同樣適用 Graph Draft Batch、Ticket Revision、Implementation Brief 與 Result Acceptance；waiver 仍須明確指定 criterion 與理由。
 
 Approved Product Brief 是不可變快照。任何內容變更都必須建立新的 draft，經再次核准後才成為新的 approved 版本。舊的 approved 版本必須保留，供既有 graph、tickets 與 implementation handoffs 追溯。
 
 ## Rationale
 
 - 產品的核心價值是可信且可追溯的 project context。
-- 明確 approval 可避免一般對話被誤判成正式決策。
+- 對話中的明確同意與版本綁定，兼顧一次確認的操作體驗及可追溯的 approval。
 - 不可變版本讓衍生資料能穩定指向當時實際核准的產品意圖。
 - 新 draft 流程與 ADR 0007 的 draft-first 原則一致。
 

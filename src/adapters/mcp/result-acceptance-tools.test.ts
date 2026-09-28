@@ -2,7 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect, it } from "vitest";
 import { acceptanceFixture } from "../../test-support/result-acceptance-fixture.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 
 it("accepts and replays exact canonical data/audit through MCP, rejecting injected actor and waiver fields", async () => {
   const fixture = acceptanceFixture();

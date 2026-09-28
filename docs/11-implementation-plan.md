@@ -1,5 +1,7 @@
 # Implementation Plan
 
+> 歷史實作基線：本文件保留原 Phase 1／1A 的交付切分及 storage／transaction 約束，不是目前待辦清單。預設流程已由 ADR0039–0041 調整；新階層、圖譜自動同步、來源內容版本與同範圍實作授權以 [精簡工作流](22-skill-led-workflows.md)、[階層規劃](23-planning-hierarchy.md) 為準。後續順序見 [roadmap](08-roadmap.md)。舊 prompts、graph approval 與分開的 evidence／handoff 呼叫只供相容路徑參考。
+
 ## 目標
 
 第一階段目標是建立一個本機 stdio MCP server，讓 Codex 或其他標準 MCP client 可以透過 tools、resources、prompts 操作 AI Product Graph 的核心流程。

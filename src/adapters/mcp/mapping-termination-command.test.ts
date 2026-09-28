@@ -3,7 +3,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect, it } from "vitest";
 import { acceptanceFixture } from "../../test-support/result-acceptance-fixture.js";
 import { createPlaneCreateProcessor } from "../../application/create-plane-create-processor.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 import type { ToolEnvelope } from "./tool-envelope.js";
 
 it("terminates via strict MCP with server identity and reports duplicate termination identity", async () => {

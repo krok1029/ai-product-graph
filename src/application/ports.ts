@@ -237,6 +237,7 @@ export interface ObservedEvidenceRepository {
 }
 
 export interface ImplementationResultRepository {
+  findLatestActiveDraftByTargetId(implementationTargetId: string): ImplementationResult | null;
   listVerdicts(resultId: string): AcceptanceCriterionVerdict[];
   listEvidenceIds(resultId: string): string[];
   approve(resultId: string, approvedAt: string): void;

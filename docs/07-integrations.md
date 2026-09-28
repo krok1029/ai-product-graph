@@ -1,5 +1,9 @@
 # 整合策略
 
+## 範圍與目前狀態
+
+本文件同時保存已交付能力與後續整合約束，不代表每條流程目前可用。Plane 已有首次 create／reconciliation、明確 observation、drift history、sync plan／health／termination；後續 update/status execution、差異 resolution 與 GitHub adapter 尚未交付。後續依 [roadmap](08-roadmap.md) 暫緩，先驗證本機持續開發與接手。
+
 ## 整合策略
 
 MCP server 應該擁有 product context 和 graph data；外部系統則負責它們擅長的專門工作流。
@@ -8,7 +12,7 @@ AI Product Graph 是 Ticket 規格、Result Acceptance 與 `done` completion sem
 
 內部 Ticket 已是 `done`、但外部 work item 被重新開啟時，adapter 必須建立 Sync Conflict，不得自動降低內部 Delivery Status。使用者將衝突分類為原 acceptance 無效、新增工作或外部誤操作後，系統才分別執行 Result Revocation、建立 Follow-up Ticket，或重新向外同步關閉。
 
-Adapter 讀取外部 title、description、acceptance criteria 或其他 specification content 時，必須先保存 immutable External Work Item Snapshot。若內容與目前 approved Ticket Revision 不同，建立 Content Drift；外部內容不得直接覆蓋 canonical specification。採用外部修改時，必須以最新 approved revision 為 base 建立 Ticket Revision Draft，再走正常 approval。
+Adapter 讀取外部 title、description、acceptance criteria 或其他 specification content 時，必須先保存 immutable External Work Item Snapshot。若內容與目前 approved Ticket Revision 不同，建立 Content Drift；外部內容不得直接覆蓋 canonical specification。後續採用外部修改時，先由 agent 判斷是否仍在既有 Spec 範圍內。涉及產品方向或能力變更時先依正常流程修訂 Brief／Milestone／Spec，再以最新 approved Ticket revision 為 base、有效的候選 Spec 來源鏈建立 Ticket Revision Draft，最後走正常 approval。server 驗證階層與版本，不判斷自然語言語意一致；詳細後續契約由 [Spec #94](https://github.com/krok1029/ai-product-graph/issues/94) 追蹤。
 
 MVP External Export Policy 固定為 `manual_first_export`。核准 Ticket Revision 或 Implementation Target 不會自動在所有已連線 containers 建立 work items；使用者必須明確選擇 owner 與 External Container 執行首次 export。External Work Item mapping 成為 active 後，後續 approved revisions 與適用狀態變更才自動產生 Sync Intents。Project-level auto-export 延後評估。
 
@@ -65,8 +69,8 @@ Lifecycle intent 永久無法完成時，使用者只能選擇修復後重試、
 
 整合順序：
 
-- MVP 不做 GitHub。
-- Plane adapter 完成後，再評估 GitHub Issues / PR adapter。
+- 專用 GitHub adapter 尚未交付，本機流程不以它為前置條件。
+- 本機驗證後依實際工作選擇 provider；不必等待 Plane 全部完成，也不因已有 Plane 程式碼就優先擴充它。
 
 ## Plane
 
@@ -85,7 +89,7 @@ Lifecycle intent 永久無法完成時，使用者只能選擇修復後重試、
 - Open-source project management product。
 - 有現代 issue、module、cycle、page model。
 - API 和 webhook integration surface 友善。
-- 符合第一階段「開源 PM 工具」方向。
+- 是原規劃選定並已有部分實作的 provider；後續優先順序由真實使用需求決定。
 
 ## External Work Item Ownership
 
@@ -125,7 +129,7 @@ Lifecycle intent 永久無法完成時，使用者只能選擇修復後重試、
 
 MVP approach：
 
-- 先從 markdown handoff documents 開始。
+- 由 skills 使用 `get_work_context`、`start_implementation` 與 `submit_work_result` 完成本機交付；Markdown handoff 僅按需匯出。
 - MCP server 不內建執行 coding agent。
 - 之後再加更深的自動化與 PR 回寫。
 
@@ -141,9 +145,9 @@ MVP approach：
 
 ## Integration Priority
 
-1. MCP clients。
-2. Coding agent handoff。
-3. Plane work items。
-4. GitHub Issues 和 PRs。
-5. Notion 或 Docs import。
-6. Slack 或非同步團隊回饋。
+1. 穩定目前 MCP／skills 的持續開發及跨對話接手。
+2. 依實際使用證據補進度與變更查詢缺口。
+3. 使用者選定 Plane 或 GitHub 的具體情境後，才重啟該 provider 的交付。
+4. 其他文件匯入或團隊回饋整合保持候選，不先安排實作。
+
+新增外部 resolution／mutation tools 與新的 resolution resource 僅註冊於 full；保留現有 core resources，不藉此次規格重訂改動 core 的本機工作流。外部內容差異已處理、候選草稿核准、Result Acceptance 與外部同步成功須分開呈現；任何一項不自動推出其他項成立。

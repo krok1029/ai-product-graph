@@ -1,11 +1,18 @@
 # MCP Tool Spec
 
+> 2026-09-28：目前 core 採用 Product Brief → Milestone → Spec → Ticket；新增 `save_planning_node`、Ticket `source_spec_id` 與自動 graph projection，契約見 [階層規劃](23-planning-hierarchy.md)。本文件中的手動 graph batch 核准與 Brief 後 pending 行為保留供 full 未採用階層之舊專案。
+
+> 預設公開介面為 core profile。新增 `get_work_context`、`start_implementation`、`submit_work_result` 的欄位與 transaction 語意見 [精簡工作流契約](./22-skill-led-workflows.md#新工具契約)。本文件原有 `approve_implementation_brief`、`get_implementation_handoff`、`record_observed_evidence`、`submit_implementation_result`、外部同步 tools 與六個 prompts 均保留於 full profile；其餘本機 tools 仍在 core 提供。
+
+> 規劃來源 freshness 區分內容版本與上游重新確認，詳見 [ADR 0041](adr/0041-scope-freshness-to-planning-content.md)。`get_graph_context` 新增全專案 active Tickets 的 `delivery` 摘要及診斷，`get_work_context` 新增逐 Ticket `delivery` 與各 target 的 `pending_result`；這些唯讀欄位不改變驗收狀態。同範圍的 Implementation Brief 可沿用明確實作授權，Result Acceptance 仍需對結果的同意。
+
+
 ## 設計原則
 
 - MVP 使用少量粗粒度 workflow tools + 必要 read tools。
 - Mutating tools 一律回傳 structured summary。
 - AI generation 由 client agent 執行，server 不直接呼叫 LLM。
-- AI generated content 一律先建立為 draft。
+- Product Brief／Ticket 等待審內容先建立 draft；Milestone／Spec 透過規劃工具自動保存並記錄 applied audit，不另要求 graph approval。
 - Destructive tools 不放進第一版。
 - Tool input / output 必須可 schema validation。
 
@@ -1538,7 +1545,7 @@ Prompts 應回傳 instructions，要求 client agent 產生符合 tool input sch
 
 Arguments 經 trim 後不得為空。`prompts/get` 只回傳 client-side instructions 與工具呼叫 JSON 範例，不讀寫 domain 資料、不執行 generation，也不呼叫 provider。Client 先讀 `tools/list` 的實際 schema，並取得來源與精確版本，才填寫 JSON。範例中的 `<...>` 不是可提交的 identities；缺少介面或來源資料時停止相關生成並取得 structured context。
 
-所有生成均先建立 draft；使用者對該 draft identity 的明確核准才可觸發 approval tools。唯讀 review／trace 不執行 mutations，review 通過不構成 Approval。Prompt 不替代 tools 的資料驗證、來源 freshness 與 optimistic concurrency checks。
+所有生成均先建立 draft。使用者對已展示且可明確辨識的 draft 版本表達對話同意（例如「可以」「同意，就這版」）即可授權 client 呼叫 approval tools，不需再次正式確認或要求使用者輸入 tool／ID。一次同意可涵蓋已展示且範圍明確的多個 drafts，client 逐一呼叫並回報結果；不延伸到之後生成或修改的版本，不宣稱跨 tools 的原子操作。只有核准意圖或版本範圍不清楚時才釐清；單純理解、agent 自行判斷不構成 Approval。工具成功後才回報核准完成，server 仍記錄核准者、時間與版本。Result Acceptance 適用同一互動規則，但 waiver 仍需明確 criterion 與理由。唯讀 review／trace 不執行 mutations，review 通過不構成 Approval。Prompt 不替代 tools 的資料驗證、來源 freshness 與 optimistic concurrency checks。
 
 ## Sync Intent Read Tools
 

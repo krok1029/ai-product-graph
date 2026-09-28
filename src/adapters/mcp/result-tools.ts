@@ -12,7 +12,7 @@ import {
 } from "./serializers.js";
 import { success, toToolResult } from "./tool-envelope.js";
 
-export function registerResultTools(server: McpServer, service: ProductGraphService) {
+export function registerResultTools(server: McpServer, service: ProductGraphService, legacy = true) {
   server.registerTool("revoke_result_acceptance", {
     title: "Revoke Result Acceptance",
     description: "Revoke an acceptance that was invalid when made, archive its Result, and preserve immutable evidence and decision history.",
@@ -47,6 +47,8 @@ export function registerResultTools(server: McpServer, service: ProductGraphServ
     });
     return success(result.data, result.auditLogId);
   }));
+  if (!legacy) return;
+
   server.registerTool(
     "record_observed_evidence",
     {

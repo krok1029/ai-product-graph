@@ -1,5 +1,7 @@
 # ADR 0014：AI 產生的 Graph 以 Batch 原子核准
 
+> 後續調整：新階層規劃與自動圖譜同步依 [ADR0040](0040-planning-hierarchy-and-automatic-graph.md)，此處保留原決策歷史。
+
 ## Status
 
 Accepted

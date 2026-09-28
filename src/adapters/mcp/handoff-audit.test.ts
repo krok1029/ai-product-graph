@@ -9,7 +9,7 @@ import { openDatabase } from "../../infrastructure/sqlite/database.js";
 import { createSqlitePorts } from "../../infrastructure/sqlite/repositories.js";
 import { domainSnapshot } from "../../test-support/domain-snapshot.js";
 import { acceptanceFixture } from "../../test-support/result-acceptance-fixture.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 
 const eventTime = "2026-09-29T12:00:00.000Z";
 async function setup() {

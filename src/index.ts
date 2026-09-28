@@ -3,8 +3,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { createMcpServer } from "./adapters/mcp/server.js";
 import { createApp } from "./app.js";
 
+const profile = process.env.AI_PRODUCT_GRAPH_MCP_PROFILE ?? "core";
+if (profile !== "core" && profile !== "full") {
+  throw new Error("AI_PRODUCT_GRAPH_MCP_PROFILE must be core or full.");
+}
 const app = createApp();
-const server = createMcpServer(app.service);
+const server = createMcpServer(app.service, { profile });
 const transport = new StdioServerTransport();
 
 process.on("SIGINT", () => {

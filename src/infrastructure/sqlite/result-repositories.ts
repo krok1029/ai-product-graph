@@ -6,6 +6,16 @@ import { mapImplementationResult, type ImplementationResultRow } from "./row-map
 export function createResultRepositories(database: SqliteDatabase): Pick<ApplicationPorts, "implementationResults"> {
   return {
     implementationResults: {
+      findLatestActiveDraftByTargetId(targetId) {
+        const row = database.prepare(`SELECT id, project_id, implementation_brief_id,
+          implementation_target_id, ticket_revision_id, supersedes_implementation_result_id,
+          result_json, review_status, lifecycle_status, stale_at_submission,
+          stale_reasons_json, created_at, updated_at, archived_at
+          FROM implementation_results WHERE implementation_target_id = ?
+          AND review_status = 'draft' AND lifecycle_status = 'active'
+          ORDER BY created_at DESC, id DESC LIMIT 1`).get(targetId) as ImplementationResultRow | undefined;
+        return row ? mapImplementationResult(row) : null;
+      },
       listVerdicts(resultId) {
         const rows = database.prepare(`SELECT id, implementation_result_id AS implementationResultId,
           acceptance_criterion_id AS acceptanceCriterionId, verdict, reason,

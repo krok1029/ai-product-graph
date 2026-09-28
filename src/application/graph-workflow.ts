@@ -1,3 +1,4 @@
+import { applyGraphChanges } from "./graph-projection.js";
 // Graph workflow 主流程。
 //
 // 負責 product-intent graph draft 建立、approval 與 context reads。Workflow
@@ -10,10 +11,7 @@ import type {
   AuditLogEntry,
   GraphDraftBatch,
   GraphDraftBatchChange,
-  GraphEdge,
-  GraphNode,
   GraphNodeType,
-  GraphRelationType,
   GraphRevision,
   LifecycleStatus
 } from "../domain/models.js";
@@ -21,6 +19,7 @@ import type { ApplicationPorts } from "./ports.js";
 
 import {
   PRODUCT_INTENT_NODE_TYPES,
+  PLANNING_NODE_TYPES,
   expandGraphNodeIds,
   graphBaseConflict,
   graphConflict,
@@ -28,7 +27,6 @@ import {
   normalizeEdgePayload,
   normalizeNodePayload,
   normalizeOptionalText,
-  resolveEndpointId,
   slugify,
   validateEndpoint,
   validationError
@@ -43,6 +41,7 @@ export type GraphChangeInput= {
 };
 
 type GraphWorkflowOptions= {
+  planning?: boolean;
   idFactory: () => string;
   clock: () => Date;
   actor: {
@@ -164,7 +163,7 @@ export class GraphWorkflow {
     });
   }
 
-  approve(graphDraftBatchId: string) {
+  approve(graphDraftBatchId: string, automatic = false) {
     const now = this.options.clock().toISOString();
 
     return this.ports.transactions.run(() => {
@@ -280,8 +279,8 @@ export class GraphWorkflow {
         throw graphBaseConflict(batch.baseGraphRevisionId, current);
       }
 
-      const applied = this.applyChanges(
-        batch,
+      const applied = applyGraphChanges(
+        this.ports, this.options.idFactory, batch,
         revision,
         validation.changes,
         now
@@ -307,11 +306,12 @@ export class GraphWorkflow {
       };
       const audit = this.newAuditEntry({
         projectId: project.id,
-        action: "graph_draft_batch.approved",
+        action: automatic ? "graph_draft_batch.applied" : "graph_draft_batch.approved",
         entityType: "graph_draft_batch",
         entityId: batch.id,
         actorId: this.options.actor.id,
         afterSummary: {
+          applicationMode: automatic ? "automatic" : "manual",
           batch: approvedBatch,
           revision,
           applied,
@@ -448,13 +448,13 @@ export class GraphWorkflow {
       let conflict: Record<string, unknown>|null= null;
 
       if (input.entityKind === "node") {
-        normalizedPayload= normalizeNodePayload(input);
+        normalizedPayload= normalizeNodePayload(input, this.options.planning);
         if (input.operation === "add") {
           const slug = slugify(String(normalizedPayload.title));
           if (
             !slug||
-            batchSlugs.has(slug)||
-            this.ports.graphNodes.findBySlug(projectId, slug)
+            (!PLANNING_NODE_TYPES.has(String(normalizedPayload.type)) && (batchSlugs.has(slug)||
+            this.ports.graphNodes.findBySlug(projectId, slug)))
           ) {
             conflict= graphConflict(
               "AMBIGUOUS_NODE_IDENTITY",
@@ -475,7 +475,8 @@ export class GraphWorkflow {
               "Target GraphNode is not active in this Project.",
               { targetId: input.targetId }
             );
-          } else if (!PRODUCT_INTENT_NODE_TYPES.has(node.type)) {
+          } else if (!PRODUCT_INTENT_NODE_TYPES.has(node.type) ||
+            (!this.options.planning && PLANNING_NODE_TYPES.has(node.type))) {
             conflict= graphConflict(
               "OWNERSHIP_SCOPE",
               "Product Brief extraction cannot modify this GraphNode type.",
@@ -519,6 +520,10 @@ export class GraphWorkflow {
             this.ports
           );
           conflict= source.conflict ?? target.conflict;
+          if (!this.options.planning && [source.nodeId, target.nodeId].some(id =>
+            id && PLANNING_NODE_TYPES.has(this.ports.graphNodes.findById(id)?.type ?? ""))) {
+            conflict = graphConflict("OWNERSHIP_SCOPE", "Use save_planning_node for planning relationships.", {});
+          }
         } else {
           const edge = this.ports.graphEdges.findById(input.targetId as string);
           if (
@@ -538,7 +543,8 @@ export class GraphWorkflow {
               !source||
               !target||
               !PRODUCT_INTENT_NODE_TYPES.has(source.type)||
-              !PRODUCT_INTENT_NODE_TYPES.has(target.type)
+              !PRODUCT_INTENT_NODE_TYPES.has(target.type) ||
+              (!this.options.planning && [source.type, target.type].some(type => PLANNING_NODE_TYPES.has(type)))
             ) {
               conflict= graphConflict(
                 "OWNERSHIP_SCOPE",
@@ -574,139 +580,6 @@ export class GraphWorkflow {
           ...change.conflict
         }))]
     };
-  }
-
-  private applyChanges(
-    batch: GraphDraftBatch,
-    revision: GraphRevision,
-    changes: GraphDraftBatchChange[],
-    now: string
-  ) {
-    const addedIds: string[]= [];
-    const updatedIds: string[]= [];
-    const archivedIds: string[]= [];
-    const addedNodeIds = new Map<string, string>();
-
-    for (const change of changes) {
-      if (change.entityKind !== "node") continue;
-      if (change.operation === "add") {
-        const id = this.options.idFactory();
-        const title = String(change.payload.title);
-        const node: GraphNode= {
-          id,
-          projectId: batch.projectId,
-          slug: slugify(title),
-          type: change.payload.type as GraphNodeType,
-          title,
-          description:
-            change.payload.description === null
-              ? null
-              :String(change.payload.description),
-          source: "product_brief",
-          sourceRefType: "product_brief_version",
-          sourceRefId: batch.sourceProductBriefVersionId,
-          lifecycleStatus: "active",
-          createdInGraphRevisionId: revision.id,
-          lastChangedInGraphRevisionId: revision.id,
-          metadata: change.payload.metadata as Record<string, unknown>,
-          createdAt: now,
-          updatedAt: now
-        };
-        this.ports.graphNodes.insert(node);
-        addedNodeIds.set(change.changeId, node.id);
-        addedIds.push(node.id);
-      } else if (change.operation === "update") {
-        this.ports.graphNodes.update(change.targetId as string, {
-          ...(change.payload.title !== undefined
-            ? { title: change.payload.title as string }
-            :{}),
-          ...(change.payload.description !== undefined
-            ? {
-              description: change.payload.description as string|null
-            }
-            :{}),
-          ...(change.payload.metadata !== undefined
-            ? {
-              metadata: change.payload.metadata as Record<string, unknown>
-            }
-            :{}),
-          sourceRefId: batch.sourceProductBriefVersionId,
-          graphRevisionId: revision.id,
-          updatedAt: now
-        });
-        updatedIds.push(change.targetId as string);
-      } else {
-        this.ports.graphNodes.archive(
-          change.targetId as string,
-          revision.id,
-          now
-        );
-        archivedIds.push(change.targetId as string);
-      }
-    }
-
-    for (const change of changes) {
-      if (change.entityKind !== "edge") continue;
-      if (change.operation === "add") {
-        const id = this.options.idFactory();
-        const edge: GraphEdge= {
-          id,
-          projectId: batch.projectId,
-          sourceNodeId: resolveEndpointId(
-            change.payload,
-            "source",
-            addedNodeIds
-          ),
-          targetNodeId: resolveEndpointId(
-            change.payload,
-            "target",
-            addedNodeIds
-          ),
-          relationType:
-            change.payload.relation_type as GraphRelationType,
-          confidence: change.payload.confidence as number|null,
-          lifecycleStatus: "active",
-          createdInGraphRevisionId: revision.id,
-          lastChangedInGraphRevisionId: revision.id,
-          metadata: change.payload.metadata as Record<string, unknown>,
-          createdAt: now,
-          updatedAt: now
-        };
-        this.ports.graphEdges.insert(edge);
-        addedIds.push(edge.id);
-      } else if (change.operation === "update") {
-        this.ports.graphEdges.update(change.targetId as string, {
-          ...(change.payload.relation_type !== undefined
-            ? {
-              relationType:
-                change.payload.relation_type as GraphRelationType
-            }
-            :{}),
-          ...(change.payload.confidence !== undefined
-            ? {
-              confidence: change.payload.confidence as number|null
-            }
-            :{}),
-          ...(change.payload.metadata !== undefined
-            ? {
-              metadata: change.payload.metadata as Record<string, unknown>
-            }
-            :{}),
-          graphRevisionId: revision.id,
-          updatedAt: now
-        });
-        updatedIds.push(change.targetId as string);
-      } else {
-        this.ports.graphEdges.archive(
-          change.targetId as string,
-          revision.id,
-          now
-        );
-        archivedIds.push(change.targetId as string);
-      }
-    }
-
-    return { addedIds, updatedIds, archivedIds };
   }
 
   private requireActiveProject(projectId: string) {

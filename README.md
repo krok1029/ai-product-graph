@@ -37,16 +37,18 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 模糊想法
   -> AI 釐清
   -> Product Brief
-  -> 知識圖譜
-  -> Epics 和 tickets
-  -> AI 實作計畫
-  -> 程式碼修改和 PR
-  -> 更新圖譜
+  -> Milestone → Spec → Ticket（自動同步圖譜）
+  -> AI 實作計畫與來源檢查
+  -> 程式碼修改、測試與證據
+  -> 使用者驗收
+  -> 新需求的影響分析與後續交付
 ```
 
 ## Repository 狀態
 
-目前已實作本機 stdio MCP、SQLite 持久化，以及 Project／Repository／Idea → Product Brief → Graph → Ticket Revision → Implementation Brief／handoff → Observed Evidence／Implementation Result → Result Acceptance／Revocation 的主流程。另提供 6 個 client-side prompts、9 個 resources、node trace 與三種 artifact 的 Markdown 匯出。
+目前已實作本機 stdio MCP、SQLite 持久化，以及 Project／Repository／Idea → Product Brief → Milestone → Spec → Ticket Revision → Implementation Brief／handoff → Observed Evidence／Implementation Result → Result Acceptance／Revocation 的主流程。預設使用 23 個本機 tools 與規劃／實作／驗收三個 skills；保留本機 resources、node trace 與三種 artifact 的 Markdown 匯出。full 相容模式共提供 43 個 tools（包含原 39 個）與六個 prompts，詳見 [精簡工作流](docs/22-skill-led-workflows.md)。
+
+新增需求時，重新確認仍適用的既有 Spec 可保留原 Ticket 與驗收；只有實際內容或引用來源變更才使交付失效。圖譜查詢同時提供依賴阻塞、證據缺口、待接受結果與下一步。同範圍技術計畫沿用使用者明確的實作授權，降低重複確認；詳細規則見 [階層規劃與來源版本](docs/23-planning-hierarchy.md)。
 
 Plane integration 目前完成首次匯出的本機 preparation：註冊穩定 container identity、明確提交 pinned export request、查詢 intent 與 attempt history。另有可注入 provider port 的首次 create 執行核心，支援 durable claims、reconciliation、原子 mapping／snapshot 保存，以及 active mapping 的 durable content/status enrollment；正式 stdio 不啟動 processor；Plane HTTP adapter 可由明確單次 CLI 執行 first create／reconciliation，Phase 3 的後續 update/status execution 與雙向同步尚未完成。
 
@@ -94,13 +96,11 @@ Plane integration 目前完成首次匯出的本機 preparation：註冊穩定 c
         └── sqlite/
 ```
 
-## 建議下一步
+## 本機 MVP 使用
 
-從 [GitHub Issues](https://github.com/krok1029/ai-product-graph/issues) 的 `ready-for-agent` 功能票繼續。每張票具備獨立驗收、commit 與 PR，通過獨立 spec／coding standards review 後 merge。Spec 彙總：
+先執行 `node scripts/install-skills.mjs` 安裝三個流程 skills，再 `pnpm build` 並重新啟動 MCP。可從 `$ai-product-plan`、`$ai-product-implement` 或 `$ai-product-accept` 進入；對已展示版本的明確對話同意即為核准。
 
-- [Local delivery acceptance loop](https://github.com/krok1029/ai-product-graph/issues/16)
-- [MCP planning and provenance reading](https://github.com/krok1029/ai-product-graph/issues/18)
-- [Human review Markdown exports](https://github.com/krok1029/ai-product-graph/issues/19)
+本機 MVP 已可試用。後續依 [新版 roadmap](docs/08-roadmap.md) 先統一版本基線、驗證持續開發與跨對話接手，再依實際缺口改善進度說明；Plane／GitHub／UI 開發維持暫緩。舊版 client 或外部整合操作可設定 `AI_PRODUCT_GRAPH_MCP_PROFILE=full`，不會因此啟動外部 processor。
 
 第一個實作版本採用：
 

@@ -199,7 +199,7 @@ async function connect(path: string) {
   const transport = new StdioClientTransport({
     command: process.execPath, args: ["--import", "tsx", "src/index.ts"],
     cwd: resolve(dirname(fileURLToPath(import.meta.url)), "../../.."), stderr: "pipe",
-    env: { ...getDefaultEnvironment(), AI_PRODUCT_GRAPH_DB_PATH: path,
+    env: { AI_PRODUCT_GRAPH_MCP_PROFILE: "full", ...getDefaultEnvironment(), AI_PRODUCT_GRAPH_DB_PATH: path,
       AI_PRODUCT_GRAPH_ACTOR_ID: "stdio-demo-actor", AI_PRODUCT_GRAPH_ACTOR_NAME: "Demo reviewer" }
   });
   try {

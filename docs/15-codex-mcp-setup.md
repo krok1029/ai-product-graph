@@ -82,6 +82,10 @@ pnpm --dir /Users/limingfeng/Project/ai-product-graph dev
 
 正式使用建議先 build，再用 `node dist/index.js`，避免 MCP client 啟動時依賴 dev runtime。
 
+## Skills 與 profile
+
+執行 `node scripts/install-skills.mjs` 安裝 `ai-product-plan`、`ai-product-implement`、`ai-product-accept`。MCP 預設 `core` 提供 23 個本機 tools，六個舊 prompts 與外部整合不載入。舊 client 可設定 `AI_PRODUCT_GRAPH_MCP_PROFILE=full`，取得原本所有 tools/prompts 與新入口；更改後重啟 MCP。完整操作見 [精簡工作流](./22-skill-led-workflows.md)。
+
 ## Environment
 
 可選 env：

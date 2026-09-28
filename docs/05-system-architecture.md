@@ -15,7 +15,7 @@
 - Protocol surface：MCP server。
 - Storage：本機 MVP 先用 SQLite。
 - Later storage：Postgres + pgvector。
-- AI orchestration：MCP server 提供 prompt templates、resources 和 structured context；LLM generation 由 MCP client 的 agent 執行。
+- AI orchestration：三個 skills 編排 client agent；MCP 提供 resources、structured context、驗證與保存；六個舊 prompts 僅供 full 相容模式。
 - Auth：本機 MVP 先延後；之後 hosted MCP 再設計。
 
 ## High-Level Components
@@ -24,12 +24,13 @@
 MCP Server
   -> Tools
   -> Resources
-  -> Prompts
+  -> Legacy prompts (full only)
 
 Core Domain
   -> Projects
   -> Ideas
   -> Product Briefs
+  -> Milestones / Specs
   -> Graph Nodes
   -> Graph Edges
   -> Tickets
@@ -45,7 +46,7 @@ Application Layer
   -> Durable Sync Intent / Outbox Writer
 
 AI Orchestration
-  -> Prompt templates
+  -> Planning / implementation / acceptance skills
   -> Structured context resources
   -> Tool workflows
   -> Client agent performs generation
@@ -59,30 +60,22 @@ Data Layer
 
 Integrations
   -> MCP adapter first
-  -> Plane adapter after MVP core
-  -> GitHub adapter later
+  -> Plane adapter (partially delivered; follow-ups deferred)
+  -> GitHub adapter (optional; not yet delivered)
   -> Coding agent handoff adapter
-  -> Post-commit Sync Intent processor
+  -> Post-commit provider execution (explicit CLI; mapped updates pending)
 ```
 
 ## 建置順序
 
-1. 本機 MCP server，先支援 project 和 idea tools。
-2. Product Brief prompt 和 tool。
-3. Graph node / edge 儲存。
-4. Graph context resources。
-5. Ticket generation tool。
-6. Implementation brief tool。
-7. Plane adapter。
-8. GitHub adapter。
-9. Optional UI。
+本機 MCP、SQLite 與規劃到驗收已落地。後續依 [roadmap](08-roadmap.md) 統一基線、驗證持續開發與接手、改善實際查詢缺口，再按需求恢復選配整合；不以 provider 完成度安排核心流程。
 
 ## 需要保留的架構決策
 
 - MVP 階段，PM integrations 保持外部整合。
 - Canonical product knowledge 存在本地。
 - 外部 tickets 和 PRs 是 linked artifacts。
-- AI output 一律先成為 draft，approve 後才寫入 canonical data。
+- Product Brief／Ticket 的新版本保留 draft／approval；Milestone／Spec 在已授權規劃範圍內自動保存圖譜，不把 applied 偽裝成人類核准。Result Acceptance 仍為獨立決策。
 - Graph edits 使用簡單 audit log，不做完整 event sourcing。
 - Domain model 不依賴外部整合；外部介面透過 ports & adapters 接入。
 - Approval transaction 只原子保存 domain state 與 durable Sync Intents，不在 transaction 內呼叫外部 API；integration processor 在 commit 後執行並可於服務重啟後恢復。

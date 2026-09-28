@@ -1,222 +1,39 @@
 # MCP-First 架構
 
-## 決策
+## 目前決策
 
-AI Product Graph 的第一個實作版本應該是 MCP server，而不是 Web app。
+AI Product Graph 以本機 stdio MCP 提供結構化產品資料，client agent 透過三個 skills 完成規劃、實作與驗收。SQLite 保存正式資料，server 負責版本、關係、交易與來源驗證，不直接呼叫 LLM 或執行 coding agent。
 
-MCP server 就是第一個產品介面。它讓 AI agent 可以建立和查詢產品上下文、生成圖譜結構、產生 tickets，並準備 implementation handoff。
+目前流程為 Product Brief → Milestone → Spec → Ticket → Implementation Brief／handoff → Evidence／Result → Acceptance。詳細設計見 [系統架構](05-system-architecture.md)、[精簡工作流](22-skill-led-workflows.md) 與 [階層規劃](23-planning-hierarchy.md)。
 
-## 為什麼 MCP First
+## 介面分工
 
-- 核心使用者是 AI agent，不是操作 dashboard 的人。
-- 如果先做 UI，會在 agent workflow 被證明前就被迫設計 API、state 和 interaction。
-- MCP 很自然地對應到這個產品：
-  - Tools 負責 actions。
-  - Resources 負責 project context。
-  - Prompts 負責可重複使用的 workflows。
-- UI 之後仍然可以建立在同一個 domain model 上。
+| 介面 | 責任 | 範圍 |
+| --- | --- | --- |
+| Skills | 對話、內容生成、程式碼檢查、來源重新比對、整理驗收 | 規劃／實作／驗收三個入口 |
+| MCP tools | 驗證、保存、核准及查詢正式資料 | core 23 個；full 43 個 |
+| MCP resources | 提供 Project、graph、Ticket 與 trace 等上下文 | 本機讀取入口 |
+| MCP prompts | 相容原有 workflow templates | 六個，僅 full 提供 |
+| Markdown export | 閱讀、分享或人工檢視 | 按需，非正式資料來源或必經步驟 |
 
-## MCP Tools
+Skills 不可直接改 SQLite 代替 MCP commands。工具名稱與欄位以 [MCP Tool Spec](12-mcp-tool-spec.md) 及其連結的新契約為準，不從早期候選名稱推測 API。
 
-MVP 採用「少量粗粒度 workflow tools + 必要 read tools」。細粒度 mutation tools 可以保留，但不應在第一版把 tool surface 做得過大。
+## 正式資料與變更
 
-### Project Tools
+- Product Brief Version、Ticket Revision 等待審內容先建立 draft，對具體版本取得對話同意後保存 approval。
+- Milestone／Spec 在已授權的規劃範圍內保存即同步圖譜，保留 Graph Revision 與 automation audit，不另作 graph approval。
+- 來源重新確認與內容版本分開；Spec 內容未改且完整來源鏈有效時，原交付可沿用。真實變更、封存、歸屬與依賴問題仍受 freshness 檢查。
+- 同範圍技術計畫可沿用對 approved Ticket 的實作授權；新結果仍須使用者接受。歷史有效 Acceptance 不因新增需求自動撤銷。
+- `get_graph_context` 回傳 planning 與全專案 active Tickets 的 delivery 診斷；`get_work_context` 提供逐 Ticket、逐 target 的正式工作脈絡。
 
-```text
-create_project
-list_projects
-get_project
-update_project
-```
+## 儲存與 Repository 邊界
 
-### Idea Tools
+SQLite 及 repository ports 已落地；schema 以 [SQLite Schema](13-sqlite-schema.md) 與 migrations 為準。主要 identities 使用 ULID，structured JSON 是正式內容；Markdown 是衍生輸出。
 
-```text
-add_idea
-list_ideas
-get_idea
-clarify_idea
-```
+Server 不直接掃描 Repository。Client 檢查真實程式碼與 commit／dirty state，提供 Repository Context 並在 `start_implementation` 驗證 baseline；僅讀到產品來源 current 並不足以直接開工。
 
-### Product Brief Tools
+## 相容與選配
 
-```text
-generate_product_brief
-get_product_brief
-update_product_brief
-approve_product_brief
-```
+Full 保留未採用新階層的舊專案操作及外部工具，不會因此自動遷移 Project、啟動 processor 或關閉 active mapping 的 enrollment。階層化專案即使由 full 操作也必須遵守新來源規則。
 
-### Graph Tools
-
-```text
-generate_graph
-list_graph_nodes
-list_graph_edges
-get_graph_context
-get_node_trace
-create_graph_node
-create_graph_edge
-update_graph_node
-```
-
-### Ticket Tools
-
-```text
-generate_tickets
-list_tickets
-get_ticket
-update_ticket
-get_ticket_context
-```
-
-### Implementation Tools
-
-```text
-create_implementation_brief
-link_pull_request
-record_test_result
-record_release
-record_feedback
-```
-
-## MCP Resources
-
-建議 URI patterns：
-
-```text
-product-graph://projects
-product-graph://projects/{projectId}
-product-graph://projects/{projectId}/brief
-product-graph://projects/{projectId}/graph
-product-graph://projects/{projectId}/tickets
-product-graph://tickets/{ticketId}
-product-graph://tickets/{ticketId}/context
-product-graph://nodes/{nodeId}
-product-graph://nodes/{nodeId}/trace
-```
-
-第一版 MCP transport 使用 stdio local server。HTTP-based MCP server 延後到 hosted / multi-user 需求明確後再做。
-
-## MCP Prompts
-
-建議 prompts：
-
-```text
-product-brief
-extract-graph
-generate-tickets
-implementation-brief
-review-ticket-quality
-trace-feature-context
-```
-
-## 本機 MVP 儲存
-
-第一版直接使用 SQLite：
-
-```text
-projects
-ideas
-product_briefs
-graph_nodes
-graph_edges
-tickets
-implementation_briefs
-external_links
-audit_log
-```
-
-原因：
-
-- 本機安裝容易。
-- 不需要 hosted database。
-- 適合單人 MCP 使用情境。
-- 之後可以透過 repository layer 遷移到 Postgres。
-
-## Product Brief Format
-
-Product Brief 的 canonical data 使用 structured JSON。
-
-Markdown 只作為輸出、rendering、handoff 或 human review 格式，不作為 canonical source of truth。
-
-第一版 Product Brief JSON 應至少包含：
-
-```text
-product_goal
-target_users
-pain_points
-core_workflows
-mvp_scope
-non_goals
-success_metrics
-risks
-open_questions
-```
-
-## LLM Generation Responsibility
-
-第一版 MCP server 不直接呼叫 LLM。
-
-Server 提供：
-
-- MCP prompts。
-- MCP resources。
-- Structured context。
-- 儲存與驗證 tools。
-
-Client agent 負責實際 generation，然後把結果透過 tools 回寫成 draft。使用者 approve 後，draft 才能轉成 canonical data。
-
-## Repository Context Boundary
-
-第一版 MCP server 不直接掃描 local repository。
-
-Implementation brief 可以接受使用者或 client agent 提供的 repo summary、file list、module notes 或其他 code context。這讓 server 保持安全和簡單，同時仍能生成比純產品層更有用的 handoff。
-
-## Review Surface
-
-Human review 第一版放在兩個地方：
-
-- MCP client 對話確認。
-- Markdown draft export，用於閱讀、diff 和 handoff。
-
-不做 UI review。
-
-## ID Strategy
-
-Graph nodes、tickets 和其他主要 entities 使用 ULID 作為穩定 ID，並另外保留 display slug 供人類閱讀、搜尋和外部匯出使用。
-
-## Semantic Search
-
-第一版預留 embedding / semantic search 欄位或 extension point，但不實作 embeddings。先把 graph 結構、traceability 和 MCP workflow 做穩。
-
-## Primary MCP Client
-
-第一版以 Codex 為 primary target MCP client，因為它最貼近 ticket-to-code workflow。同時保持標準 MCP 相容，不寫死 Codex-only 行為。
-
-## 第一個 Demo
-
-第一個 demo 應該透過 MCP client 跑：
-
-```text
-使用者提供模糊想法
-  -> agent calls add_idea
-  -> agent calls clarify_idea
-  -> 使用者回答問題
-  -> agent calls generate_product_brief
-  -> agent calls generate_graph
-  -> agent calls generate_tickets
-  -> agent calls create_implementation_brief
-```
-
-這個 demo 不需要 Web UI。
-
-## 安全與品質規則
-
-- Mutating tools 應該回傳結構化 summary，說明改了什麼。
-- 第一版應避免 destructive tools。
-- AI-generated Product Briefs、graph nodes、graph edges 和 tickets 一律先建立為 draft。
-- Draft 必須經使用者 approve 後才成為 canonical data。
-- Graph edits 應寫入簡單 audit log，記錄 action、entity、before / after summary 和 actor。
-- 每張 generated ticket 應該連到至少一個 product goal 或 pain point。
-- Implementation briefs 應包含 acceptance criteria、non-goals 和 related graph context。
+Hosted MCP、Postgres、embeddings 及 UI 尚未排入交付。Primary client 是 Codex，資料與工具維持標準 MCP 邊界；其他 client 的 workflow 編排需另行驗證。先驗證本機持續開發的價值，後續依 [roadmap](08-roadmap.md) 處理真實缺口。
