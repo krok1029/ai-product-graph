@@ -23,7 +23,7 @@ async function replay(profile: "core" | "full") {
   let calls = 0;
   try {
     const names = (await client.listTools()).tools.map(tool => tool.name);
-    expect(names).toHaveLength(profile === "core" ? 23 : 44);
+    expect(names).toHaveLength(profile === "core" ? 23 : 45);
     const project = (await call("create_project", { name: "輕運動計時器：暫存流程回放" })).project;
     const repository = (await call("create_repository", { project_id: project.id, slug: "timer", name: "Timer" })).repository;
     const idea = (await call("add_idea", { project_id: project.id, content: "共用開始、暫停、重設控制", source: "isolated protocol fixture" })).idea;

@@ -37,7 +37,7 @@ it("defaults to 23 local tools without legacy prompts or external sync surfaces"
 
 it("retains the original tools and six prompts in full compatibility mode", async () => {
   const f = await setup("full");
-  expect((await f.client.listTools()).tools).toHaveLength(44);
+  expect((await f.client.listTools()).tools).toHaveLength(45);
   expect((await f.client.listPrompts()).prompts).toHaveLength(6);
   expect((await f.call("list_external_containers", {})).ok).toBe(true);
 });

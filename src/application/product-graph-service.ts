@@ -1,3 +1,4 @@
+import { ContentDriftAdoptionWorkflow, type AdoptContentDriftInput } from "./content-drift-adoption-workflow.js";
 import { ContentDriftRejectionWorkflow, type RejectContentDriftInput } from "./content-drift-rejection-workflow.js";
 import { PlanningWorkflow } from "./planning-workflow.js";
 import { LocalDeliveryWorkflow } from "./local-delivery-workflow.js";
@@ -162,6 +163,12 @@ export class ProductGraphService {
 
   getSyncIntent(syncIntentId: string) {
     return new SyncIntentReads(this.ports).get(syncIntentId);
+  }
+
+  adoptContentDrift(input: AdoptContentDriftInput) {
+    return new ContentDriftAdoptionWorkflow(this.ports, {
+      idFactory: this.idFactory, clock: this.clock, actor: this.actor
+    }).adopt(input);
   }
 
   rejectContentDrift(input: RejectContentDriftInput) {
