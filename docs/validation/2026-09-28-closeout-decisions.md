@@ -18,11 +18,14 @@
 | D3 | 在既有 graph context 中補 Milestone／Spec 的唯讀交付分組，不新增工具或手動階段狀態。 | 分组依資料來源與版本，不能推論自然語言退出條件是否滿足；新增欄位的 client 相容性需測試。 | 調整投影欄位或改由 client 整理，保留原 Ticket／規格／驗收資料。 |
 | D4 | 保留歷史成本未知值；新 run 的時間只描述實際記錄區間。 | 尚無等價前後比較，不能證明節省百分比；舊訊息及等待時段無法補造。 | 若要量化效益，另跑有完整時間／決策記錄的等價情境。 |
 | D5 | 保留原 dirty checkout 與已存在的未提交實作，在新 worktrees 交付。 | 原目錄仍不等於最新 main；已安裝 skills／connector 不因 PR 合併自動升級。 | 使用者審查後安排明確升級／工作目錄整理，先保留來源快照，避免覆寫。 |
+| D7 | 階段父關係需可查證在核准來源時已成立；歷史不足時列未歸組，artifact 根目錄 symlink 明確拒絕。 | 保守投影可能讓舊資料暫無群組；建置捷徑須改傳真實路徑。兩項皆來自 PR review 的實際反例。 | 若需放寬，新增可證明的 ancestry 歷史或實體複製支援，再以同反例回歸，不直接信任額外引用或捷徑。 |
 | D6 | 子票／PR 的工程完成可獨立記錄；父 Spec 的產品驗收條件不能因子票全關閉而自動通過。 | Issue 的工程狀態與 live 產品交付狀態不同，摘要須清楚標示。 | 最後逐項審查父 Spec 與 Milestone，必要時修訂範圍或留下具體後續票。 |
 
 ## 執行與證據規則
 
 GitHub Issues 是本 repository 規劃的正式來源，不為登記自身 roadmap 額外建立使用者 SQLite Project。Spec #116／Ticket #119、Spec #117／Ticket #120、Spec #118／Tickets #121–#122 構成目前無阻擋工作；彙整票 #123 需等成果才定稿。
+
+本輪執行結果見 [最後審查包](2026-09-28-local-closeout-review.md)。新增全新 Spec reviewer；系統 agent thread 上限後，Standards 軸沿用未實作該 PR 的既有 agent，保持獨立，沒有作者自審。
 
 每張票循環：依具體 Spec 實作 → 適用測試 → 提交確切 head → 新 agent 分別做 Spec 與 Standards review → 修正／重審 → 合併。Reviewer 不能審自己寫的變更。合併後的主分支另作整合驗證，失敗留紀錄並修正，不用放寬條件掩蓋問題。
 

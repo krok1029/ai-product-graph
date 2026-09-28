@@ -1,6 +1,6 @@
 # Roadmap
 
-2026-09-28（Asia/Taipei）核對：依 GitHub 已合併 PR、未結 Issues 與即時 MCP 資料更新。後續順序仍為「統一版本基線 → 驗證持續開發與接手 → 改善進度與變更說明 → 按需求恢復外部整合」。本次只更新文件，沒有重跑程式測試或接受產品結果。來源、版本差異與剩餘工作見 [進度核對紀錄](validation/2026-09-28-project-status.md)。
+2026-09-28（Asia/Taipei）工程收尾更新：PR #124–#127 已合併，整合基線通過 1,002 tests、雙型別檢查、build、smoke、core/full 重啟驗證及隔離依賴回放。正式產品接受留待最後審查；確切來源與限制見 [最後審查包](validation/2026-09-28-local-closeout-review.md)。[早先進度核對](validation/2026-09-28-project-status.md) 為歷史快照。
 
 GitHub Issues 是 Specs 與 Tickets 的正式追蹤來源；本文件定義階段成果、範圍、順序與退出條件。SQLite 中的使用者 Project 不等同於本 repository 的 roadmap。
 
@@ -46,7 +46,7 @@ GitHub Issues 是 Specs 與 Tickets 的正式追蹤來源；本文件定義階�
 
 **成果**：證明來源追溯和驗收紀錄可以減少重做，並建立實際管理成本的基準。
 
-**狀態**：工程收尾中。#101 已固定起點；#102 完成情境 A 的新增篩選、驗收及原交付沿用；#103／#111 完成來源影響與排序接手檢查點；[#104／PR #115](https://github.com/krok1029/ai-product-graph/pull/115) 已完成真實新任務的唯讀接手。#105 已保存來源往返、過期 handoff／pending Acceptance 的拒絕證據，清單 r3 待接受、篩選 r2 來源有效但依賴清單。使用者現授權自主推進到本機流程工程收尾，再一次審查；#121 先完成隔離驗證，正式 Acceptance 不由工程 review 代替。#106 彙整成果與成本限制，#98 原始完整驗收要求仍留待最終核對。
+**狀態**：本輪工程證據已齊備，正式產品驗收待最後審查。#101 已固定起點；#102 完成情境 A 的新增篩選、驗收及原交付沿用；#103／#111 完成來源影響與排序接手檢查點；[#104／PR #115](https://github.com/krok1029/ai-product-graph/pull/115) 已完成真實新任務的唯讀接手。#105 已保存來源往返、過期 handoff／pending Acceptance 的拒絕證據，清單 r3 待接受、篩選 r2 來源有效但依賴清單。使用者現授權自主推進到本機流程工程收尾，再一次審查；#121 已完成並由 PR #127 合併隔離驗證，正式 Acceptance 不由工程 review 代替。#106 的成果與成本報告已交付最後審查包，#98 原始完整驗收要求仍留待最終核對。
 
 依賴：先固定可重現的 Milestone 1 版本基線。使用同一個有持續變更需求的獨立測試 Project；不得假設先前已刪除的試用資料仍存在，也不自動還原它們。
 
@@ -64,7 +64,7 @@ GitHub Issues 是 Specs 與 Tickets 的正式追蹤來源；本文件定義階�
 
 **成果**：對話能準確回答「階段做到哪裡、為何卡住、改動影響什麼、下一步是什麼」。
 
-**狀態**：使用者已授權進入本機收尾改善。依已觀察到的 runtime 來源與階段分組缺口，新增 Spec #116／#117 與 Tickets #119／#120 並行；先測試、獨立 review、合併，再以新基線驗證。Spec #118 統籌工程證據與最後審查材料，不自動完成使用者產品驗收。
+**狀態**：本輪改善已交付。Spec #116／#117、Tickets #119／#120 分別經 PR #126／#125 完成 runtime 驗證與階段進度；獨立審查發現的兩項問題已修正並重審通過，整合測試通過。Spec #118 的工程證據及最後審查包已齊備，仍不自動完成使用者產品驗收或宣稱成本改善比例。
 
 依賴：Milestone 2 的實際問題。先以既有 graph、planning、delivery 與 work context 整理階段摘要；只有資料缺口可重現時才新增 API／projection。
 
@@ -107,6 +107,6 @@ GitHub Issues 是 Specs 與 Tickets 的正式追蹤來源；本文件定義階�
 
 原本本機 MCP MVP 的核心能力已交付，#104 已完成。原 #105／#106 繼續保留完整驗收及報告追蹤；使用者改為最後集中審查，因此不把 live pending Result 或被它阻擋的篩選偽稱已接受。
 
-本輪分為三份 Spec：[#116 執行基線](https://github.com/krok1029/ai-product-graph/issues/116)、[#117 階段進度](https://github.com/krok1029/ai-product-graph/issues/117)、[#118 工程收尾](https://github.com/krok1029/ai-product-graph/issues/118)。#119 runtime、#120 進度投影、#121 隔離工程驗證、#122 範圍與決策文件可並行；最後 [#123 審查包](https://github.com/krok1029/ai-product-graph/issues/123) 依賴這些成果。每票各有 PR 與獨立 Spec／Standards review，無未解決問題才合併。暫定決策與調整方法見 [決策紀錄](validation/2026-09-28-closeout-decisions.md)。
+本輪三份 Spec：[#116 執行基線](https://github.com/krok1029/ai-product-graph/issues/116)、[#117 階段進度](https://github.com/krok1029/ai-product-graph/issues/117)、[#118 工程收尾](https://github.com/krok1029/ai-product-graph/issues/118)。#119–#122 已合併，[#123 審查包](https://github.com/krok1029/ai-product-graph/issues/123) 整合成果；本輪没有未實作的獨立工程票。剩餘為清單 Result 最終審查、解除依賴後篩選自己的正式 handoff／Result／Acceptance，以及父 Spec／Milestone 退出條件判定。見 [審查包](validation/2026-09-28-local-closeout-review.md) 與 [決策紀錄](validation/2026-09-28-closeout-decisions.md)。
 
 這輪停止點為「本機工程成果、必要驗證、PR 與審查材料齊備」。使用者最終 Result Acceptance、父 Spec／Milestone 判定另列待審，不自動代簽。Plane 完整同步與本機 Web UI 均不在本輪實作範圍；雲端多人與 GitHub adapter 不再是必做階段。

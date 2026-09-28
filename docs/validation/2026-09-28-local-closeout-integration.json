@@ -1,0 +1,355 @@
+{
+  "schema_version": 1,
+  "kind": "local_closeout_integration_projection",
+  "source_commit": "eab9fa07cc94fd479f8fe95b4a261b19fe964c29",
+  "source_worktree": "/private/tmp/apg-closeout/report",
+  "tracked_source_diff": "empty at checks",
+  "untracked_at_runtime": [
+    "docs/validation/2026-09-28-local-closeout-review.md",
+    "node_modules (dependency symlink)"
+  ],
+  "validation": {
+    "tests": {
+      "status": "passed",
+      "files": 64,
+      "count": 1002,
+      "vitest_start_local": "2026-09-28 15:43:33 Asia/Taipei",
+      "reported_duration_seconds": 11.74
+    },
+    "typecheck": "passed",
+    "typecheck_ts6": "passed",
+    "build": "passed",
+    "smoke": "passed",
+    "planning_suite": {
+      "count": 24,
+      "included_in_full_suite": true
+    }
+  },
+  "runtime": {
+    "status": "passed",
+    "startedAt": "2026-09-28T07:44:09.706Z",
+    "completedAt": "2026-09-28T07:44:10.575Z",
+    "scope": "isolated-stdio-fixture",
+    "node": {
+      "executable": "/Users/limingfeng/.nvm/versions/node/v20.19.0/bin/node",
+      "version": "v20.19.0",
+      "platform": "darwin",
+      "architecture": "arm64"
+    },
+    "sourceObservation": {
+      "status": "observed",
+      "directory": "/private/tmp/apg-closeout/report",
+      "commit": "eab9fa07cc94fd479f8fe95b4a261b19fe964c29",
+      "dirty": true,
+      "artifactBuildProvenance": "unknown"
+    },
+    "existingConnectorVersion": "unknown",
+    "dependencies": {
+      "directory": "/Users/limingfeng/Project/ai-product-graph/node_modules",
+      "snapshotStatus": "not-snapshotted",
+      "lockfileSha256": "578c56058a37beb42235b9feb604bf223493eb7d7c8e8a4238e4345ac3c97abd"
+    },
+    "installedSkills": [
+      {
+        "name": "ai-product-plan",
+        "configuredPath": "/Users/limingfeng/.codex/skills/ai-product-plan",
+        "resolvedPath": "/Users/limingfeng/Project/ai-product-graph/skills/ai-product-plan",
+        "status": "observed",
+        "fingerprint": {
+          "algorithm": "sha256-sorted-path-content-v1",
+          "sha256": "02f74fa6612298ca3c24a6b423da76a41eb57c0cf925ce5a93ba59ba7747aef8",
+          "files": [
+            {
+              "path": "SKILL.md",
+              "sha256": "8556e6c3ee9a31fc8a8ff82aaa242e2e1accf54f068b949f22b5d52de8c8b493"
+            },
+            {
+              "path": "references/planning-contract.md",
+              "sha256": "9441f843f26cc8dcfd887305326e5a9df850126614e87e8e107a547ad6292ba7"
+            }
+          ]
+        }
+      },
+      {
+        "name": "ai-product-implement",
+        "configuredPath": "/Users/limingfeng/.codex/skills/ai-product-implement",
+        "resolvedPath": "/Users/limingfeng/Project/ai-product-graph/skills/ai-product-implement",
+        "status": "observed",
+        "fingerprint": {
+          "algorithm": "sha256-sorted-path-content-v1",
+          "sha256": "aeafea5105405b06d66d25525489f865fbc8f50f3eb5d029542b6faab1481a37",
+          "files": [
+            {
+              "path": "SKILL.md",
+              "sha256": "9be86036fd7198cac3f552277ff8330d8d9bdda13ab3a509e8514d5c56304394"
+            }
+          ]
+        }
+      },
+      {
+        "name": "ai-product-accept",
+        "configuredPath": "/Users/limingfeng/.codex/skills/ai-product-accept",
+        "resolvedPath": "/Users/limingfeng/Project/ai-product-graph/skills/ai-product-accept",
+        "status": "observed",
+        "fingerprint": {
+          "algorithm": "sha256-sorted-path-content-v1",
+          "sha256": "3b4302d778bf342f30a5df89eb0797042a580dea8b66408cccc64aa78ac58059",
+          "files": [
+            {
+              "path": "SKILL.md",
+              "sha256": "3634fe5a431d89ec881165a1c1baf0e221e9a830456c3be9d31bd142295fb70d"
+            },
+            {
+              "path": "references/evidence.md",
+              "sha256": "d2ef45185d3ec9db62cba9bab53c588e674f17c0131ba7a1d7c13e9401de51bf"
+            }
+          ]
+        }
+      }
+    ],
+    "profiles": [
+      {
+        "profile": "core",
+        "databasePath": "/private/tmp/apg-closeout/apg-runtime-proof-lpiRmS/databases-ErgJi2/core.sqlite",
+        "initialDiscovery": {
+          "tools": [
+            "accept_implementation_result",
+            "add_idea",
+            "approve_product_brief_version",
+            "approve_ticket_revision",
+            "create_implementation_brief_draft",
+            "create_product_brief_draft",
+            "create_project",
+            "create_repository",
+            "create_ticket_draft_batch",
+            "create_ticket_revision_draft",
+            "export_markdown_draft",
+            "get_graph_context",
+            "get_idea",
+            "get_node_trace",
+            "get_project",
+            "get_ticket_context",
+            "get_work_context",
+            "list_projects",
+            "list_repositories",
+            "revoke_result_acceptance",
+            "save_planning_node",
+            "start_implementation",
+            "submit_work_result"
+          ],
+          "prompts": [],
+          "promptsSupported": false,
+          "server": {
+            "name": "ai-product-graph",
+            "version": "0.1.0"
+          }
+        },
+        "restart": {
+          "status": "passed",
+          "readOnlyToolCalls": [
+            "get_project",
+            "list_projects"
+          ],
+          "projectId": "01M3KFH9AY8J3NC67ZFTSC4MB2"
+        },
+        "sessions": [
+          {
+            "pid": 9000,
+            "stderr": "AI Product Graph MCP server using /private/tmp/apg-closeout/apg-runtime-proof-lpiRmS/databases-ErgJi2/core.sqlite\n",
+            "closed": true
+          },
+          {
+            "pid": 9001,
+            "stderr": "AI Product Graph MCP server using /private/tmp/apg-closeout/apg-runtime-proof-lpiRmS/databases-ErgJi2/core.sqlite\n",
+            "closed": true
+          }
+        ]
+      },
+      {
+        "profile": "full",
+        "databasePath": "/private/tmp/apg-closeout/apg-runtime-proof-lpiRmS/databases-ErgJi2/full.sqlite",
+        "initialDiscovery": {
+          "tools": [
+            "accept_implementation_result",
+            "add_idea",
+            "adopt_content_drift",
+            "approve_graph_draft_batch",
+            "approve_implementation_brief",
+            "approve_product_brief_version",
+            "approve_ticket_revision",
+            "create_graph_draft_batch",
+            "create_implementation_brief_draft",
+            "create_product_brief_draft",
+            "create_project",
+            "create_repository",
+            "create_ticket_draft_batch",
+            "create_ticket_revision_draft",
+            "export_markdown_draft",
+            "get_content_drift_resolution",
+            "get_external_work_item",
+            "get_graph_context",
+            "get_idea",
+            "get_implementation_handoff",
+            "get_mapping_content_drift_history",
+            "get_mapping_sync_health",
+            "get_mapping_sync_plan",
+            "get_mapping_termination",
+            "get_node_trace",
+            "get_project",
+            "get_sync_intent",
+            "get_ticket_context",
+            "get_ticket_sync_health",
+            "get_work_context",
+            "list_external_containers",
+            "list_mapping_sync_intents",
+            "list_projects",
+            "list_repositories",
+            "list_ticket_export_requests",
+            "list_ticket_external_work_items",
+            "record_observed_evidence",
+            "register_external_container",
+            "reject_content_drift",
+            "request_plane_ticket_export",
+            "revoke_result_acceptance",
+            "save_planning_node",
+            "start_implementation",
+            "submit_implementation_result",
+            "submit_work_result",
+            "terminate_sync_mapping"
+          ],
+          "prompts": [
+            "extract-graph",
+            "generate-tickets",
+            "implementation-brief",
+            "product-brief",
+            "review-ticket-quality",
+            "trace-feature-context"
+          ],
+          "promptsSupported": true,
+          "server": {
+            "name": "ai-product-graph",
+            "version": "0.1.0"
+          }
+        },
+        "restart": {
+          "status": "passed",
+          "readOnlyToolCalls": [
+            "get_project",
+            "list_projects"
+          ],
+          "projectId": "01M3KFH9NB36BPHPYF6JJ6MTAM"
+        },
+        "sessions": [
+          {
+            "pid": 9002,
+            "stderr": "AI Product Graph MCP server using /private/tmp/apg-closeout/apg-runtime-proof-lpiRmS/databases-ErgJi2/full.sqlite\n",
+            "closed": true
+          },
+          {
+            "pid": 9003,
+            "stderr": "AI Product Graph MCP server using /private/tmp/apg-closeout/apg-runtime-proof-lpiRmS/databases-ErgJi2/full.sqlite\n",
+            "closed": true
+          }
+        ]
+      }
+    ],
+    "limitations": [
+      "Source checkout observation does not prove artifact build provenance.",
+      "Installed skill hashes describe disk bytes, not skills loaded by any agent.",
+      "Dependencies are shared from node_modules; dependency bytes are not snapshotted or attested.",
+      "Hashes are local observations, not remote authentication.",
+      "Only isolated discovery and fixture persistence are verified; no existing connector is restarted or identified."
+    ],
+    "temporaryDatabasesRemoved": true
+  },
+  "artifact_projection": {
+    "sha256": "adf4d13e70a4517bb80b40d8d6348152bf91b6b72378006b406e5c4b43c2cad6",
+    "files": 503,
+    "entrypoint": "/private/tmp/apg-closeout/apg-runtime-proof-lpiRmS/artifacts/index.js",
+    "unchangedAfterExecution": true,
+    "full_file_manifest": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/runtime-manifest.json"
+  },
+  "isolated_replay": {
+    "kind": "isolated_protocol_replay",
+    "actor": {
+      "id": "isolated-protocol-reviewer-not-user",
+      "displayName": "隔離協定測試 actor，非使用者"
+    },
+    "product_commit": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+    "source_commit": "eab9fa07cc94fd479f8fe95b4a261b19fe964c29",
+    "script_sha256": "866b901d6afa6ec1bd99dcd03d2fa5999eeff446b5d959de04096a2c71327c7c",
+    "started_at": "2026-09-28T07:44:02.121Z",
+    "completed_at": "2026-09-28T07:44:02.206Z",
+    "elapsed_ms": 85,
+    "assertions": {
+      "blocked_before_acceptance": true,
+      "dependency_retained": true,
+      "baseline_mismatch_rejected_atomically": true,
+      "current_handoff": true,
+      "pending_not_accepted": true,
+      "dependent_accepted_by_test_actor": true,
+      "idempotency": true,
+      "sqlite_integrity": true
+    },
+    "limitations": [
+      "合成 fixture 不是 live Project",
+      "不是新的無歷史對話",
+      "不將 #104 C4 改成歷史通過",
+      "不證明 UI 或使用者 Acceptance"
+    ]
+  },
+  "observed_invocation_correction": "First pnpm invocation included an extra -- separator, rejected before runtime startup. Corrected to node dist/verify-local-runtime.js --output-parent /private/tmp/apg-closeout; successful run recorded separately.",
+  "raw_evidence": [
+    {
+      "name": "integration-runtime.log",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/integration-runtime.log",
+      "sha256": "e524e5cbd21f004dc29f3b5e21f7ccfeeac89db3d3bb9de9b33f2726ed1879d2"
+    },
+    {
+      "name": "integration-replay.log",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/integration-replay.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "integration-smoke.log",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/integration-smoke.log",
+      "sha256": "6bcb12561aa9f06f3ffe22e94da8962b4abc4e30b7a053624ab97b4a802ccb35"
+    },
+    {
+      "name": "integration-tests.log",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/integration-tests.log",
+      "sha256": "617434c81a248523c667c53fc17606a9a2359f74a2240fbb6037cb9663116a44"
+    },
+    {
+      "name": "integration-build.log",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/integration-build.log",
+      "sha256": "0f8ec3b87b1c77c5efc4319477c55996872f804cc7002045274d5df60b99d415"
+    },
+    {
+      "name": "integration-typecheck.log",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/integration-typecheck.log",
+      "sha256": "d8386e513037d22d8d66fd4ea172a941bf683e4951c8fce45464869e530d6906"
+    },
+    {
+      "name": "integration-runtime-final.log",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/integration-runtime-final.log",
+      "sha256": "161faf33f29296e959c19be82f244b1ad1afe65191a3a89f6f742f1fa86951f3"
+    },
+    {
+      "name": "integration-replay.json",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/integration-replay.json",
+      "sha256": "8277be5c03672bc170e8158ed5fa476fd8ca40f311529cfc64138d27e482dae1"
+    },
+    {
+      "name": "runtime-manifest.json",
+      "path": "/Users/limingfeng/Project/ai-product-graph/tmp/validation/20260928-closeout/runtime-manifest.json",
+      "sha256": "84eef649cf98e5a2bb8a88e75e6e1fa0419b0c31902819b9930c9cf0358c8a33"
+    }
+  ],
+  "limitations": [
+    "This is a public projection, not a copy of all raw evidence. Local evidence paths and hashes identify retained bytes.",
+    "Full fixture run times do not measure preparation, review, user waiting, or cost improvement.",
+    "No live Result Acceptance or connector restart.",
+    "Tested integration commit excludes the later documentation-only review-pack commit."
+  ]
+}

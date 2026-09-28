@@ -48,7 +48,7 @@ UI 可以之後再做，作為圖譜視覺化和管理介面。它不應該阻�
 
 目前已實作本機 stdio MCP、SQLite 持久化，以及 Project／Repository／Idea → Product Brief → Milestone → Spec → Ticket Revision → Implementation Brief／handoff → Observed Evidence／Implementation Result → Result Acceptance／Revocation 的主流程。預設使用 23 個本機 tools 與規劃／實作／驗收三個 skills；保留本機 resources、node trace 與三種 artifact 的 Markdown 匯出。最新已合併主分支的 full 相容模式共提供 46 個 tools 與六個 prompts；早先本機基線為 43 個，詳見 [精簡工作流](docs/22-skill-led-workflows.md)。
 
-2026-09-28 進度核對：核心基線 PR #99 已合併；新增篩選與沿用原交付的情境 A 已驗收，排序規格變更已完成影響檢查並產生待接受的新結果。跨對話唯讀接手已由 PR #115 完成；其餘修復及成本彙整進入工程收尾，產品接受留待使用者最後審查。原本機工作目錄與連線中 MCP 不應被視為已自動更新至主分支；完整來源與版本邊界見 [最新進度及剩餘工作](docs/validation/2026-09-28-project-status.md)。
+2026-09-28 本機工程收尾：跨對話唯讀接手、可重現 runtime 驗證、Milestone／Spec 進度摘要與隔離交付回放已交付，PR #124–#127 已合併；整合基線通過 1,002 項測試。正式清單結果待使用者最後接受、篩選保留依賴。請從 [最後審查包與剩餘事項](docs/validation/2026-09-28-local-closeout-review.md) 及 [自主決策紀錄](docs/validation/2026-09-28-closeout-decisions.md) 閱讀。原工作目錄與正在連線的 MCP 不因合併而自動更新；[早先進度核對](docs/validation/2026-09-28-project-status.md) 保留為歷史快照。
 
 新增需求時，重新確認仍適用的既有 Spec 可保留原 Ticket 與驗收；只有實際內容或引用來源變更才使交付失效。圖譜查詢同時提供依賴阻塞、證據缺口、待接受結果與下一步。同範圍技術計畫沿用使用者明確的實作授權，降低重複確認；詳細規則見 [階層規劃與來源版本](docs/23-planning-hierarchy.md)。
 
@@ -104,7 +104,7 @@ Plane integration 目前完成首次匯出的本機 preparation：註冊穩定 c
 
 先執行 `node scripts/install-skills.mjs` 安裝三個流程 skills，再 `pnpm build` 並重新啟動 MCP。可從 `$ai-product-plan`、`$ai-product-implement` 或 `$ai-product-accept` 進入；對已展示版本的明確對話同意即為核准。
 
-本機 MVP 已可試用，核心版本基線已合併。後續依 [新版 roadmap](docs/08-roadmap.md) 完成持續開發與跨對話接手驗證，再依實際缺口改善進度說明；其餘 Plane 同步與本機 UI 尚待具體交付安排。GitHub 操作由 agent 使用 `gh`，再以既有流程保存產品脈絡與交付證據；GitHub 專用 adapter 已移出必做清單，僅在實際流程暴露可重現缺口時另評估最小補強。舊版 client 或外部整合操作可設定 `AI_PRODUCT_GRAPH_MCP_PROFILE=full`，不會因此啟動外部 processor。
+本機 MVP 已可試用，本輪工程收尾及進度改善已交付，詳見 [roadmap](docs/08-roadmap.md)。最後產品審查仍需逐項判斷；其餘 Plane 同步與本機 UI 不在本輪。GitHub 操作由 agent 使用 `gh`，再以既有流程保存產品脈絡與交付證據；GitHub 專用 adapter 已移出必做清單，僅在實際流程暴露可重現缺口時另評估最小補強。舊版 client 或外部整合操作可設定 `AI_PRODUCT_GRAPH_MCP_PROFILE=full`，不會因此啟動外部 processor。
 
 第一個實作版本採用：
 
