@@ -17,6 +17,7 @@ export type ObservationRow = PlaneObservation & {
   snapshotProjectId: string | null; snapshotMappingId: string | null; snapshotItemId: string | null;
   contentJson: string | null; externalStatus: string | null; concurrencyToken: string | null;
   capturedAt: string | null; validScope: number;
+  revisionSpecificationJson: string; revisionTargetsJson: string; revisionMetadataJson: string;
   auditBeforeJson: string | null; auditAfterJson: string | null; auditMetadataJson: string;
 };
 export type DriftRow = Omit<ContentDrift, "diff"> & {
@@ -27,6 +28,7 @@ export const observationSelect = `SELECT o.snapshot_id AS snapshotId, o.project_
   o.source_ticket_revision_id AS sourceTicketRevisionId, o.actor_id AS actorId, o.audit_log_id AS auditLogId,
   s.project_id AS snapshotProjectId, s.mapping_id AS snapshotMappingId,
   s.external_work_item_id AS snapshotItemId, s.content_json AS contentJson,
+  r.specification_json AS revisionSpecificationJson, r.required_targets_json AS revisionTargetsJson, r.metadata_json AS revisionMetadataJson,
   a.before_summary_json AS auditBeforeJson, a.after_summary_json AS auditAfterJson, a.metadata_json AS auditMetadataJson,
   s.external_status AS externalStatus, s.concurrency_token AS concurrencyToken, s.captured_at AS capturedAt,
   CASE WHEN r.ticket_id = o.ticket_id AND r.project_id = o.project_id AND r.review_status = 'approved'
@@ -76,6 +78,10 @@ export function validateObservationEvidence(row: ObservationRow, mapping: Extern
       row.snapshotItemId !== mapping.externalWorkItemId || row.contentJson === null || row.capturedAt === null) invalid(mapping.id);
   for (const value of [row.auditBeforeJson, row.auditAfterJson, row.auditMetadataJson]) {
     if (value !== null) parseEvidenceJson(value, mapping.id);
+  }
+  // 僅解析 observation 明確引用的 revision；不比較目前規格、不重算已保存 diff。
+  for (const value of [row.revisionSpecificationJson, row.revisionTargetsJson, row.revisionMetadataJson]) {
+    parseEvidenceJson(value, mapping.id);
   }
   const content = parseEvidenceJson(row.contentJson, mapping.id);
   if (!content || typeof content !== "object" || Array.isArray(content)) invalid(mapping.id);

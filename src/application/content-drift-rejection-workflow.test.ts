@@ -119,6 +119,20 @@ it("ignores malformed unrelated observations and sync intents but verifies the e
   expect(() => reject("unrelated-drift")).toThrow(expect.objectContaining({ code: "CONFLICT" }));
 });
 
+it("does not inspect a newer unrelated revision when rejecting saved historical evidence", () => {
+  const captured = f.capture();
+  const newer = f.replaceRevision();
+  f.database.prepare("UPDATE ticket_revisions SET specification_json = '{', required_targets_json = '{', metadata_json = '{' WHERE id = ?")
+    .run(newer.id);
+  const before = f.allRows();
+
+  const result = reject(captured.drift!.id);
+
+  expect(result.evidence.drift).toEqual(captured.drift);
+  expect(result.evidence.observation.sourceTicketRevisionId).toBe(f.revision.id);
+  expect(f.allRows().ticket_revisions).toEqual(before.ticket_revisions);
+});
+
 it("allows marker-only drift rejection without changing external markers", () => {
   const captured = f.capture({ changes: [{ field: "external_source", expected: "other", observed: { present: true, value: "ai-product-graph" } }] });
   expect(reject(captured.drift!.id).resolution.record.kind).toBe("reject");
@@ -142,6 +156,9 @@ it.each([
   ["observation item", "UPDATE plane_observations SET external_work_item_id = 'other'"],
   ["observation ticket", "UPDATE plane_observations SET ticket_id = 'other'"],
   ["captured revision missing", "UPDATE plane_observations SET source_ticket_revision_id = 'other'"],
+  ["captured revision specification JSON", "UPDATE ticket_revisions SET specification_json = '{' WHERE id = (SELECT source_ticket_revision_id FROM plane_observations WHERE snapshot_id = 'captured')"],
+  ["captured revision targets JSON", "UPDATE ticket_revisions SET required_targets_json = '{' WHERE id = (SELECT source_ticket_revision_id FROM plane_observations WHERE snapshot_id = 'captured')"],
+  ["captured revision metadata JSON", "UPDATE ticket_revisions SET metadata_json = '{' WHERE id = (SELECT source_ticket_revision_id FROM plane_observations WHERE snapshot_id = 'captured')"],
   ["captured revision draft", "UPDATE ticket_revisions SET review_status = 'draft'"],
   ["captured revision owner", "UPDATE ticket_revisions SET ticket_id = 'other'"],
   ["observer actor", "UPDATE plane_observations SET actor_id = 'other'"],
