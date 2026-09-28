@@ -55,6 +55,19 @@ it("keeps an error manifest and never opens an inherited user database", async (
   }
 });
 
+it("rejects an artifact root symlink instead of preserving a mutable source link as its snapshot", async () => {
+  const parent = temporary(); const artifacts = join(parent, "build"); mkdirSync(artifacts);
+  writeFileSync(join(artifacts, "index.js"), "throw new Error('must not execute')");
+  const linked = join(parent, "linked-build"); symlinkSync(artifacts, linked);
+  const result = await verifyLocalRuntime({ repositoryRoot: resolve("."), artifactsDirectory: linked,
+    outputParent: parent, skillsDirectory: join(parent, "absent-skills") });
+  expect(result.status).toBe("failed");
+  expect(result.manifest.failure).toMatchObject({ stage: "snapshot", message: expect.stringContaining("directory symlink") });
+  expect(result.manifest.temporaryDatabasesRemoved).toBe(true);
+  expect(result.manifest.profiles).toBeUndefined();
+  expect(existsSync(join(dirname(result.manifestPath), "artifacts"))).toBe(false);
+});
+
 // 以小型 MCP fixture 驗證程序管理；真實 SQLite 與建置產物另由 verify:runtime 驗證。
 function fixtureSource(valid: boolean) {
   return `import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';

@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fingerprint, hash, observeSkills, observeSource } from "./runtime-files.js";
@@ -33,6 +33,8 @@ export async function verifyLocalRuntime(options: VerificationOptions) {
   };
   let stage = "snapshot";
   try {
+    // 根目錄也拒絕 symlink，避免 cpSync 留下仍指回可變來源的假複本。
+    if (lstatSync(artifactsDirectory).isSymbolicLink()) throw new Error("Artifact directory symlink is not supported; provide its real path.");
     const before = fingerprint(artifactsDirectory);
     if (!existsSync(join(artifactsDirectory, "index.js"))) throw new Error("Build artifacts must include index.js; run the build first.");
     cpSync(artifactsDirectory, snapshotDirectory, { recursive: true, errorOnExist: true });

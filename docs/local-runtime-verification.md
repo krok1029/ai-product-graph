@@ -13,6 +13,8 @@ npm run verify:runtime
 
 輸出一行 JSON，包含 `status` 與絕對 `manifestPath`。成功退出碼為 0，失敗為 1。可指定：
 
+建置產物根目錄與其內部檔案都不接受 symlink；請提供根目錄的真實路徑，確保保留的是實體複本。
+
 ```sh
 npm run verify:runtime -- --artifacts-directory /absolute/build/dist --skills-directory /absolute/codex/skills --output-parent /absolute/existing/output
 ```
