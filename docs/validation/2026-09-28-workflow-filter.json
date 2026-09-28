@@ -1,0 +1,1119 @@
+{
+  "schema_version": 1,
+  "run_id": "workflow-filter-20260928",
+  "kind": "scenario_a_completed_with_measurement_limits",
+  "issue": 102,
+  "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+  "status": "篩選 Result 已明確接受，三張 Ticket 均 done/current；原交付 identities 保留。成本與 MCP runtime 來源仍有下述量測限制。",
+  "runtime": {
+    "main_validation_base_commit": "8ecf43d697c3f7eefd01a10a9211b3254aa2c458",
+    "connected_mcp_process_commit": null,
+    "connected_mcp_profile": null,
+    "current_skill_hashes": null,
+    "limitation": "沿用 #101 的未驗證限制：已觀察 exposed tools/resources，但未固定並識別連線中 process 與 loaded module bytes；未重新採集 skills hashes，不將主專案工作目錄 commit 視為 MCP 執行版本；不能據此歸因版本效能或宣稱成本改善。",
+    "capability_observation": {
+      "observed_at": "2026-09-28 05:54:51 UTC",
+      "tool_names": [
+        "mcp__ai_product_graph__accept_implementation_result",
+        "mcp__ai_product_graph__add_idea",
+        "mcp__ai_product_graph__approve_product_brief_version",
+        "mcp__ai_product_graph__approve_ticket_revision",
+        "mcp__ai_product_graph__create_implementation_brief_draft",
+        "mcp__ai_product_graph__create_product_brief_draft",
+        "mcp__ai_product_graph__create_project",
+        "mcp__ai_product_graph__create_repository",
+        "mcp__ai_product_graph__create_ticket_draft_batch",
+        "mcp__ai_product_graph__create_ticket_revision_draft",
+        "mcp__ai_product_graph__export_markdown_draft",
+        "mcp__ai_product_graph__get_graph_context",
+        "mcp__ai_product_graph__get_idea",
+        "mcp__ai_product_graph__get_node_trace",
+        "mcp__ai_product_graph__get_project",
+        "mcp__ai_product_graph__get_ticket_context",
+        "mcp__ai_product_graph__get_work_context",
+        "mcp__ai_product_graph__list_projects",
+        "mcp__ai_product_graph__list_repositories",
+        "mcp__ai_product_graph__revoke_result_acceptance",
+        "mcp__ai_product_graph__save_planning_node",
+        "mcp__ai_product_graph__start_implementation",
+        "mcp__ai_product_graph__submit_work_result"
+      ],
+      "resource_templates": [
+        {
+          "server": "ai-product-graph",
+          "uriTemplate": "product-graph://projects/{projectId}",
+          "name": "project",
+          "title": "project",
+          "mimeType": "application/json"
+        },
+        {
+          "server": "ai-product-graph",
+          "uriTemplate": "product-graph://projects/{projectId}/brief",
+          "name": "project-brief",
+          "title": "project-brief",
+          "mimeType": "application/json"
+        },
+        {
+          "server": "ai-product-graph",
+          "uriTemplate": "product-graph://projects/{projectId}/graph",
+          "name": "project-graph",
+          "title": "project-graph",
+          "mimeType": "application/json"
+        },
+        {
+          "server": "ai-product-graph",
+          "uriTemplate": "product-graph://projects/{projectId}/tickets",
+          "name": "project-tickets",
+          "title": "project-tickets",
+          "mimeType": "application/json"
+        },
+        {
+          "server": "ai-product-graph",
+          "uriTemplate": "product-graph://tickets/{ticketId}",
+          "name": "ticket",
+          "title": "ticket",
+          "mimeType": "application/json"
+        },
+        {
+          "server": "ai-product-graph",
+          "uriTemplate": "product-graph://tickets/{ticketId}/context",
+          "name": "ticket-context",
+          "title": "ticket-context",
+          "mimeType": "application/json"
+        },
+        {
+          "server": "ai-product-graph",
+          "uriTemplate": "product-graph://nodes/{nodeId}",
+          "name": "node",
+          "title": "node",
+          "mimeType": "application/json"
+        },
+        {
+          "server": "ai-product-graph",
+          "uriTemplate": "product-graph://nodes/{nodeId}/trace",
+          "name": "node-trace",
+          "title": "node-trace",
+          "mimeType": "application/json"
+        }
+      ],
+      "process_and_entrypoint": {
+        "matching_processes": [
+          "51389 Mon Sep 28 13:48:19 2026     /Users/limingfeng/.nvm/versions/node/v20.19.0/bin/node /Users/limingfeng/Project/ai-product-graph/dist/index.js",
+          "93721 Mon Sep 28 10:01:29 2026     /Users/limingfeng/.nvm/versions/node/v20.19.0/bin/node /Users/limingfeng/Project/ai-product-graph/dist/index.js"
+        ],
+        "index_sha256": "c7c382cf6a8053310f9b05efb7a374377a4d243285e97c9c662e4a67c5b12e24"
+      },
+      "limits": "Two matching Node processes found. Cannot attribute current connected calls to one PID or prove loaded module bytes from current filesystem bytes. Exposed tools/resources match core profile. No live process restart."
+    }
+  },
+  "product_repository": {
+    "root_path": "/Users/limingfeng/Project/workflow-checklist",
+    "remote_url": null,
+    "user_decision": "只做主專案 PR，清單維持本機",
+    "accepted_baseline_commit": "e6c72bca5d5215f96418345593a8b5a3f327bc8e",
+    "baseline_manifest_sha256": "793e99e81f17afeb1ce72274f0a1e575b270b5918f04a5b5b6096e77528a550a",
+    "baseline_entries": [
+      {
+        "path": ".gitignore",
+        "kind": "file",
+        "sha256": "3ee2b1561e02ce97e389a8c7cc83d481c16af61a88f0e36186abf1e7e9f1ce98"
+      },
+      {
+        "path": "README.md",
+        "kind": "file",
+        "sha256": "5435db52566122dd71ab538bdffa22e5a839cc7efe8807e03c54e90129460a3e"
+      },
+      {
+        "path": "index.html",
+        "kind": "file",
+        "sha256": "3b9299dd8ee5775cc3d96cdb6080da5307a12e0bd7eeea93445ce8e5ae7abd0e"
+      },
+      {
+        "path": "package.json",
+        "kind": "file",
+        "sha256": "a55562566eac9af8259a12693b5bd16e22db6967c99374ff742c2207d96f160c"
+      },
+      {
+        "path": "server.mjs",
+        "kind": "file",
+        "sha256": "15a178d8676ec3f6cedd2fa4e40076621168b914b0786e71ff041b1d86d72e39"
+      },
+      {
+        "path": "src/app.js",
+        "kind": "file",
+        "sha256": "e79937987d4d936f1ee09dd64f82e512ab83ff4e1779185031359e540aa58cc4"
+      },
+      {
+        "path": "src/checklist.js",
+        "kind": "file",
+        "sha256": "e8a912ce17c0eb68d890859ecd66148fdeba43aa3403e74a40c310f0d79785ed"
+      },
+      {
+        "path": "styles.css",
+        "kind": "file",
+        "sha256": "130ce8a21e914d0f50e79f7f487d5ffd35f001a6b597ba355e668ab7515320ec"
+      },
+      {
+        "path": "test/checklist.test.js",
+        "kind": "file",
+        "sha256": "2f625b2b10b212db463a64f9053af8455c92a56e739e0c803c931dd4a3233977"
+      }
+    ],
+    "final_commit": "583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9",
+    "final_source_manifest": {
+      ".gitignore": "3ee2b1561e02ce97e389a8c7cc83d481c16af61a88f0e36186abf1e7e9f1ce98",
+      "README.md": "5435db52566122dd71ab538bdffa22e5a839cc7efe8807e03c54e90129460a3e",
+      "index.html": "f88ebfdf8860820d9a0a6da136c5ab31fd779d663f4bce9ef15fe42a28e08ce0",
+      "package.json": "a55562566eac9af8259a12693b5bd16e22db6967c99374ff742c2207d96f160c",
+      "server.mjs": "76dbbbc2908f642f994424fdfcad7646755bd7e9b2794933cdef9f6857b09b2c",
+      "src/app.js": "f035a3ad2b3567e60eaf2d39732cc3bc4c8d784c8ded53ae487c82c71b0ab852",
+      "src/checklist.js": "e8a912ce17c0eb68d890859ecd66148fdeba43aa3403e74a40c310f0d79785ed",
+      "src/filter.js": "a17842e7491260df16d68785d9cdd81a67ea3cd1a1abe7ca248912d456ab4057",
+      "styles.css": "a0b8f5693869765ac77423c3847fcd1192585e534061527d7824e0440f741dab",
+      "test/checklist.test.js": "2f625b2b10b212db463a64f9053af8455c92a56e739e0c803c931dd4a3233977",
+      "test/filter.test.js": "9237404a5dc61148c8acd72a85c7a9e1610ad614da6ce9bebec63eb9bf612bb9",
+      "test/server.test.js": "34d94d064c5bd1dace204a892919f7538303b3e6b3814f853fc659703e6b6cb4"
+    },
+    "final_source_manifest_verified_against_git_tree": true
+  },
+  "source_files": [
+    {
+      "file": "aAcceptedBaselineGraph.json",
+      "file_bytes_sha256": "ae613cb7bf5b53c56f815f124556180ddf91e9eefb5b44a8ff3fd45a9da3a5cf",
+      "response_data_sha256": "fde2fe7b9c5381397bfd7f13ae26456410d1103d251552fd541918ecc380561b"
+    },
+    {
+      "file": "aAfterApprovalGraph.json",
+      "file_bytes_sha256": "4b1e9e915bd3973ebbf11e7bf9d386dd48b44d15c6da8a8f9d922f14bf23177e",
+      "response_data_sha256": "cbf6d68e1d053fd0c19d93a13d5903c6d331207a7980b3bdae81e1e392e30a94"
+    },
+    {
+      "file": "aReconfirmM1.json",
+      "file_bytes_sha256": "aa50841a14de22e281681dca125b78dc2f5766f233e0f756f666343835a928f1",
+      "response_data_sha256": "3fa45af4a7bea6173ca738f39fce6327406d4af5c5a357790742f0be32ff9f03"
+    },
+    {
+      "file": "aReconfirmedChecklist.json",
+      "file_bytes_sha256": "4d9d44e84e563bf949ad8adfbb9e802e818962a23bf1e41bc2436ef6334d0c2d",
+      "response_data_sha256": "7799d24c5abd3046c1054a7a26b630078525f662036c7f7839cdcbc0d477cb88"
+    },
+    {
+      "file": "aReconfirmedGraph.json",
+      "file_bytes_sha256": "1459c3dea5b007d3d9bb84d98875fae09c5cc9fd2507d20b5068117ba45fe9cb",
+      "response_data_sha256": "03ea548d9fc449720771641593a52c5ec4b2f96a129f66263d870f0faa3b32c0"
+    },
+    {
+      "file": "aReconfirmedHelp.json",
+      "file_bytes_sha256": "1d46133f69fa830d3d18a4825e52ad28c02310ea17a319f1be8cd9f847bcfd11",
+      "response_data_sha256": "dff31e1fcf2945b05b520b294ef4aa03d4fcf5b20f7e7165946173d32da8aba6"
+    },
+    {
+      "file": "explicitAcceptanceRaw0.json",
+      "file_bytes_sha256": "1a11853ec17c8ba0e32b83f60acf57744bad01681ae6aa57520380a0f1c5b2e5",
+      "response_data_sha256": "6747a4b8918fbaebd36acfc3f96eb06aed19ccdcecee5d7052d52f656a3fe04e"
+    },
+    {
+      "file": "explicitAcceptanceRaw1.json",
+      "file_bytes_sha256": "1e7f8078c939e9410cfaf45f2dcb158058aa8cbc4824274dff9b8acb4cb02d82",
+      "response_data_sha256": "719302dcf1b7fb0b6f0f9046c18475c22bc5085e6b2b9ccdac8ec8a40324d921"
+    },
+    {
+      "file": "filter-browser.json",
+      "file_bytes_sha256": "0297054aa06153f90c0c7915d86604713c31d46f77c075eb5ae1a7a316dac862",
+      "observation_sha256": "e88d86b7b61721263a9a9778b23389a333b7888c32f3322f7e4a1c0f1b089918"
+    },
+    {
+      "file": "filter-review.json",
+      "file_bytes_sha256": "e445fcb7c716ea38b8e51914d2c4243a0e604c2d530591aba97552ca05523618",
+      "observation_sha256": "514458a5225485e9e032a75b4bebc1c1c57353523495a83590159712c4b4940d"
+    },
+    {
+      "file": "filter-source-manifest.json",
+      "file_bytes_sha256": "bcc0e561e604a538d28fd7f727182c42f826dd24fbd6ef0aa354533dd62ffc4a",
+      "observation_sha256": "ca99951c1c50fffe77c2f101fe95f565a43319a504bf54010df41cf24247b411"
+    },
+    {
+      "file": "filter-tests.json",
+      "file_bytes_sha256": "6fa78167cc9e9a7c3815f979e62825162f05d9239c1e8dd8290b7087ccbacc04",
+      "observation_sha256": "0897a849805d6dc79e83d681075cf26b9f313b28795a34df908f1b41e3a85153"
+    },
+    {
+      "file": "filterAcceptance.json",
+      "file_bytes_sha256": "67a87c3f71063da9963ed5a698ec7d3528d60d8f889014dc848349584055b3ad",
+      "response_data_sha256": "384f0a4094f68202c4f22cf9f6efcbed8470991d9df358e4f2f64ba971ef2635"
+    },
+    {
+      "file": "filterApprovalRaw.json",
+      "file_bytes_sha256": "7ad8cfe5a692176296db3be3b71a7a3ef59981621a852cc9fb639496c6a445a0",
+      "response_data_sha256": "099bc390686f6035ebb064ba28d651e28803190d8920e4c0944ebb84a29da411"
+    },
+    {
+      "file": "filterBriefDraftRaw.json",
+      "file_bytes_sha256": "ea204c9958e4e840a6a0a2e7b9a25fd0a73a2708f2ccf55735ad0dd2ea6d2b8c",
+      "response_data_sha256": "d05d5a3900e3a2cdfdb6205322570c28557bb54abf7a83946d4e31b9fe3fcd43"
+    },
+    {
+      "file": "filterFinalGraph.json",
+      "file_bytes_sha256": "f1a9f8417164060e22391912d59102a87c1afd2d01c142955c8f2932c22cdc5e",
+      "response_data_sha256": "96ec9e3ca1c70e5f86ce6a2931fdded0bac6864e1053882afb7705d072cea552"
+    },
+    {
+      "file": "filterIdeaRaw.json",
+      "file_bytes_sha256": "7cc6248b3563b5675c60d58f16653f8bcfdf29f0a3ecdffc85a4e726d045e98d",
+      "response_data_sha256": "29266f58176bee1b9db84bfb01943ef731422505be2c2c6c8e4cd6004ca07ff6"
+    },
+    {
+      "file": "filterImplementationDraft.json",
+      "file_bytes_sha256": "49477574438c0a60d4f2beaa8d8407af9788927c7f8d19ec631e21d037900742",
+      "response_data_sha256": "4387a60aa19c3186d2b1727331deabd893ce2540c53dfea8dab27bce426acc73"
+    },
+    {
+      "file": "filterMilestone.json",
+      "file_bytes_sha256": "a5e0db3f9121a0be6ee4fede10ebb0ccaa4137bdb214942f80fc5c4f0c70555b",
+      "response_data_sha256": "59c1ae8b591383537ac62adaa96a313083522241d542aa57a8f9b7e41a5e4d1b"
+    },
+    {
+      "file": "filterResultRaw.json",
+      "file_bytes_sha256": "f159a73680df03e1ea2e0c78a762f10c909de9af41316806a1acc7bddcdd0ecc",
+      "response_data_sha256": "0b1836f001e0dfe7d85bac4c525d6166c2f8d673f2fc7d7087d9d00042046307"
+    },
+    {
+      "file": "filterSpec.json",
+      "file_bytes_sha256": "d3dd4d37f69023d18a4140db111161e1b43aaf91373504646f4279d67d4d7ef1",
+      "response_data_sha256": "9a1e0ad67fcd3b6cbe87a3602bfa8bab4961d24583abc460af132255bdf34d4a"
+    },
+    {
+      "file": "filterStart.json",
+      "file_bytes_sha256": "fef55949d8eb9f99b445e8ad0e2cb1722fa73160eb4460eff096747a680cb5f6",
+      "response_data_sha256": "a690bfc464cbb2de8b957c17f5d158a023d8341630d21251e17b8eb3954f192a"
+    },
+    {
+      "file": "filterTicketApproval.json",
+      "file_bytes_sha256": "ca343892780905a6e83d762dea2c5f0741e1f8b52cd4aff3ef9d69114de537b2",
+      "response_data_sha256": "15b24754c41a8288ba005e436d79940691efc65a8b18a9c95afa3a23cafa7009"
+    },
+    {
+      "file": "filterTicketDraftRaw.json",
+      "file_bytes_sha256": "8e3160a460d0a795694598d94b07c55b404d7bd7e2a96a92d2ef31119caa8f9a",
+      "response_data_sha256": "1b05a0fa09b07d4dfb632c9551dde6b04bac3bce1c651176cef52e0269bed558"
+    },
+    {
+      "file": "filterWorkContextBefore.json",
+      "file_bytes_sha256": "8155b304426006ec8c43ac1be7e80a98d1205779414eafcf1c4f4e0feb1eee2a",
+      "response_data_sha256": "25011c3209e23af1d65662d83af49abd63df7dec5591803d5422609a7c27ab28"
+    },
+    {
+      "file": "runtime-observation.json",
+      "file_bytes_sha256": "42ecda3e479b748200816397cb06e79db4df5d55da90e9d02a045aeaeb13b917",
+      "observation_sha256": "a17a9e45bac3f20ea3f54e81ce79815437223ff51348df6cd7456f2993016021"
+    }
+  ],
+  "product_brief_change": {
+    "before_version_id": "01M3JXW0DN8A9EYA4GA7F516A7",
+    "draft_version_id": "01M3K8XHPM0PX5T79GHKCBBP04",
+    "approved_version_id": "01M3K8XHPM0PX5T79GHKCBBP04",
+    "draft_created_at": "2026-09-28T05:48:31.828Z",
+    "approved_at": "2026-09-28T05:49:47.475Z",
+    "draft_content_sha256": "c8380c31a11a8ee786b05f6ddc04c4236e7ef8c787419e7ca9f2f7d0ca352c9c",
+    "approved_content_sha256": "c8380c31a11a8ee786b05f6ddc04c4236e7ef8c787419e7ca9f2f7d0ca352c9c",
+    "user_decision_reference": "call_7OpdwuqjTPfPS7bduxg5VoJj[0]：同意這份 v2 範圍"
+  },
+  "snapshots": {
+    "aAcceptedBaselineGraph": {
+      "source_file": "aAcceptedBaselineGraph.json",
+      "graph_revision_id": "01M3JY3JVH3D2EPE6ZNAM7H071",
+      "planning": {
+        "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+        "stale_node_ids": [],
+        "affected_ticket_ids": []
+      },
+      "delivery_summary": {
+        "total": 2,
+        "done": 2,
+        "stale": 0,
+        "blocked": 0,
+        "awaiting_acceptance": 0
+      },
+      "tickets": [
+        {
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "delivery_status": "done",
+          "source_freshness": "current",
+          "source_problem": null,
+          "next_action": "done"
+        },
+        {
+          "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+          "delivery_status": "done",
+          "source_freshness": "current",
+          "source_problem": null,
+          "next_action": "done"
+        }
+      ]
+    },
+    "aAfterApprovalGraph": {
+      "source_file": "aAfterApprovalGraph.json",
+      "graph_revision_id": "01M3K8ZVJNDJ84H6P8BZ6VEQJF",
+      "planning": {
+        "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+        "stale_node_ids": [
+          "01M3JY37R2X5SCFQY52DDYNN2Y",
+          "01M3JY3DHYFY20WX92JYBQJNPG",
+          "01M3JY3JVHS4VMMPRCJMW4SPWY"
+        ],
+        "affected_ticket_ids": [
+          "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "01M3JY4YKBVSWSNGTFWWV5Y2DJ"
+        ]
+      },
+      "delivery_summary": {
+        "total": 2,
+        "done": 2,
+        "stale": 2,
+        "blocked": 0,
+        "awaiting_acceptance": 0
+      },
+      "tickets": [
+        {
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "delivery_status": "done",
+          "source_freshness": "stale",
+          "source_problem": {
+            "reason": "planning_source_unreconciled",
+            "details": {
+              "ticketId": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+              "ticketRevisionId": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+              "graphNodeId": "01M3JY3DHYFY20WX92JYBQJNPG"
+            }
+          },
+          "next_action": "reconcile_sources"
+        },
+        {
+          "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+          "delivery_status": "done",
+          "source_freshness": "stale",
+          "source_problem": {
+            "reason": "planning_source_unreconciled",
+            "details": {
+              "ticketId": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+              "ticketRevisionId": "01M3JY4YKBTV4V7YBZR77TXXKP",
+              "graphNodeId": "01M3JY3JVHS4VMMPRCJMW4SPWY"
+            }
+          },
+          "next_action": "reconcile_sources"
+        }
+      ]
+    },
+    "aReconfirmedGraph": {
+      "source_file": "aReconfirmedGraph.json",
+      "graph_revision_id": "01M3K90GECWC8DRTJNY3ZGZX46",
+      "planning": {
+        "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+        "stale_node_ids": [],
+        "affected_ticket_ids": []
+      },
+      "delivery_summary": {
+        "total": 2,
+        "done": 2,
+        "stale": 0,
+        "blocked": 0,
+        "awaiting_acceptance": 0
+      },
+      "tickets": [
+        {
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "delivery_status": "done",
+          "source_freshness": "current",
+          "source_problem": null,
+          "next_action": "done"
+        },
+        {
+          "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+          "delivery_status": "done",
+          "source_freshness": "current",
+          "source_problem": null,
+          "next_action": "done"
+        }
+      ]
+    },
+    "filterFinalGraph": {
+      "source_file": "filterFinalGraph.json",
+      "graph_revision_id": "01M3K932Y50ZPDAT76R7SHYRPW",
+      "planning": {
+        "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+        "stale_node_ids": [],
+        "affected_ticket_ids": []
+      },
+      "delivery_summary": {
+        "total": 3,
+        "done": 3,
+        "stale": 0,
+        "blocked": 0,
+        "awaiting_acceptance": 0
+      },
+      "tickets": [
+        {
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "title": "完成本機待辦清單的新增、完成切換與保存",
+          "delivery_status": "done",
+          "approved_revision_id": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [],
+          "blocking_dependency_ids": [],
+          "next_action": "done",
+          "targets": [
+            {
+              "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3JZTV0R0RYXD1ZF6CAVRVB3",
+              "accepted_result_id": "01M3K093HMFYYMCPV98D747EV2",
+              "pending_result_id": null,
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        {
+          "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+          "title": "提供可獨立使用的操作說明與資料限制",
+          "delivery_status": "done",
+          "approved_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [],
+          "blocking_dependency_ids": [],
+          "next_action": "done",
+          "targets": [
+            {
+              "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+              "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+              "pending_result_id": null,
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        {
+          "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+          "title": "在本機清單加入完成狀態篩選",
+          "delivery_status": "done",
+          "approved_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "blocking_dependency_ids": [],
+          "next_action": "done",
+          "targets": [
+            {
+              "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3K9CMW3NQTY07S5BK4D1HHB",
+              "accepted_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+              "pending_result_id": null,
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "unchanged_planning_comparison": [
+    {
+      "id": "01M3JY37R2X5SCFQY52DDYNN2Y",
+      "type": "milestone",
+      "title": "M1：可用且可驗收的本機清單",
+      "before_content_revision_id": "01M3JY37R234AMMBHC1H4T2FKA",
+      "after_content_revision_id": "01M3JY37R234AMMBHC1H4T2FKA",
+      "before_content_sha256": "86cb70f7b34cd1632e2a596bf53333347b621f737d4b01dbf80eaf3d09033107",
+      "after_content_sha256": "86cb70f7b34cd1632e2a596bf53333347b621f737d4b01dbf80eaf3d09033107",
+      "before_semantic_sha256": "ceeedf3ef42025e74a33dbd341267d4b9ef36b11d8427fc8d7e298fa4d3825ea",
+      "after_semantic_sha256": "ceeedf3ef42025e74a33dbd341267d4b9ef36b11d8427fc8d7e298fa4d3825ea",
+      "before_source_parent_revision_id": "01M3JY14RY1XZQRTVDFHQ95MYT",
+      "after_source_parent_revision_id": "01M3K8ZVJNDJ84H6P8BZ6VEQJF",
+      "before_last_changed_in_graph_revision_id": "01M3JY37R234AMMBHC1H4T2FKA",
+      "after_last_changed_in_graph_revision_id": "01M3K90GECWC8DRTJNY3ZGZX46",
+      "saved_during_reconfirmation": true,
+      "final_content_revision_id": "01M3JY37R234AMMBHC1H4T2FKA",
+      "final_content_sha256": "86cb70f7b34cd1632e2a596bf53333347b621f737d4b01dbf80eaf3d09033107",
+      "final_semantic_sha256": "ceeedf3ef42025e74a33dbd341267d4b9ef36b11d8427fc8d7e298fa4d3825ea"
+    },
+    {
+      "id": "01M3JY3DHYFY20WX92JYBQJNPG",
+      "type": "spec",
+      "title": "待辦清單操作與本機保存",
+      "before_content_revision_id": "01M3JY3DHY9YTTVFR8S29Y7S8K",
+      "after_content_revision_id": "01M3JY3DHY9YTTVFR8S29Y7S8K",
+      "before_content_sha256": "32ca80f896fa972c6b3b275ca17bbee3880099ef8db7af4847a20a7602999112",
+      "after_content_sha256": "32ca80f896fa972c6b3b275ca17bbee3880099ef8db7af4847a20a7602999112",
+      "before_semantic_sha256": "513e766da17b9ec4cf6c924f032f3e169bb8ae81eada94412faf5a3f79bb5f2a",
+      "after_semantic_sha256": "513e766da17b9ec4cf6c924f032f3e169bb8ae81eada94412faf5a3f79bb5f2a",
+      "before_source_parent_revision_id": "01M3JY37R234AMMBHC1H4T2FKA",
+      "after_source_parent_revision_id": "01M3JY37R234AMMBHC1H4T2FKA",
+      "before_last_changed_in_graph_revision_id": "01M3JY3DHY9YTTVFR8S29Y7S8K",
+      "after_last_changed_in_graph_revision_id": "01M3JY3DHY9YTTVFR8S29Y7S8K",
+      "saved_during_reconfirmation": false,
+      "final_content_revision_id": "01M3JY3DHY9YTTVFR8S29Y7S8K",
+      "final_content_sha256": "32ca80f896fa972c6b3b275ca17bbee3880099ef8db7af4847a20a7602999112",
+      "final_semantic_sha256": "513e766da17b9ec4cf6c924f032f3e169bb8ae81eada94412faf5a3f79bb5f2a"
+    },
+    {
+      "id": "01M3JY3JVHS4VMMPRCJMW4SPWY",
+      "type": "spec",
+      "title": "獨立操作說明與資料限制",
+      "before_content_revision_id": "01M3JY3JVH3D2EPE6ZNAM7H071",
+      "after_content_revision_id": "01M3JY3JVH3D2EPE6ZNAM7H071",
+      "before_content_sha256": "5a9ab0be0ed4208511011396c41154f723100b7b2eef31e02c23396a0330d87a",
+      "after_content_sha256": "5a9ab0be0ed4208511011396c41154f723100b7b2eef31e02c23396a0330d87a",
+      "before_semantic_sha256": "0a7d940e721fa4ab40616f89fbf6e2cc96bcd782a05f7b1acbd233436e7154d2",
+      "after_semantic_sha256": "0a7d940e721fa4ab40616f89fbf6e2cc96bcd782a05f7b1acbd233436e7154d2",
+      "before_source_parent_revision_id": "01M3JY37R234AMMBHC1H4T2FKA",
+      "after_source_parent_revision_id": "01M3JY37R234AMMBHC1H4T2FKA",
+      "before_last_changed_in_graph_revision_id": "01M3JY3JVH3D2EPE6ZNAM7H071",
+      "after_last_changed_in_graph_revision_id": "01M3JY3JVH3D2EPE6ZNAM7H071",
+      "saved_during_reconfirmation": false,
+      "final_content_revision_id": "01M3JY3JVH3D2EPE6ZNAM7H071",
+      "final_content_sha256": "5a9ab0be0ed4208511011396c41154f723100b7b2eef31e02c23396a0330d87a",
+      "final_semantic_sha256": "0a7d940e721fa4ab40616f89fbf6e2cc96bcd782a05f7b1acbd233436e7154d2"
+    }
+  ],
+  "preserved_delivery_comparison": [
+    {
+      "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+      "spec_id": "01M3JY3DHYFY20WX92JYBQJNPG",
+      "before": {
+        "ticket_revision_id": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+        "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3JZTV0R0RYXD1ZF6CAVRVB3",
+        "accepted_result_id": "01M3K093HMFYYMCPV98D747EV2",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      },
+      "after": {
+        "ticket_revision_id": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+        "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3JZTV0R0RYXD1ZF6CAVRVB3",
+        "accepted_result_id": "01M3K093HMFYYMCPV98D747EV2",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      },
+      "initial_result_acceptance": {
+        "accepted_at": "2026-09-28T05:42:27.446Z",
+        "actor_id": "00000000000000000000000001",
+        "id": "01M3K8JDVSHXTB7G39EMDZD97E",
+        "implementation_result_id": "01M3K093HMFYYMCPV98D747EV2",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB"
+      },
+      "post_reconfirmation_accepted_result": {
+        "id": "01M3K093HMFYYMCPV98D747EV2",
+        "review_status": "approved",
+        "lifecycle_status": "active",
+        "updated_at": "2026-09-28T05:42:27.446Z"
+      },
+      "acceptance_verification": "初版 acceptance 回應保存不可變 Acceptance→Result identity；後續 work context 仍指向同一 active approved Result，但不回傳 Acceptance ID，未另查歷史 Acceptance。",
+      "final": {
+        "ticket_revision_id": "01M3JY4YK8HSMSNNS7HAXJ21A7",
+        "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3JZTV0R0RYXD1ZF6CAVRVB3",
+        "accepted_result_id": "01M3K093HMFYYMCPV98D747EV2",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      }
+    },
+    {
+      "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+      "spec_id": "01M3JY3JVHS4VMMPRCJMW4SPWY",
+      "before": {
+        "ticket_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+        "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+        "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      },
+      "after": {
+        "ticket_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+        "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+        "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      },
+      "initial_result_acceptance": {
+        "accepted_at": "2026-09-28T05:42:32.319Z",
+        "actor_id": "00000000000000000000000001",
+        "id": "01M3K8JJM0HS7NDJ2MTN0YPQMD",
+        "implementation_result_id": "01M3K097JXX36TDET2SCJ2F738",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB"
+      },
+      "post_reconfirmation_accepted_result": {
+        "id": "01M3K097JXX36TDET2SCJ2F738",
+        "review_status": "approved",
+        "lifecycle_status": "active",
+        "updated_at": "2026-09-28T05:42:32.319Z"
+      },
+      "acceptance_verification": "初版 acceptance 回應保存不可變 Acceptance→Result identity；後續 work context 仍指向同一 active approved Result，但不回傳 Acceptance ID，未另查歷史 Acceptance。",
+      "final": {
+        "ticket_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+        "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+        "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+        "pending_result_id": null,
+        "criteria_without_evidence": [],
+        "unsatisfied_criterion_ids": []
+      }
+    }
+  ],
+  "reconfirmation": {
+    "operation": "save_planning_node",
+    "source_file": "aReconfirmM1.json",
+    "node_id": "01M3JY37R2X5SCFQY52DDYNN2Y",
+    "graph_revision": {
+      "id": "01M3K90GECWC8DRTJNY3ZGZX46",
+      "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+      "graph_draft_batch_id": "01M3K90GEA2R57WYAE18GTVAG4",
+      "source_product_brief_version_id": "01M3K8XHPM0PX5T79GHKCBBP04",
+      "sequence_number": 6,
+      "is_noop_reconciliation": false,
+      "reconciliation_summary": "Save milestone: M1：可用且可驗收的本機清單",
+      "created_at": "2026-09-28T05:50:08.844Z"
+    },
+    "spec_save_count_in_this_reconfirmation": 0
+  },
+  "new_filter_planning": {
+    "milestone_id": "01M3K9230M6CAH3C9WWPXM5KFH",
+    "milestone_created_at": "2026-09-28T05:51:00.627Z",
+    "spec_id": "01M3K932Y5QHE8WGSKQG4R0HC3",
+    "spec_content_revision_id": "01M3K932Y50ZPDAT76R7SHYRPW",
+    "spec_created_at": "2026-09-28T05:51:33.316Z",
+    "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+    "ticket_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+    "ticket_revision_status": "approved",
+    "ticket_created_at": "2026-09-28T05:51:59.909Z",
+    "dependencies": [
+      "01M3JY4YK7TQWT4A4X03W2CF4Y"
+    ],
+    "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+    "implementation_brief_id": "01M3K9CMW3NQTY07S5BK4D1HHB",
+    "result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+    "acceptance_id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+    "ticket_approved_at": "2026-09-28T05:55:45.907Z",
+    "ticket_draft_specification_sha256": "dc86f9fcd9dc8e435d3ed233eecfef68ad50fba71521db64841440c60d4f8af2",
+    "ticket_approved_specification_sha256": "dc86f9fcd9dc8e435d3ed233eecfef68ad50fba71521db64841440c60d4f8af2",
+    "implementation_brief_approved_at": "2026-09-28T05:56:57.674Z",
+    "implementation_brief_status": "approved",
+    "repository_context_snapshot_id": "01M3K9CMW3VX4P9RS86M51HNDB",
+    "repository_baseline_commit": "e6c72bca5d5215f96418345593a8b5a3f327bc8e",
+    "result_status": "approved",
+    "result_submission_disposition": "reviewable",
+    "result_created_at": "2026-09-28T06:05:21.452Z",
+    "accepted_at": "2026-09-28T06:06:50.883Z"
+  },
+  "costs": {
+    "scenario_start_utc": null,
+    "scenario_end_utc": null,
+    "total_elapsed_seconds": null,
+    "user_wait_seconds": null,
+    "environment_wait_seconds": null,
+    "effective_work_seconds": null,
+    "decision_total": null,
+    "repeat_confirmation_total": null,
+    "human_correction_total": null,
+    "duplicate_artifact_total": null,
+    "limitation": "原始回應只含 domain event 時間，未保存各查詢或使用者訊息 UTC 起訖；不將 artifact timestamp 差當作工作或等待時間。",
+    "documented_decisions": [
+      {
+        "kind": "product_brief_v2_approval",
+        "reference": "call_7OpdwuqjTPfPS7bduxg5VoJj[0]",
+        "answer": "同意這份 v2 範圍",
+        "server_event_time": "2026-09-28T05:49:47.475Z"
+      },
+      {
+        "kind": "filter_ticket_approval",
+        "reference": "已展示精確 Ticket Revision 的使用者核准；server 回應 filterTicketApproval.json",
+        "ticket_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+        "server_event_time": "2026-09-28T05:55:45.907Z"
+      },
+      {
+        "kind": "filter_result_acceptance",
+        "reference": "使用者明確接受已展示的篩選 Result；server 回應 filterAcceptance.json",
+        "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+        "server_event_time": "2026-09-28T06:06:50.883Z"
+      }
+    ],
+    "failed_operation_notes": [
+      {
+        "operation": "create_product_brief_draft",
+        "reason": "sourceIdea mismatch，改用原 Product Brief 的 source_idea_id 後建立 v2。",
+        "result": "對話工具紀錄指出一次 conflict、未建立 Brief artifact；新 Idea 留作提案來源，不是重複 Brief。未附失敗原始回應，不視為機器核對的失敗呼叫總量。",
+        "source": "主 agent 協調紀錄",
+        "error_code": "CONFLICT",
+        "error_message": "Product Brief is linked to a different source Idea.",
+        "expected_source_idea_id": "01M3JXT488Z3CXGG5Y17RSYWD6",
+        "actual_source_idea_id": "01M3K8WDR9P5410WSAKPRJT019"
+      }
+    ],
+    "prerequisite_decisions": [
+      {
+        "kind": "baseline_acceptance",
+        "reference": "call_2y9739UO1MuG4heUgItTBFIF[0]",
+        "answer": "接受清單與操作說明兩份結果",
+        "server_event_times": [
+          "2026-09-28T05:42:27.446Z",
+          "2026-09-28T05:42:32.319Z"
+        ]
+      },
+      {
+        "kind": "local_product_repository",
+        "reference": "call_2y9739UO1MuG4heUgItTBFIF[1]",
+        "answer": "只做主專案 PR，清單維持本機"
+      }
+    ],
+    "implementation_review_rework": {
+      "known_findings": 1,
+      "description": "兩名 reviewer 同時指出相同缺少資源路由的 P1，作為一個已知問題記錄；修正耗時未量測。",
+      "human_correction": false
+    },
+    "observed_artifact_interval": {
+      "from_event": "Product Brief v2 draft created",
+      "from_utc": "2026-09-28T05:48:31.828Z",
+      "to_event": "filter Result accepted",
+      "to_utc": "2026-09-28T06:06:50.883Z",
+      "elapsed_seconds": 1099.055,
+      "interpretation": "僅為兩個已知 domain event 間隔，未涵蓋最初情境請求／完整準備與末次查詢，不等於情境總耗時、有效工作或等待時間。"
+    }
+  },
+  "acceptance_criteria": [
+    {
+      "criterion": 1,
+      "status": "observed",
+      "evidence": "explicitAcceptanceRaw0/1 + preserved_delivery_comparison"
+    },
+    {
+      "criterion": 2,
+      "status": "observed",
+      "evidence": "Brief v2 與篩選 Ticket 精確版本均已 approved；Spec/Milestone 已保存"
+    },
+    {
+      "criterion": 3,
+      "status": "observed",
+      "evidence": "三個 graph snapshots；M1 同內容保存已足夠，無需改寫 Specs"
+    },
+    {
+      "criterion": 4,
+      "status": "observed_at_completion",
+      "evidence": "filterFinalGraph 三張 done/current；原兩組 identities 與三個規劃內容版本/hash 比對仍相同"
+    },
+    {
+      "criterion": 5,
+      "status": "observed_with_measurement_limits",
+      "evidence": "篩選獨立 Ticket 已接受，7 satisfied outcomes/no waiver；tests/browser 實際起訖與 domain event 間隔已保存，但完整成本與 runtime 來源未量測"
+    }
+  ],
+  "implementation_evidence": {
+    "tests": {
+      "source_file": "filter-tests.json",
+      "command": "node --test",
+      "node": "20.19.0",
+      "started_at": "2026-09-28T06:01:51.174255+00:00",
+      "finished_at": "2026-09-28T06:01:51.352573+00:00",
+      "exit_code": 0,
+      "passed": 17,
+      "failed": 0,
+      "test_names": [
+        "初始空清單不主動写入資料",
+        "拒絕空白標題且不寫入",
+        "標題去除前後空白；標記字元原樣保留且預設未完成",
+        "同毫秒加入仍新到舊；切換兩次不改身份順序或其他項目",
+        "時鐘倒退不改變新增先後",
+        "未知身份不改資料也不寫入",
+        "重新建立使用同一儲存的清單後身份文字順序及狀態相同",
+        "寫入失敗保留新增與切換的記憶體內容，後續成功操作保存完整清單",
+        "損壞或不支援的資料禁止後續新增及切換，不覆蓋原資料",
+        "瀏覽器拒絕讀取時鎖定寫入",
+        "外部修改 snapshot 不會繞過保存與狀態規則",
+        "三種篩選保留原有新到舊順序，切換檢視不改資料也不寫入",
+        "完成與取消後立即移出目前篩選，其他項目順序不變",
+        "已完成檢視內新增的未完成項目仍保存，重讀後身份順序與狀態完整",
+        "空資料及無符合項目回傳空集合，不改原集合",
+        "保存失敗的記憶體項目仍可篩選，篩選不嘗試覆寫原資料",
+        "實際伺服器提供入口的全部模組，並保持私有檔案不可存取"
+      ]
+    },
+    "browser": {
+      "kind": "manual_desktop_browser_verification",
+      "tool": "cua_repl",
+      "origin": "http://127.0.0.1:4178/",
+      "started_at": "2026-09-28T06:02:47.228Z",
+      "finished_at": "2026-09-28T06:03:45.005Z",
+      "commit": "583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9",
+      "steps": [
+        "重新載入後全部選中、原2項顯示且原資料仍在",
+        "未完成顯示1項；勾選後移出並顯示未完成空狀態，焦點回未完成按鈕",
+        "Tab與空白鍵切換已完成顯示2項，原新到舊順序",
+        "已完成檢視新增「篩選驗證｜新增待辦」：不顯示未完成新項、狀態區告知可切换查看",
+        "取消完成即時移出；全部取消時顯示已完成空狀態，焦點留已完成按鈕",
+        "切回全部新項在前、原2項依原序在後；還原初版兩項原完成狀態",
+        "從已完成重新整理後回全部，DOM資料身份／文字／順序／完成狀態前後JSON完全相等",
+        "操作說明展開及Enter收合，DOM項目JSON前後相同",
+        "桌面畫面檢視完成，選中按鈕有底線／色彩，焦點框清楚"
+      ],
+      "original_item_ids": [
+        "a4208c58-46f2-415e-9e05-4dc7d3536fde",
+        "f08ec827-36c9-424f-843e-7f91baf18dad"
+      ],
+      "new_item_id": "97b5728a-0b68-4a91-b5fa-12c26cd2aa7d",
+      "assertions": {
+        "identity_order_status_preserved": true,
+        "original_items_preserved": true,
+        "help_did_not_change_items": true
+      },
+      "limitations": [
+        "瀏覽器未破壞持久資料來注入讀寫錯誤；錯誤邊界由Node測試覆蓋",
+        "本紀錄為已執行工具觀察的整理，並非自動化E2E程式"
+      ]
+    },
+    "review": {
+      "base": "e6c72bca5d5215f96418345593a8b5a3f327bc8e",
+      "initial_head": "c4a69d772fb83dab719859db8786935825fc0e67",
+      "final_head": "583e3019aeaf770d7b2e3ddcd6adbe0b7a8cddc9",
+      "review_source": "collaboration agent reports in this conversation",
+      "initial_findings": [
+        {
+          "priority": "P1",
+          "finding": "New filter.js static import absent from server asset allowlist, app entrypoint fails to load.",
+          "reported_by": [
+            "filter_spec_review",
+            "filter_standards_review"
+          ]
+        }
+      ],
+      "fix": "Explicit filter.js asset route and actual loopback server test traversing imported module graph; private paths and POST remain 404.",
+      "final_reviews": [
+        {
+          "agent": "filter_spec_review",
+          "findings": 0,
+          "tests_passed": 17
+        },
+        {
+          "agent": "filter_standards_review",
+          "findings": 0,
+          "tests_passed": 17
+        }
+      ],
+      "product_acceptance": "not implied by reviews"
+    },
+    "submission": {
+      "implementation_result": {
+        "id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "implementation_brief_id": "01M3K9CMW3NQTY07S5BK4D1HHB",
+        "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+        "ticket_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+        "supersedes_implementation_result_id": null,
+        "result": {
+          "summary": "已完成本機三種完成狀態篩選，保留原排序與持久資料，重整回全部。17項測試、桌面實測與獨立Spec/Standards複查通過；未完成事項為零，等待使用者接受。",
+          "unfinished_items": [],
+          "submission_disposition": "reviewable"
+        },
+        "review_status": "draft",
+        "lifecycle_status": "active",
+        "submission_disposition": "reviewable",
+        "stale_at_submission": false,
+        "stale_reasons": [],
+        "created_at": "2026-09-28T06:05:21.452Z",
+        "updated_at": "2026-09-28T06:05:21.452Z",
+        "archived_at": null
+      },
+      "observed_evidence_ids": [
+        "01M3K9WBN8BTARTQ6WWV0VAWT3",
+        "01M3K9WBNBGEJTCX5ESEC94N2A",
+        "01M3K9WBNCXYVPE5RHMPK8Q3DW"
+      ],
+      "criterion_verdicts": [
+        {
+          "id": "01M3K9WBNDR07ZJT2HR4F127X2",
+          "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac1",
+          "verdict": "satisfied",
+          "reason": "初次載入及從已完成重新整理後全部選中；Tab/空白鍵可切換，選取狀態有明確提示。",
+          "evidence_ids": [
+            "01M3K9WBNBGEJTCX5ESEC94N2A"
+          ],
+          "created_at": "2026-09-28T06:05:21.452Z"
+        },
+        {
+          "id": "01M3K9WBNDKP1E6GH0A1TPC9B1",
+          "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac2",
+          "verdict": "satisfied",
+          "reason": "實測未完成／已完成正確集合，切回全部新項在前；規則測試驗證混合狀態排序。",
+          "evidence_ids": [
+            "01M3K9WBNBGEJTCX5ESEC94N2A",
+            "01M3K9WBN8BTARTQ6WWV0VAWT3"
+          ],
+          "created_at": "2026-09-28T06:05:21.452Z"
+        },
+        {
+          "id": "01M3K9WBND6CB93VB0RZV3437X",
+          "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac3",
+          "verdict": "satisfied",
+          "reason": "勾選或取消時項目即時移出，兩種空狀態均觀察；焦點回目前篩選控制。",
+          "evidence_ids": [
+            "01M3K9WBNBGEJTCX5ESEC94N2A"
+          ],
+          "created_at": "2026-09-28T06:05:21.452Z"
+        },
+        {
+          "id": "01M3K9WBNEPHNMWE2N1G876S43",
+          "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac4",
+          "verdict": "satisfied",
+          "reason": "已完成檢視新增未完成項目後隱藏，切回全部可見，重整仍存在且身份相同。",
+          "evidence_ids": [
+            "01M3K9WBNBGEJTCX5ESEC94N2A"
+          ],
+          "created_at": "2026-09-28T06:05:21.452Z"
+        },
+        {
+          "id": "01M3K9WBNEZA2ZBSJ64P4RFPXE",
+          "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac5",
+          "verdict": "satisfied",
+          "reason": "規則測試涵蓋空集合、寫入失敗記憶體篩選與既有讀取損壞保護；桌面實測兩種篩選空狀態。",
+          "evidence_ids": [
+            "01M3K9WBN8BTARTQ6WWV0VAWT3"
+          ],
+          "created_at": "2026-09-28T06:05:21.452Z"
+        },
+        {
+          "id": "01M3K9WBNEVPGA7Y3DJXQ7PK4N",
+          "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac6",
+          "verdict": "satisfied",
+          "reason": "原checklist資料模型與help區塊不變；篩選不寫入測試通過，桌面比對原兩項身份文字狀態不變。",
+          "evidence_ids": [
+            "01M3K9WBNCXYVPE5RHMPK8Q3DW",
+            "01M3K9WBN8BTARTQ6WWV0VAWT3",
+            "01M3K9WBNBGEJTCX5ESEC94N2A"
+          ],
+          "created_at": "2026-09-28T06:05:21.452Z"
+        },
+        {
+          "id": "01M3K9WBNEYRTM4S2F7JKQ8Q23",
+          "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac7",
+          "verdict": "satisfied",
+          "reason": "17項測試與已保存的桌面操作紀錄、精確程式指紋可追溯，獨立review無未解決問題。",
+          "evidence_ids": [
+            "01M3K9WBN8BTARTQ6WWV0VAWT3"
+          ],
+          "created_at": "2026-09-28T06:05:21.452Z"
+        }
+      ]
+    },
+    "acceptance": {
+      "archived_result_ids": [],
+      "criterion_outcomes": [
+        {
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac1",
+          "created_at": "2026-09-28T06:06:50.883Z",
+          "id": "01M3K9Z307NAAQWC1JZWA8HD1E",
+          "outcome": "satisfied",
+          "result_acceptance_id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+          "submitted_verdict_id": "01M3K9WBNDR07ZJT2HR4F127X2",
+          "waiver_decision_id": null
+        },
+        {
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac2",
+          "created_at": "2026-09-28T06:06:50.883Z",
+          "id": "01M3K9Z307ABKKXQPANBZG9EFQ",
+          "outcome": "satisfied",
+          "result_acceptance_id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+          "submitted_verdict_id": "01M3K9WBNDKP1E6GH0A1TPC9B1",
+          "waiver_decision_id": null
+        },
+        {
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac3",
+          "created_at": "2026-09-28T06:06:50.883Z",
+          "id": "01M3K9Z3074639P7N1C038NY20",
+          "outcome": "satisfied",
+          "result_acceptance_id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+          "submitted_verdict_id": "01M3K9WBND6CB93VB0RZV3437X",
+          "waiver_decision_id": null
+        },
+        {
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac4",
+          "created_at": "2026-09-28T06:06:50.883Z",
+          "id": "01M3K9Z307F2847SMRHWY0V9XH",
+          "outcome": "satisfied",
+          "result_acceptance_id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+          "submitted_verdict_id": "01M3K9WBNEPHNMWE2N1G876S43",
+          "waiver_decision_id": null
+        },
+        {
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac5",
+          "created_at": "2026-09-28T06:06:50.883Z",
+          "id": "01M3K9Z307A96SDVS5AFZE4V9E",
+          "outcome": "satisfied",
+          "result_acceptance_id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+          "submitted_verdict_id": "01M3K9WBNEZA2ZBSJ64P4RFPXE",
+          "waiver_decision_id": null
+        },
+        {
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac6",
+          "created_at": "2026-09-28T06:06:50.883Z",
+          "id": "01M3K9Z307PDQCBBY176QW6ZN1",
+          "outcome": "satisfied",
+          "result_acceptance_id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+          "submitted_verdict_id": "01M3K9WBNEVPGA7Y3DJXQ7PK4N",
+          "waiver_decision_id": null
+        },
+        {
+          "acceptance_criterion_id": "01M3K93WX6A48WS4YZMPW88CMQ:r1:ac7",
+          "created_at": "2026-09-28T06:06:50.883Z",
+          "id": "01M3K9Z307QR6XR4VEXCA9Q4RS",
+          "outcome": "satisfied",
+          "result_acceptance_id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+          "submitted_verdict_id": "01M3K9WBNEYRTM4S2F7JKQ8Q23",
+          "waiver_decision_id": null
+        }
+      ],
+      "implementation_result": {
+        "id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+        "lifecycle_status": "active",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "review_status": "approved"
+      },
+      "result_acceptance": {
+        "accepted_at": "2026-09-28T06:06:50.883Z",
+        "actor_id": "00000000000000000000000001",
+        "id": "01M3K9Z3073PHD3G27JJJ5GJG5",
+        "implementation_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB"
+      },
+      "ticket": {
+        "delivery_status": "done",
+        "id": "01M3K93WX6A48WS4YZMPW88CMQ"
+      },
+      "waiver_decisions": []
+    }
+  }
+}
