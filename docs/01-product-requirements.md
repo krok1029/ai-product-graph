@@ -19,7 +19,7 @@
 - 本機 stdio MCP、SQLite 持久化、Project／Repository identities 與 Idea 保存。
 - Product Brief 與 Ticket Revision 的不可變版本及對話核准。
 - Milestone／Spec 保存、自動圖譜同步與來源變更診斷。
-- 三個 skills 編排規劃、實作、驗收；預設 core 提供 23 個 tools，full 相容模式提供 44 個 tools 及六個舊 prompts。
+- 三個 skills 編排規劃、實作、驗收；預設 core 提供 23 個 tools，full 相容模式提供 45 個 tools 及六個舊 prompts。
 - 工作上下文、真實 Repository baseline 檢查、Implementation Brief 與 handoff。
 - Observed Evidence、Implementation Result、Result Acceptance／Revocation 及跨重啟查詢。
 - 圖譜、trace 與 Ticket 交付診斷：依賴阻塞、來源過期、證據缺口、待接受結果及下一步。

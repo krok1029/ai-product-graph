@@ -30,7 +30,7 @@
 
 ### Profiles 與 Skills
 
-Core 提供 23 個 tools 與本機 resources，無 MCP prompts。規劃／實作／驗收 skills 是預設流程入口；full 提供 44 個 tools、六個舊 prompts 與外部工具，用於相容與選配整合。切換 profile 不會自動遷移 Project 或啟動同步。
+Core 提供 23 個 tools 與本機 resources，無 MCP prompts。規劃／實作／驗收 skills 是預設流程入口；full 提供 45 個 tools、六個舊 prompts 與外部工具，用於相容與選配整合。切換 profile 不會自動遷移 Project 或啟動同步。
 
 詳細介面見 [精簡工作流](22-skill-led-workflows.md) 與 [階層規劃](23-planning-hierarchy.md)。
 
