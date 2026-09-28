@@ -443,3 +443,39 @@ it("keeps legacy and missing-source identities visible instead of dropping their
 
   expect(target.ungrouped.tickets).toEqual([{ ticket_id: work.ticket.id, source_spec_id: s.id, reason: "source_spec_missing" }]);
 });
+
+it("does not mistake an extra Milestone reference for approved parentage after Spec reparenting", async () => {
+  const f = await setup(); const { m, s } = await f.hierarchy();
+  const other = (await f.save(milestone)).data.node;
+  const work = (await f.call("create_ticket_draft_batch", { project_id: f.project.id,
+    source_graph_revision_id: f.base(), source_node_ids: [s.id],
+    tickets: [{ ...f.ticketInput(s.id), related_graph_node_ids: [other.id] }] })).data.tickets[0];
+  expect((await f.call("approve_ticket_revision", { ticket_revision_id: work.revision.id })).ok).toBe(true);
+  const read = async () => (await f.call("get_graph_context", { project_id: f.project.id })).data.delivery.stage_progress;
+  expect((await read()).milestones.find((stage: any) => stage.milestone_id === m.id).ticket_ids).toEqual([work.ticket.id]);
+
+  await f.save(spec, other.id, s.id);
+  const target = await read();
+
+  expect(target.milestones.flatMap((stage: any) => stage.ticket_ids)).toEqual([]);
+  expect(target.ungrouped.tickets).toEqual([{ ticket_id: work.ticket.id, source_spec_id: s.id, reason: "approved_ancestry_changed" }]);
+  const replacement = await f.call("create_ticket_revision_draft", { ticket_id: work.ticket.id,
+    base_approved_revision_id: work.revision.id, source_graph_revision_id: f.base(), specification: f.ticketInput(s.id) });
+  expect((await f.call("approve_ticket_revision", { ticket_revision_id: replacement.data.revision.id })).ok).toBe(true);
+  const updated = await read();
+  expect(updated.ungrouped.tickets).toEqual([]);
+  expect(updated.milestones.find((stage: any) => stage.milestone_id === other.id).ticket_ids).toEqual([work.ticket.id]);
+});
+
+it("keeps work ungrouped when the parent edge has no verifiable historical revision", async () => {
+  const f = await setup(); const { s } = await f.hierarchy(); const work = await deliver(f, s.id);
+  const list = f.ports.graphEdges.list.bind(f.ports.graphEdges);
+  // 模擬舊 edge 缺少來源版本；不直接修改正式資料或偽造父歸屬。
+  f.ports.graphEdges.list = (...args) => list(...args).map(edge => edge.sourceNodeId === s.id
+    ? { ...edge, createdInGraphRevisionId: null } : edge);
+
+  const target = (await f.call("get_graph_context", { project_id: f.project.id })).data.delivery.stage_progress;
+
+  expect(target.milestones.flatMap((stage: any) => stage.ticket_ids)).toEqual([]);
+  expect(target.ungrouped.tickets).toEqual([{ ticket_id: work.ticket.id, source_spec_id: s.id, reason: "approved_ancestry_unverifiable" }]);
+});

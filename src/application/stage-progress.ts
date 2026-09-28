@@ -35,8 +35,26 @@ export function stageProgress(ports: ApplicationPorts, projectId: string, ticket
   const nodes = ports.graphNodes.list(projectId);
   const byId = new Map(nodes.map(node => [node.id, node]));
   const edges = ports.graphEdges.list(projectId, "active");
-  const hasParent = (node: GraphNode, parent: GraphNode) => node.metadata.parent_node_id === parent.id &&
-    edges.some(edge => edge.sourceNodeId === node.id && edge.targetNodeId === parent.id && edge.relationType === "belongs_to");
+  const parentEdge = (node: GraphNode, parent: GraphNode) => node.metadata.parent_node_id === parent.id
+    ? edges.find(edge => edge.sourceNodeId === node.id && edge.targetNodeId === parent.id && edge.relationType === "belongs_to")
+    : undefined;
+  const hasParent = (node: GraphNode, parent: GraphNode) => Boolean(parentEdge(node, parent));
+  const approvedParentProblem = (chain: GraphNode[], sourceRevisionId: string) => {
+    const source = ports.graphRevisions.findById(sourceRevisionId);
+    if (!source || source.projectId !== projectId) return "approved_ancestry_unverifiable";
+    for (let index = 0; index < chain.length - 1; index++) {
+      const edge = parentEdge(chain[index]!, chain[index + 1]!);
+      const created = edge?.createdInGraphRevisionId ? ports.graphRevisions.findById(edge.createdInGraphRevisionId) : null;
+      const changed = edge?.lastChangedInGraphRevisionId ? ports.graphRevisions.findById(edge.lastChangedInGraphRevisionId) : null;
+      if (!created || !changed || created.projectId !== projectId || changed.projectId !== projectId) {
+        return "approved_ancestry_unverifiable";
+      }
+      // 額外引用不是父歸屬。現存關係必須在核准來源版本時已成立，之後也未變更。
+      if (created.sequenceNumber > source.sequenceNumber) return "approved_ancestry_changed";
+      if (changed.sequenceNumber > source.sequenceNumber) return "approved_ancestry_unverifiable";
+    }
+    return null;
+  };
   const milestones = nodes.filter(node => node.type === "milestone" && node.lifecycleStatus === "active")
     .sort((a, b) => Number(content(a).sequence ?? 0) - Number(content(b).sequence ?? 0) || a.id.localeCompare(b.id));
   const specs = nodes.filter(node => node.type === "spec" && node.lifecycleStatus === "active").sort((a, b) => a.id.localeCompare(b.id));
@@ -63,7 +81,7 @@ export function stageProgress(ports: ApplicationPorts, projectId: string, ticket
         !hasParent(spec, milestone) || !hasParent(milestone, root)) reason = "source_ancestry_invalid";
       else if (![spec, milestone, root].every(node => ports.ticketRevisions.listGraphNodeIds(revision.id).includes(node.id))) {
         reason = "approved_ancestry_changed";
-      }
+      } else reason = approvedParentProblem([spec, milestone, root], revision.sourceGraphRevisionId);
     }
     if (reason) ungrouped.push({ ticket_id: ticket.ticket_id, source_spec_id: specId, reason });
     else grouped.set(specId!, [...(grouped.get(specId!) ?? []), ticket]);

@@ -12,7 +12,7 @@
 
 ## 核准來源與未歸組
 
-分組只使用 Ticket 的 current active approved revision，不採用尚未核准的新草稿、標題相似度或歷史 Ticket edge。核准 revision 所引用的 Spec → Milestone → Product Brief 身分，必須仍對應目前 active 的節點及 `belongs_to` 關係。
+分組只使用 Ticket 的 current active approved revision，不採用尚未核准的新草稿、標題相似度或歷史 Ticket edge。核准 revision 所引用的 Spec → Milestone → Product Brief 身分，必須仍對應目前 active 的節點及 `belongs_to` 關係。關係的建立及最後變更 Graph Revision 必須可查證，且不晚於 Ticket 的 source Graph Revision；不能把額外引用的 Milestone 當成核准父歸屬。新建的父關係表示歸屬已變；缺少歷史版本或無法證明既有關係未變時保守列為未歸組，不新增 schema 或猜測舊來源。
 
 Spec 內容改變但來源身分未變，Ticket 留在同一群組並呈現 `stale`。父來源尚待重新確認也是 freshness 問題，不能藉此隱藏已存在的工作。Spec 移到新 Milestone 而核准 ancestry 未更新時，Ticket 進入 `ungrouped`；核准替代 revision 後才重新分組。
 
@@ -25,7 +25,8 @@ Spec 內容改變但來源身分未變，Ticket 留在同一群組並呈現 `sta
 | `legacy_without_spec` | 舊 Ticket 沒有 Spec 來源 |
 | `source_spec_missing` / `source_spec_archived` / `source_spec_invalid` | 來源 Spec 缺失、封存或型別不符 |
 | `source_ancestry_missing` / `source_ancestry_archived` / `source_ancestry_invalid` | 祖先缺失、封存或關係／型別不符 |
-| `approved_ancestry_changed` | 現在的 ancestry 不在核准 revision 的來源集合中 |
+| `approved_ancestry_changed` | 現在的 ancestry 不在核准來源中，或父關係在核准來源版本後才建立 |
+| `approved_ancestry_unverifiable` | 缺少關係歷史版本，或關係之後曾變更而無法證明核准時父歸屬 |
 
 ## 計數與完成邊界
 
