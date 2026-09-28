@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "run_id": "local-closeout-engineering-20260928",
+  "issue": 121,
+  "parent_spec": 118,
+  "status": "engineering_proof_ready_for_review_live_acceptances_deferred",
+  "verified_at": "2026-09-28T07:33:11.484180+00:00",
+  "product": {
+    "commit": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+    "working_tree_clean": true,
+    "tracked_files": [
+      {
+        "path": ".gitignore",
+        "sha256": "3ee2b1561e02ce97e389a8c7cc83d481c16af61a88f0e36186abf1e7e9f1ce98"
+      },
+      {
+        "path": "README.md",
+        "sha256": "21909db70ab530a7c62c475a8246c0645e760647bb07bedbd8e6d10f32a66128"
+      },
+      {
+        "path": "index.html",
+        "sha256": "858bd3a519051d28f86b1c48854233552411299d471fa7f846c7c5a3a2ebacd9"
+      },
+      {
+        "path": "package.json",
+        "sha256": "a55562566eac9af8259a12693b5bd16e22db6967c99374ff742c2207d96f160c"
+      },
+      {
+        "path": "server.mjs",
+        "sha256": "76dbbbc2908f642f994424fdfcad7646755bd7e9b2794933cdef9f6857b09b2c"
+      },
+      {
+        "path": "src/app.js",
+        "sha256": "f035a3ad2b3567e60eaf2d39732cc3bc4c8d784c8ded53ae487c82c71b0ab852"
+      },
+      {
+        "path": "src/checklist.js",
+        "sha256": "7d845cfa71489693bcd7c3062ce12fcdf61b30fa694571d7327d6d8b9fc424f9"
+      },
+      {
+        "path": "src/filter.js",
+        "sha256": "a17842e7491260df16d68785d9cdd81a67ea3cd1a1abe7ca248912d456ab4057"
+      },
+      {
+        "path": "styles.css",
+        "sha256": "a0b8f5693869765ac77423c3847fcd1192585e534061527d7824e0440f741dab"
+      },
+      {
+        "path": "test/checklist.test.js",
+        "sha256": "667df7b0c3c1c7bcc43124c12b9c546e38a0b07449df0bec74ac7708e21893a9"
+      },
+      {
+        "path": "test/filter.test.js",
+        "sha256": "cbe21dbf966ee07e1f0ce5164e486c91d75e86e2b18b223a7880abd7e8b7ad8c"
+      },
+      {
+        "path": "test/server.test.js",
+        "sha256": "34d94d064c5bd1dace204a892919f7538303b3e6b3814f853fc659703e6b6cb4"
+      }
+    ],
+    "historical_tests": {
+      "started_at": "2026-09-28T06:27:35.271466+00:00",
+      "ended_at": "2026-09-28T06:27:35.594182+00:00",
+      "exit_code": 0,
+      "count": 20,
+      "rerun_in_this_ticket": false
+    }
+  },
+  "live": {
+    "before_observed_at": "2026-09-28T07:28:35.649Z",
+    "after_observed_at": "2026-09-28T07:32:28.527Z",
+    "all_three_contexts_equal": true,
+    "writes_by_this_ticket": 0,
+    "contexts": [
+      {
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "revision_id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "delivery": {
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "title": "完成本機待辦清單的新增、完成切換與保存",
+          "delivery_status": "planned",
+          "approved_revision_id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [],
+          "blocking_dependency_ids": [],
+          "next_action": "review_result",
+          "targets": [
+            {
+              "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3KCYBZ93KX7C9BGYPEF7QB7",
+              "accepted_result_id": null,
+              "pending_result_id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        "decoded_data_sha256": "c8f2b50ad900ff119430bd8c276f3e1e2850e03db858afe26428e3e8054ae713"
+      },
+      {
+        "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+        "revision_id": "01M3KCN5S62J4WEQ1K0MKC07G0",
+        "delivery": {
+          "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+          "title": "在本機清單加入完成狀態篩選",
+          "delivery_status": "planned",
+          "approved_revision_id": "01M3KCN5S62J4WEQ1K0MKC07G0",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "blocking_dependency_ids": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "next_action": "complete_dependencies",
+          "targets": [
+            {
+              "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": null,
+              "accepted_result_id": null,
+              "pending_result_id": null,
+              "criteria_without_evidence": [
+                "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac1",
+                "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac2",
+                "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac3",
+                "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac4",
+                "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac5",
+                "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac6",
+                "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac7"
+              ],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        "decoded_data_sha256": "3a5174ddfc89950eda42a6da1445a43296fc3a72683ae62dd76740234bb47032"
+      },
+      {
+        "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+        "revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+        "delivery": {
+          "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+          "title": "提供可獨立使用的操作說明與資料限制",
+          "delivery_status": "done",
+          "approved_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [],
+          "blocking_dependency_ids": [],
+          "next_action": "done",
+          "targets": [
+            {
+              "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+              "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+              "pending_result_id": null,
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        "decoded_data_sha256": "16d610eca753f600a7266f160d26547c49e59d62f257c15427dd96c6e3140f4c"
+      }
+    ]
+  },
+  "criteria": [
+    {
+      "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac1",
+      "text": "初次開啟與重新整理後顯示全部；三種選项可用鍵盤操作，清楚標示目前選擇。",
+      "engineering_verdict": "supported_by_applicable_evidence",
+      "formal_delivery": "not_user_acceptance",
+      "evidence": [
+        "filter-browser.json (unchanged interactions)",
+        "sorting-browser.json",
+        "sorting-filter-browser-supplement.json"
+      ]
+    },
+    {
+      "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac2",
+      "text": "未完成只顯示未完成，已完成只顯示已完成；全部先未完成、再已完成，各狀態組均按新增先後由新到舊，同毫秒或時鐘倒退不改新增次序。",
+      "engineering_verdict": "supported_by_applicable_evidence",
+      "formal_delivery": "not_user_acceptance",
+      "evidence": [
+        "sorting-tests.json",
+        "sorting-browser.json"
+      ]
+    },
+    {
+      "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac3",
+      "text": "勾選／取消立即更新篩選結果；項目移出目前檢視後仍有合理鍵盤焦點。",
+      "engineering_verdict": "supported_by_applicable_evidence",
+      "formal_delivery": "not_user_acceptance",
+      "evidence": [
+        "sorting-tests.json",
+        "sorting-browser.json",
+        "filter-browser.json (unchanged interactions)"
+      ]
+    },
+    {
+      "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac4",
+      "text": "任一檢視仍可新增非空白待辦並持久保存；新增未完成項目在已完成檢視隱藏，切回全部或未完成可見。",
+      "engineering_verdict": "supported_by_applicable_evidence",
+      "formal_delivery": "not_user_acceptance",
+      "evidence": [
+        "sorting-tests.json",
+        "sorting-browser.json",
+        "sorting-filter-browser-supplement.json"
+      ]
+    },
+    {
+      "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac5",
+      "text": "無符合項目時顯示對應空狀態；原本讀寫失敗保護與提示保持有效。",
+      "engineering_verdict": "supported_by_applicable_evidence",
+      "formal_delivery": "not_user_acceptance",
+      "evidence": [
+        "sorting-tests.json",
+        "filter-browser.json (unchanged interactions)",
+        "browser-verification.json (original empty state)"
+      ]
+    },
+    {
+      "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac6",
+      "text": "切換篩選不改 identity、文字、完成狀態、建立順序或儲存格式，不儲存篩選選擇，獨立操作說明內容與行為不變。",
+      "engineering_verdict": "supported_by_applicable_evidence",
+      "formal_delivery": "not_user_acceptance",
+      "evidence": [
+        "sorting-tests.json",
+        "sorting-browser.json",
+        "filter-browser.json (unchanged interactions)"
+      ]
+    },
+    {
+      "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac7",
+      "text": "提供可重現規則測試及本機桌面實測，記錄篩選、動態切換、空狀態、鍵盤及重整保留資料；另提交結果供使用者接受。",
+      "engineering_verdict": "partial_formal_result_deferred",
+      "formal_delivery": "pending_dependency_and_result",
+      "evidence": [
+        "sorting-tests.json",
+        "sorting-browser.json",
+        "sorting-filter-browser-supplement.json"
+      ]
+    }
+  ],
+  "historical_roundtrip_sources_verified": 21,
+  "evidence_sources": [
+    {
+      "path": "/Users/limingfeng/Project/workflow-checklist/evidence/sorting-tests.json",
+      "sha256": "0ac97334b3cd96f942a4b189cc43b7379bf9d090f23a342effdc744c55ccfafc"
+    },
+    {
+      "path": "/Users/limingfeng/Project/workflow-checklist/evidence/browser-verification.json",
+      "sha256": "11f089a68ac35c490713c91fbd7ac7dd7c4637343ca21013a4705f87883b82f8"
+    },
+    {
+      "path": "/private/tmp/apg-delivery-current/scenario-a/filter-browser.json",
+      "sha256": "0297054aa06153f90c0c7915d86604713c31d46f77c075eb5ae1a7a316dac862"
+    },
+    {
+      "path": "/private/tmp/apg-delivery-current/scenario-b-repair/sorting-browser.json",
+      "sha256": "81d7891278f732e1ec0893291ca0d766c2c413e8ece45441789ddbf8479bc480"
+    },
+    {
+      "path": "/private/tmp/apg-delivery-current/scenario-b-final/sorting-filter-browser-supplement.json",
+      "sha256": "365ba43c4f3ec1ead8c814830029e13790cca97f085a0cf9137888d9f860f595"
+    },
+    {
+      "path": "/private/tmp/apg-delivery-current/scenario-b-final/repair-evidence-applicability.md",
+      "sha256": "2a7f8a5388c3c15595b842931a3d02c1d351a78e9e9851e734dc1c327235fee9"
+    }
+  ],
+  "costs": {
+    "historical_total_ms": null,
+    "effective_work_ms": null,
+    "waiting_ms": null,
+    "repeated_confirmations_total": null,
+    "duplicate_artifacts_total": null,
+    "replay_elapsed_ms": 97,
+    "known_setup_corrections": [
+      "Missing node_modules link; added existing dependency symlink",
+      "Fixture repository_name mismatch; corrected to registered Repository 0",
+      "TypeScript 6 explicit file check required --ignoreConfig"
+    ]
+  },
+  "limits": [
+    "Live runtime loaded version remains unknown",
+    "Historical UI evidence reused by commit and file hashes; no new desktop run",
+    "Storage failures verified by rule tests and unchanged UI path, not browser fault injection",
+    "Protocol replay uses synthetic in-memory data, not a new history-free task or final product Acceptance",
+    "Filter criterion 7 formal Result remains unavailable until upstream Acceptance"
+  ]
+}
