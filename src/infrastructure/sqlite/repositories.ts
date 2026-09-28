@@ -1,3 +1,4 @@
+import { createContentDriftResolutionRepository } from "./content-drift-resolution-repository.js";
 import { createPlaneObservationReadRepository } from "./plane-observation-read-repository.js";
 import { createPlaneObservationWriteRepository } from "./plane-observation-write-repository.js";
 import { createSyncMappingTerminationRepository } from "./sync-mapping-termination-repository.js";
@@ -25,6 +26,7 @@ import { createTicketRepositories } from "./ticket-repositories.js";
 
 export function createSqlitePorts(database: SqliteDatabase): ApplicationPorts {
   return {
+    contentDriftResolutions: createContentDriftResolutionRepository(database),
     planeObservationReads: createPlaneObservationReadRepository(database),
     planeObservationWrites: createPlaneObservationWriteRepository(database),
     syncMappingTerminations: createSyncMappingTerminationRepository(database),

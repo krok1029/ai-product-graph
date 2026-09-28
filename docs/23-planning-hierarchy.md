@@ -74,7 +74,7 @@ Ticket → Spec 投影在首次 Ticket draft 建立時可見；replacement draft
 
 ## 相容與範圍
 
-Core 為 23 個 tools；full 為 43 個 tools，保留手動 graph batch tools 與六個舊 prompts，並提供新的規劃入口。舊手動 graph tools 不能修改新階層的節點或關係，必須使用 `save_planning_node`。
+Core 為 23 個 tools；full 為 44 個 tools，保留手動 graph batch tools 與六個舊 prompts，並提供新的規劃入口。舊手動 graph tools 不能修改新階層的節點或關係，必須使用 `save_planning_node`。
 
 既有 SQLite 無需重建：節點 type、metadata、Graph Revision 與 batch 變更紀錄可直接保存此階層。啟動不會猜測舊 tickets 的 Milestones／Specs；未採用階層的舊專案可繼續走 full。第一次保存 Milestone 可建立 Brief 根節點，之後新 Ticket 與 replacement revisions 必須來自 Spec。原有已核准 Ticket 與歷史仍可讀取；採用階層後，尚未補上 Spec ancestry 的 legacy Tickets 會出現在 affected 清單，handoff／新結果接受以 `planning_source_missing` 阻擋，避免 Brief 根節點自動同步掩蓋缺少來源。若要將既有規劃納入階層，先明確整理 Milestones／Specs，再將舊 Ticket 以新 revision 指向 Spec。
 
