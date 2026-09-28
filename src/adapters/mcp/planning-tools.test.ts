@@ -337,3 +337,109 @@ it.each(["reference", "dependency"])("still invalidates a sibling Ticket with an
   expect(delivery.next_action).toBe("reconcile_sources");
   expect(delivery.source_problem.reason).toBe(relation === "reference" ? "graph_node_changed" : "ticket_dependency_stale");
 });
+
+it("groups all active project Tickets independently of graph filters and keeps empty stages", async () => {
+  // 準備：同名階段、空規格、待接受結果與跨規格的相依阻塞。
+  const f = await setup(); const { m, s } = await f.hierarchy();
+  const empty = (await f.save(milestone)).data.node;
+  const emptySpec = (await f.save(spec, empty.id)).data.node;
+  const work = await deliver(f, s.id);
+  const dependentSpec = (await f.save(spec, m.id)).data.node;
+  const dependent = (await f.call("create_ticket_draft_batch", { project_id: f.project.id,
+    source_graph_revision_id: f.base(), source_node_ids: [dependentSpec.id],
+    tickets: [{ ...f.ticketInput(dependentSpec.id), dependencies: [work.ticket.id] }] })).data.tickets[0];
+  await f.call("approve_ticket_revision", { ticket_revision_id: dependent.revision.id });
+  // 未核准的改版不能移動已核准 Ticket 的分組。
+  await f.call("create_ticket_revision_draft", { ticket_id: work.ticket.id,
+    base_approved_revision_id: work.revision.id, source_graph_revision_id: f.base(), specification: f.ticketInput(emptySpec.id) });
+  const before = f.database.prepare("SELECT total_changes() AS n").get();
+
+  // 執行：圖譜本體被縮限，交付投影仍涵蓋全專案。
+  const target = (await f.call("get_graph_context", { project_id: f.project.id, node_types: ["product_brief"], max_depth: 0 })).data;
+  const stages = target.delivery.stage_progress;
+
+  // 驗證：每票只計一次，保留可採取的下一步且沒有寫入。
+  expect(target.nodes.map((node: any) => node.type)).toEqual(["product_brief"]);
+  expect(stages.scope).toBe("active_project_tickets");
+  expect(stages.ungrouped.ticket_ids).toEqual([]);
+  expect(stages.milestones.find((stage: any) => stage.milestone_id === m.id)).toMatchObject({
+    exit_criteria: milestone.content.exit_criteria, completion: "not_evaluated",
+    summary: { total: 2, blocked: 1, awaiting_acceptance: 1 },
+    specs: expect.arrayContaining([{ spec_id: s.id, title: s.title,
+      ticket_ids: [work.ticket.id], summary: expect.objectContaining({ total: 1, awaiting_acceptance: 1 }) }])
+  });
+  expect(stages.milestones.find((stage: any) => stage.milestone_id === empty.id)).toMatchObject({
+    ticket_ids: [], summary: { total: 0 }, specs: [{ spec_id: emptySpec.id, ticket_ids: [], summary: { total: 0 } }]
+  });
+  expect(target.delivery.tickets.find((ticket: any) => ticket.ticket_id === work.ticket.id).next_action).toBe("review_result");
+  expect(target.delivery.tickets.find((ticket: any) => ticket.ticket_id === dependent.ticket.id).next_action).toBe("complete_dependencies");
+  expect(stages.milestones.flatMap((stage: any) => stage.ticket_ids).sort()).toEqual([work.ticket.id, dependent.ticket.id].sort());
+  expect(f.database.prepare("SELECT total_changes() AS n").get()).toEqual(before);
+});
+
+it("counts done and stale independently without inferring Milestone completion", async () => {
+  const f = await setup(); const { m, s } = await f.hierarchy(); const work = await deliver(f, s.id);
+  expect((await f.call("accept_implementation_result", { implementation_result_id: work.result.id,
+    idempotency_key: "stage-accepted" })).ok).toBe(true);
+  await f.save({ ...spec, content: { ...spec.content, solution: "新計時規則" } }, m.id, s.id);
+
+  const target = (await f.call("get_graph_context", { project_id: f.project.id })).data.delivery;
+
+  expect(target.stage_progress.milestones[0]).toMatchObject({ completion: "not_evaluated",
+    ticket_ids: [work.ticket.id], summary: { total: 1, done: 1, stale: 1,
+      delivery_status_counts: { planned: 0, in_progress: 0, blocked: 0, done: 1 },
+      source_freshness_counts: { current: 0, stale: 1, unapproved: 0 } } });
+  expect(target.tickets[0].next_action).toBe("reconcile_sources");
+  expect(f.ports.tickets.findById(work.ticket.id)?.deliveryStatus).toBe("done");
+});
+
+it("retains unapproved and archived-source Tickets as explicit ungrouped work", async () => {
+  const f = await setup(); const { m, s } = await f.hierarchy();
+  const draft = (await f.createTicket(s.id)).data.tickets[0];
+  const approved = (await f.createTicket(s.id)).data.tickets[0];
+  await f.call("approve_ticket_revision", { ticket_revision_id: approved.revision.id });
+  await f.call("save_planning_node", { project_id: f.project.id, base_graph_revision_id: f.base(),
+    change: { operation: "archive", node_id: m.id } });
+
+  const target = (await f.call("get_graph_context", { project_id: f.project.id, lifecycle_status: "archived" })).data.delivery;
+
+  expect(target.stage_progress.milestones).toEqual([]);
+  expect(target.stage_progress.ungrouped.summary).toMatchObject({ total: 2, stale: 1 });
+  expect(target.stage_progress.ungrouped.tickets).toEqual(expect.arrayContaining([
+    { ticket_id: draft.ticket.id, source_spec_id: null, reason: "unapproved_ticket" },
+    { ticket_id: approved.ticket.id, source_spec_id: s.id, reason: "source_spec_archived" }
+  ]));
+});
+
+it("does not move approved work to a reparented Spec until its approved ancestry is updated", async () => {
+  const f = await setup(); const { s } = await f.hierarchy();
+  const work = await deliver(f, s.id); const newParent = (await f.save(milestone)).data.node;
+  await f.save(spec, newParent.id, s.id);
+
+  const target = (await f.call("get_graph_context", { project_id: f.project.id })).data.delivery.stage_progress;
+
+  expect(target.milestones.flatMap((stage: any) => stage.ticket_ids)).toEqual([]);
+  expect(target.ungrouped.tickets).toEqual([{ ticket_id: work.ticket.id, source_spec_id: s.id, reason: "approved_ancestry_changed" }]);
+  const replacement = await f.call("create_ticket_revision_draft", { ticket_id: work.ticket.id,
+    base_approved_revision_id: work.revision.id, source_graph_revision_id: f.base(), specification: f.ticketInput(s.id) });
+  expect((await f.call("approve_ticket_revision", { ticket_revision_id: replacement.data.revision.id })).ok).toBe(true);
+  const updated = (await f.call("get_graph_context", { project_id: f.project.id })).data.delivery.stage_progress;
+  expect(updated.ungrouped.tickets).toEqual([]);
+  expect(updated.milestones.find((stage: any) => stage.milestone_id === newParent.id).ticket_ids).toEqual([work.ticket.id]);
+});
+
+it("keeps legacy and missing-source identities visible instead of dropping their Tickets", async () => {
+  const legacy = acceptanceFixture();
+  try {
+    expect(legacy.service.localDelivery.getProjectDelivery(legacy.project.id).stage_progress.ungrouped.tickets)
+      .toEqual([{ ticket_id: legacy.ticket.id, source_spec_id: null, reason: "legacy_without_spec" }]);
+  } finally { legacy.database.close(); }
+  const f = await setup(); const { s } = await f.hierarchy(); const work = await deliver(f, s.id);
+  // 模擬舊資料缺失的讀取邊界，不刪除不可變來源紀錄。
+  const list = f.ports.graphNodes.list.bind(f.ports.graphNodes);
+  f.ports.graphNodes.list = (...args) => list(...args).filter(node => node.id !== s.id);
+
+  const target = f.service.localDelivery.getProjectDelivery(f.project.id).stage_progress;
+
+  expect(target.ungrouped.tickets).toEqual([{ ticket_id: work.ticket.id, source_spec_id: s.id, reason: "source_spec_missing" }]);
+});
