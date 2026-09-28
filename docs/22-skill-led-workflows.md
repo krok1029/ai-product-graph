@@ -18,7 +18,7 @@ Installer 將 repository 的 `skills/ai-product-plan`、`skills/ai-product-imple
 AI_PRODUCT_GRAPH_MCP_PROFILE=full pnpm start
 ```
 
-`full` 提供原本 39 個 tools、六個 prompts 及七個新入口（含外部 Content Drift 拒絕、採用與處置查詢），共 46 個 tools。未知 profile 會在開啟資料庫前失敗。Core 要求 Ticket 來自 Spec，並在 Brief approval 時同步圖譜根節點；full 保留未採用階層之舊專案的操作方式。啟動 profile 本身不遷移使用者規劃資料，也不關閉 active mapping 的 durable enrollment。
+`full` 在原本機基線提供 43 個 tools；2026-09-28 已合併主分支加入 Content Drift 拒絕、採用與處置查詢後為 46 個 tools，仍有六個 prompts。Core 保持 23 個 tools。舊 checkout／已啟動 process 不會因文件更新自動取得新入口，版本差異見 [進度核對](validation/2026-09-28-project-status.md)。未知 profile 會在開啟資料庫前失敗。Core 要求 Ticket 來自 Spec，並在 Brief approval 時同步圖譜根節點；full 保留未採用階層之舊專案的操作方式。啟動 profile 本身不遷移使用者規劃資料，也不關閉 active mapping 的 durable enrollment。
 
 ## 使用方式
 

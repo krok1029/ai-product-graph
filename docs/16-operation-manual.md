@@ -49,9 +49,11 @@ Repository 已提供完整本機主路徑：Project／Repository／Idea、Produc
 
 開始 repository-backed 工作前，以 `create_repository` 建立 Project 範圍內的 Repository identity；可用 `list_repositories` 查詢既有 identity。此操作只保存 metadata，不掃描本機檔案，也不驗證遠端存取權。後續 Ticket targets、handoff 與 evidence 都使用回傳的 `repository.id`。
 
-現有功能與邊界驗收以 GitHub Issues／PR 為準；本機主要流程可用，不代表外部整合已提供。後續先依 [roadmap](08-roadmap.md) 驗證需求變更、跨對話接手及操作成本，暫不恢復外部整合開發。
+現有功能與邊界驗收以 GitHub Issues／PR 為準；本機主要流程可用。2026-09-28 核對的主分支已另外交付 Content Drift 拒絕、採用為候選草稿與處置查詢；後續依 [roadmap](08-roadmap.md) 完成需求變更、跨對話接手及操作成本驗證。原本機 checkout 與既有 MCP process 不一定是最新版本，見 [版本及進度紀錄](validation/2026-09-28-project-status.md)。
 
 Plane 已提供首次匯出與觀測，但後續 update/status execution 尚未交付；外部整合 MCP tools 需選用 full profile。
+
+最新主分支 full profile 另提供 `reject_content_drift`、`adopt_content_drift`、`get_content_drift_resolution`，以及處置 resource 與 mapping history 的處置欄位。拒絕保存理由；採用保存有來源的候選 Ticket Revision Draft，仍須走正常核准／實作／驗收；查詢保留處置歷史，不代表遠端已同步。完整契約見 [主分支差異處置文件](https://github.com/krok1029/ai-product-graph/blob/7d834d03d04454de15d503b0d66dc33f94c57021/docs/content-drift-resolution.md)。本機舊版未註冊這些入口時，不能只因文件更新就假設可以呼叫。
 
 ## 核心原則
 

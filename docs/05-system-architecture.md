@@ -13,10 +13,9 @@
 - Runtime：Node.js + TypeScript。
 - TypeScript toolchain：優先嘗試 TypeScript 7 / `tsgo`，同時保留 TypeScript 6 fallback。
 - Protocol surface：MCP server。
-- Storage：本機 MVP 先用 SQLite。
-- Later storage：Postgres + pgvector。
+- Storage：本機 SQLite；目前不安排 Postgres 遷移。
 - AI orchestration：三個 skills 編排 client agent；MCP 提供 resources、structured context、驗證與保存；六個舊 prompts 僅供 full 相容模式。
-- Auth：本機 MVP 先延後；之後 hosted MCP 再設計。
+- 範圍：本機、單人使用；依 2026-09-28 使用者決策移除 Hosted MCP 與多人版本，不安排其帳號／權限系統。外部 provider 憑證仍由各 adapter 管理。
 
 ## High-Level Components
 
@@ -52,19 +51,19 @@ AI Orchestration
   -> Client agent performs generation
 
 Data Layer
-  -> SQLite for local MVP
-  -> Postgres later
+  -> Local SQLite
   -> product_briefs store structured JSON as canonical
   -> graph_nodes / graph_edges
-  -> embeddings via pgvector later
 
 Integrations
   -> MCP adapter first
   -> Plane adapter (partially delivered; follow-ups deferred)
-  -> GitHub adapter (optional; not yet delivered)
+  -> Agent uses gh for GitHub; existing MCP evidence/result workflow
   -> Coding agent handoff adapter
   -> Post-commit provider execution (explicit CLI; mapped updates pending)
 ```
+
+GitHub 操作由 client agent 使用 `gh` 執行，MCP 保存符合既有契約的 evidence 與 Result 引用；目前不新增 GitHub adapter 或同步程序。既有 External Work Item 模型保留，不由此推定 agent 的每次 `gh` 操作均受 outbox／mapping 自動管理。
 
 ## 建置順序
 

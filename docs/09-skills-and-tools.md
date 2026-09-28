@@ -1,6 +1,6 @@
 # Skills 和 Tools
 
-目前交付的本機流程 skills、安裝方式與 tools 分工以 [Skill 主導的本機工作流](./22-skill-led-workflows.md) 為準。以下保留早期工具選型評估。
+目前交付的本機流程 skills、安裝方式與 tools 分工以 [Skill 主導的本機工作流](./22-skill-led-workflows.md) 為準。GitHub 工作由 agent 使用 `gh` 完成，再依既有 MCP 契約保存證據；不要求 GitHub 專用 adapter 或額外 GitHub skills。以下其他項目保留早期工具選型評估，不代表目前已安裝或待辦。
 
 
 ## 目前評估
@@ -11,8 +11,7 @@
 
 - `architecture`：產品與系統架構規劃。
 - `openai-docs`：需要官方 OpenAI / Codex / API 文件時使用。
-- `github:github`：GitHub repository、issue 和 PR 工作。
-- `github:yeet`：需要把本機變更發布到 GitHub 時使用。
+- `gh`：依工作授權操作 GitHub repository、Issue 與 PR；本 repository 的追蹤規則見 [issue tracker](agents/issue-tracker.md)。
 - `next-best-practices`、`vercel-react-best-practices`、`ui-ux-pro-max`：之後如果要做 UI 再用。
 
 ## TypeScript 7 / tsgo
