@@ -1,12 +1,13 @@
 import { ResourceTemplate, type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { PlaneObservationHistory } from "../../application/plane-observation-read-ports.js";
+import type { ResolvedPlaneObservationHistory } from "../../application/plane-observation-read-ports.js";
+import { serializeContentDriftResolutionDetails } from "./content-drift-resolution-serialization.js";
 import type { ProductGraphService } from "../../application/product-graph-service.js";
 import { serializeExternalWorkItemMapping, serializeExternalWorkItemSnapshot } from "./external-work-item-tools.js";
 import { resourceJson } from "./project-resources.js";
 import { success, toToolResult } from "./tool-envelope.js";
 
-export function serializePlaneObservationHistory(history: PlaneObservationHistory) {
+export function serializePlaneObservationHistory(history: ResolvedPlaneObservationHistory) {
   return {
     mapping: serializeExternalWorkItemMapping(history.mapping),
     observations: history.observations.map(({ snapshot, provenance }) => ({
@@ -18,7 +19,7 @@ export function serializePlaneObservationHistory(history: PlaneObservationHistor
     })),
     drifts: history.drifts.map(drift => ({ id: drift.id, project_id: drift.projectId, mapping_id: drift.mappingId,
       snapshot_id: drift.externalWorkItemSnapshotId, diff: drift.diff, detected_at: drift.detectedAt,
-      resolution_decision_id: drift.resolutionDecisionId }))
+      resolution_decision_id: drift.resolutionDecisionId, resolution: serializeContentDriftResolutionDetails(drift.resolution) }))
   };
 }
 

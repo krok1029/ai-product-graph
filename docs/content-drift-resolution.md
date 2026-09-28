@@ -6,7 +6,7 @@
 
 回傳 `content_drift_id`、mapping／Ticket／snapshot／captured revision 的 evidence IDs，以及 `resolution.record`、`resolution.decision` 和空的 `resolution.draft`；成功 envelope 的 `audit_log_id` 指向同一次處置。Reason 經 trim，actor 與時間只保存在 Decision。處置表示使用者選擇不採用外部變動，不表示已同步外部內容或接受實作。
 
-原始 Snapshot、diff 與 Content Drift 逐位元保留。`content_drift_resolutions` 是唯一權威關聯，raw drift 的 `resolution_decision_id` 不更新。共用處置讀取及 serializer 由有效關聯取得結果；原有 observation history 的處置整合由後續 #97 交付，目前不可用該歷史列表的 raw pointer 判斷新處置是否存在。
+原始 Snapshot、diff 與 Content Drift 逐位元保留。`content_drift_resolutions` 是唯一權威關聯，raw drift 的 `resolution_decision_id` 不更新。單筆處置讀取與 observation history 共用驗證及 serializer，由有效關聯取得處置及公開 pointer。未處置為 null；無有效關聯的 raw pointer 回 conflict。讀取契約詳見 [MCP tool 規格](12-mcp-tool-spec.md#get_content_drift_resolutionfull)。
 
 同一 drift 再次處置一律回 `CONFLICT`，包含既有 `resolution_id`／`decision_id`，不建立第二個 Decision。此一次性決策沒有 Operation Receipt replay 或重開語意。有效的歷史 Project、Ticket、外部 item 和已終止／替換 mapping 仍可拒絕；目前 Spec 的變動或封存不取消歷史證據。
 
@@ -16,7 +16,7 @@
 
 Migration 011 增加不可變關聯，並保護關聯及其 Decision 的 UPDATE／DELETE，以及 raw resolution pointer 的修改。寫入需要同一 transaction，先取得 writer lock，再檢查既有關聯；Decision、audit 或關聯任何寫入失敗，都連同新 actor 回滾。兩連線競爭至多形成一份處置。
 
-共用資料契約預留 `adopt` 與唯一候選 draft 參照，並鎖定該 revision 的內容和 base／source provenance；正常 approval／lifecycle 轉移仍可更新。採用指令已由 #96 提供；獨立讀取 tool／resource 與 observation history 整合由 #97 交付。
+共用資料契約包含 `adopt` 與唯一候選 draft 參照，並鎖定該 revision 的內容和 base／source provenance；正常 approval／lifecycle 轉移仍可更新。Full profile 已提供採用指令、`get_content_drift_resolution` 與 `product-graph://content-drifts/{driftId}/resolution`，可讀取候選 draft 的目前 review／lifecycle，不把狀態變動誤當成重新處置。
 
 
 ## 選擇性採用候選規格

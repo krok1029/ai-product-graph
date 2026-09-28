@@ -615,3 +615,14 @@ node dist/plane-observe.js <mapping-id>
 每次成功觀測都保存獨立、不可變 snapshot；內容比較固定當次 commit 時的 current approved Ticket Revision，原始 create marker key 保持不變。只有 `name`、`description_html`、`external_source`、`external_id` 參與差異；外部 labels、assignees、status 等保留在 snapshot，不改動內部 specification 或 Delivery Status。HTML 採精確比較，provider 的空白或格式正規化也可能形成差異；drift 只代表觀測不一致，不等於證明有人手動編輯。
 
 讀取不會改寫成功 outbound attempt 的 snapshot proof、mapping source revision 或 Sync Health，因此 Content Drift 可以與 health `current` 同時存在。重複命令會新增觀測，後來的 matching snapshot 不會解決舊 drift。若 GET 期間 mapping 已被終止或替換，當次結果回 conflict，不保存過時觀測。一般 stdio 啟動不連線 Plane；此命令不更新遠端內容或執行 update／close／reopen。
+
+
+## 查詢 Content Drift 的處置與歷史（full）
+
+觀測得到 `contentDriftId` 後，以 `get_content_drift_resolution({content_drift_id})` 或 `product-graph://content-drifts/{driftId}/resolution` 查詢。有效且未處置時 `resolution` 為 null；需要 mapping 全部觀測時，使用 `get_mapping_content_drift_history({mapping_id})` 或對應 `content-drifts` resource。每筆 drift 都包含相同的 `resolution`，其 `resolution_decision_id` 由有效處置關聯衍生。
+
+Reject 顯示誰在何時、基於什麼理由不採用外部變動，`draft` 為 null。Adopt 顯示候選 Ticket Revision 與 base／source graph；請分別閱讀 `resolution.record.kind` 與 `resolution.draft.review_status`／`lifecycle_status`。已處置不表示候選已核准，已核准也不表示 Implementation Result 已接受或外部內容已更新；完成驗收與同步健康度須從各自的正式查詢確認。
+
+歷史查詢固定保存時的 snapshot、captured revision 與 diff。後來候選核准或因 stale 被封存、Milestone／Spec 變更或 mapping 終止，都不抹除既有處置。單筆查詢不會因無關 observation 或 sync attempt 損壞而失敗；整份 mapping history 則會驗證其回傳的所有紀錄。真正不存在回 `NOT_FOUND`，已保存但關聯損壞或 unsupported legacy pointer 回 `CONFLICT`，不能把後者解讀為尚未處置。
+
+這些介面只有 full profile 提供，全部為本機唯讀，不連線 Plane、不重算目前 revision 差異、不更新原始 drift、不新增 audit 或 actor。重複讀取與重新啟動可以安全地用於跨對話交接。

@@ -7,6 +7,7 @@ import type { ContentDriftResolution } from "../domain/content-drift-resolution.
 import type { Decision } from "../domain/result-acceptance.js";
 import { planeObservationHistoryFixture } from "../test-support/plane-observation-history-fixture.js";
 import { ProductGraphService } from "./product-graph-service.js";
+import { serializeContentDriftResolution } from "../adapters/mcp/content-drift-resolution-serialization.js";
 import { readContentDriftResolution } from "./content-drift-resolution-support.js";
 import { openDatabase } from "../infrastructure/sqlite/database.js";
 import { createSqlitePorts } from "../infrastructure/sqlite/repositories.js";
@@ -18,12 +19,21 @@ afterEach(() => { f.database.close(); });
 it("reserves a real adopted draft, rejects conflicting rejection and permits ordinary approval", () => {
   const { record, draft, decision } = adoptedFixture();
   const before = f.allRows();
-  expect(readContentDriftResolution(f.ports, record.contentDriftId).resolution).toEqual({ record, draft, decision });
+  expect(f.service.getContentDriftResolution(record.contentDriftId).resolution).toEqual({ record, draft, decision });
+  expect(serializeContentDriftResolution(f.service.getContentDriftResolution(record.contentDriftId))).toMatchObject({
+    evidence: { captured_source_ticket_revision_id: f.revision.id },
+    resolution: { record: { kind: "adopt" }, draft: { id: draft.id, base_approved_revision_id: f.revision.id,
+      source_graph_revision_id: f.graph.graphRevision.id, review_status: "draft", lifecycle_status: "active" } }
+  });
+  expect(f.service.getMappingContentDriftHistory(f.mapping.id).drifts[0]).toMatchObject({
+    resolutionDecisionId: decision.id, resolution: { record, draft, decision }
+  });
   expect(() => f.service.rejectContentDrift({ contentDriftId: record.contentDriftId, reason: "Reject instead" }))
     .toThrow(expect.objectContaining({ code: "CONFLICT", details: { resolution_id: record.id, decision_id: decision.id } }));
   expect(f.allRows()).toEqual(before);
   const approved = f.service.approveTicketRevision(draft.id);
-  expect(readContentDriftResolution(f.ports, record.contentDriftId).resolution!.draft).toEqual(approved.revision);
+  expect(f.service.getContentDriftResolution(record.contentDriftId).resolution!.draft).toEqual(approved.revision);
+  expect(f.service.getMappingContentDriftHistory(f.mapping.id).drifts[0]!.resolution!.draft).toEqual(approved.revision);
   expect(f.database.prepare("SELECT resolution_decision_id AS raw FROM content_drifts").get()).toEqual({ raw: null });
 });
 
@@ -36,7 +46,8 @@ it("permits adopted draft stale archival while freezing its specification and pr
   expect(() => f.database.prepare("DELETE FROM ticket_revisions WHERE id = ?").run(draft.id)).toThrow("immutable");
   expect(() => f.database.prepare("DELETE FROM ticket_revision_graph_nodes WHERE ticket_revision_id = ?").run(draft.id)).toThrow("immutable");
   f.replaceRevision();
-  expect(readContentDriftResolution(f.ports, record.contentDriftId).resolution!.draft!.lifecycleStatus).toBe("archived");
+  expect(f.service.getContentDriftResolution(record.contentDriftId).resolution!.draft!.lifecycleStatus).toBe("archived");
+  expect(f.service.getMappingContentDriftHistory(f.mapping.id).drifts[0]!.resolution!.draft!.lifecycleStatus).toBe("archived");
 });
 
 it("enforces relation write transactions, kind/draft and project/actor/audit identity", () => {
@@ -78,7 +89,8 @@ it.each([
   const { record } = adoptedFixture();
   disableGuards(); f.database.exec(sql);
   const before = f.allRows();
-  expect(() => readContentDriftResolution(f.ports, record.contentDriftId)).toThrow(expect.objectContaining({ code: "CONFLICT" }));
+  expect(() => f.service.getContentDriftResolution(record.contentDriftId)).toThrow(expect.objectContaining({ code: "CONFLICT" }));
+  expect(() => f.service.getMappingContentDriftHistory(f.mapping.id)).toThrow(expect.objectContaining({ code: "CONFLICT" }));
   expect(() => f.service.rejectContentDrift({ contentDriftId: record.contentDriftId, reason: "No" })).toThrow(expect.objectContaining({ code: "CONFLICT" }));
   expect(f.allRows()).toEqual(before);
 });

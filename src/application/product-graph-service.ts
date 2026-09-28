@@ -1,5 +1,6 @@
 import { ContentDriftAdoptionWorkflow, type AdoptContentDriftInput } from "./content-drift-adoption-workflow.js";
 import { ContentDriftRejectionWorkflow, type RejectContentDriftInput } from "./content-drift-rejection-workflow.js";
+import { ContentDriftResolutionReads } from "./content-drift-resolution-reads.js";
 import { PlanningWorkflow } from "./planning-workflow.js";
 import { LocalDeliveryWorkflow } from "./local-delivery-workflow.js";
 import { PlaneObservationReads } from "./plane-observation-reads.js";
@@ -179,6 +180,10 @@ export class ProductGraphService {
 
   getMappingContentDriftHistory(mappingId: string) {
     return new PlaneObservationReads(this.ports).get(mappingId);
+  }
+
+  getContentDriftResolution(contentDriftId: string) {
+    return new ContentDriftResolutionReads(this.ports).get(contentDriftId);
   }
 
   getMappingTermination(mappingId: string) {

@@ -1,5 +1,6 @@
 import { registerContentDriftAdoptionTools } from "./content-drift-adoption-tools.js";
 import { registerContentDriftRejectionTools } from "./content-drift-rejection-tools.js";
+import { registerContentDriftResolutionReadTools } from "./content-drift-resolution-read-tools.js";
 // 外部同步介面集中註冊，只有 full profile 載入。
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ProductGraphService } from "../../application/product-graph-service.js";
@@ -18,6 +19,7 @@ import { registerExternalContainerTools } from "./external-container-tools.js";
 export function registerExternalSyncTools(server: McpServer, service: ProductGraphService) {
   registerContentDriftRejectionTools(server, service);
   registerContentDriftAdoptionTools(server, service);
+  registerContentDriftResolutionReadTools(server, service);
   registerPlaneObservationReadTools(server, service);
   registerMappingTerminationCommand(server, service);
   registerMappingTerminationReadTools(server, service);

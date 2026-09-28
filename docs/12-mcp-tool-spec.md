@@ -1747,8 +1747,34 @@ Strict input：`{ mapping_id: string }`，只接受 trim 後非空的 mapping id
 
 Output data：`{ mapping, observations, drifts }`。Mapping 使用既有完整 serializer。Observations 只包含明確 inbound capture，每筆為 `{ snapshot, provenance }`：snapshot 欄位同既有 External Work Item Snapshot；provenance 包含 `snapshot_id`、`project_id`、`mapping_id`、`external_work_item_id`、`ticket_id`、`source_ticket_revision_id`、`actor_id`、`audit_log_id`。首次 outbound create 的 snapshot 仍可從既有 item history 查詢，不假冒 inbound observation。
 
-Drifts 包含 `id`、`project_id`、`mapping_id`、`snapshot_id`、原始 versioned `diff`、`detected_at`、`resolution_decision_id`。Diff 固定歷史比較時的 approved revision 與四個 managed fields 差異；查詢時不以目前 revision 重新計算，也不因後來內容吻合或新版 approval 宣告舊 drift 已解決。只提供 stored resolution Decision reference，不推測 Decision type 或增加 resolution state。
+Drifts 包含 `id`、`project_id`、`mapping_id`、`snapshot_id`、原始 versioned `diff`、`detected_at`、`resolution_decision_id` 與 `resolution`。Diff 固定歷史比較時的 approved revision 與四個 managed fields 差異；查詢時不以目前 revision 重新計算，也不因後來內容吻合或新版 approval 宣告舊 drift 已解決。`resolution` 使用下方單筆查詢的相同處置 DTO；`resolution_decision_id` 從已驗證關聯衍生，未處置時兩者為 null。原始 drift row 不修改，沒有有效關聯的 legacy raw pointer 回 `CONFLICT`。
 
 Observations 依 snapshot `captured_at`、ID 升冪；drifts 依 `detected_at`、ID 升冪。`captured_at` 是收到 provider response 的時間，audit created_at 是本機 commit 時間；此 API 不把 commit order 宣告成外部權威狀態。原始 snapshot JSON（含未知巢狀欄位）與 provider token 原樣保留，HTML 不解讀、不執行。
 
 Active／archived mappings 均可讀；沒有 observation 時回空陣列。未知 mapping 回 `NOT_FOUND`；已知 mapping、snapshot、revision、actor、audit、drift 或 linked Decision 的 scope／identity 不一致回 `CONFLICT`，不以 SQL filter 隱藏損壞資料。讀取使用同一 transaction，不要求原始 outbound create proof 仍完整，也不修改 provider、actor、audit、claim、receipt、snapshot、diff、mapping、health 或任何 domain state。
+
+
+### `get_content_drift_resolution`（full）
+
+Strict input：`{ content_drift_id: string }`，只接受 trim 後非空的 drift identity，不接受 actor、Project、Decision 或時間覆寫。Resource 為 `product-graph://content-drifts/{driftId}/resolution`，提供相同 data。此 tool／resource 僅在 full profile 註冊，core 的本機 tools／resources 保持不變。
+
+Output data：
+
+```text
+{
+  content_drift_id,
+  evidence: { mapping_id, ticket_id, snapshot_id, captured_source_ticket_revision_id },
+  resolution: null | {
+    record: { id, project_id, content_drift_id, decision_id, kind,
+              draft_ticket_revision_id, audit_log_id },
+    decision: { id, project_id, decision_type, summary, actor_id, created_at },
+    draft: null | <既有 TicketRevision serializer>
+  }
+}
+```
+
+有效但未處置的 drift 回 `resolution: null`；實際不存在才回 `NOT_FOUND`。Reject 的 draft 為 null，Decision 保留處置 actor、理由與時間。Adopt 的 draft 保留 `base_approved_revision_id`、`source_graph_revision_id` 與目前 review／lifecycle；evidence 的 captured revision 仍是觀測時版本，不必等於採用的 base。處置種類與候選 draft 核准或封存狀態分開，不能據此推論 Implementation Acceptance 或 outbound sync 成功。
+
+只驗指定 drift 的保存證據與關聯，不依賴無關 observation、sync intent 或 attempt。已知但損壞的 evidence／association／Decision／draft／audit，或無有效關聯的 legacy raw pointer 均回 `CONFLICT`；storage failures 不偽装成未處置。Mapping history 會驗證它回傳的每筆 drift，整份結果在同一 read transaction 取得。
+
+歷史 base／source graph 必須仍有合法 provenance，但不要求目前 base pointer、graph freshness 或 owner／mapping lifecycle 仍 active。因此 draft 正常核准、stale archival、上游 Milestone／Spec 變更或封存、mapping 終止後仍可讀歷史。重複查詢／重新啟動不寫 actor、audit、資料、不取得 clock、不呼叫 provider，也不重新比較當前 Ticket specification。
