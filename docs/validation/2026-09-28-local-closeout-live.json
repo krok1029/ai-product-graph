@@ -1,0 +1,96 @@
+{
+  "kind": "read_only_live_delivery_observation",
+  "observedAt": "2026-09-28 07:47:05 UTC",
+  "loadedConnectorVersion": "unknown",
+  "projectId": "01M3JXSN8AEP7243K15BFMV4EB",
+  "delivery": {
+    "scope": "active_project_tickets",
+    "summary": {
+      "total": 3,
+      "done": 1,
+      "stale": 0,
+      "blocked": 1,
+      "awaiting_acceptance": 1
+    },
+    "tickets": [
+      {
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "delivery_status": "planned",
+        "approved_revision_id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "source_freshness": "current",
+        "source_problem": null,
+        "dependency_ticket_ids": [],
+        "blocking_dependency_ids": [],
+        "next_action": "review_result",
+        "targets": [
+          {
+            "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "approved_brief_id": "01M3KCYBZ93KX7C9BGYPEF7QB7",
+            "accepted_result_id": null,
+            "pending_result_id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+            "criteria_without_evidence": [],
+            "unsatisfied_criterion_ids": []
+          }
+        ]
+      },
+      {
+        "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+        "title": "提供可獨立使用的操作說明與資料限制",
+        "delivery_status": "done",
+        "approved_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+        "source_freshness": "current",
+        "source_problem": null,
+        "dependency_ticket_ids": [],
+        "blocking_dependency_ids": [],
+        "next_action": "done",
+        "targets": [
+          {
+            "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+            "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+            "pending_result_id": null,
+            "criteria_without_evidence": [],
+            "unsatisfied_criterion_ids": []
+          }
+        ]
+      },
+      {
+        "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+        "title": "在本機清單加入完成狀態篩選",
+        "delivery_status": "planned",
+        "approved_revision_id": "01M3KCN5S62J4WEQ1K0MKC07G0",
+        "source_freshness": "current",
+        "source_problem": null,
+        "dependency_ticket_ids": [
+          "01M3JY4YK7TQWT4A4X03W2CF4Y"
+        ],
+        "blocking_dependency_ids": [
+          "01M3JY4YK7TQWT4A4X03W2CF4Y"
+        ],
+        "next_action": "complete_dependencies",
+        "targets": [
+          {
+            "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "approved_brief_id": null,
+            "accepted_result_id": null,
+            "pending_result_id": null,
+            "criteria_without_evidence": [
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac1",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac2",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac3",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac4",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac5",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac6",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac7"
+            ],
+            "unsatisfied_criterion_ids": []
+          }
+        ]
+      }
+    ]
+  }
+}
