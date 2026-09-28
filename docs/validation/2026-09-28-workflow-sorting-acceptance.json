@@ -1,0 +1,1553 @@
+{
+  "schema_version": 1,
+  "run_id": "workflow-sorting-acceptance-20260928",
+  "issue": 105,
+  "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+  "engineering_base_commit": "5b9d83dfdeb5a1e0da2ef50107e130699a5fbaf7",
+  "status": "replacements_approved_list_result_pending_filter_dependency_blocked",
+  "roundtrip": {
+    "scope": "Only checklist Spec source content changed and restored; no product code change by these calls.",
+    "before": {
+      "source_file": "bRoundtripBefore.json",
+      "graph_revision_id": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+      "node": {
+        "id": "01M3JY3DHYFY20WX92JYBQJNPG",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "待辦清單操作與本機保存-01m3jy3dhyfy20wx92jybqjnpg",
+        "type": "spec",
+        "title": "待辦清單操作與本機保存",
+        "description": "本機繁體中文網頁提供新增欄位、完成切換與清單，以 localStorage 保存項目；全部檢視先未完成、後已完成，各組內依新增先後由新到舊顯示。",
+        "source": "product_brief",
+        "source_ref_type": "product_brief_version",
+        "source_ref_id": "01M3KA12FFGP6P112NQ93N7WDT",
+        "lifecycle_status": "active",
+        "created_in_graph_revision_id": "01M3JY3DHY9YTTVFR8S29Y7S8K",
+        "last_changed_in_graph_revision_id": "01M3KADF6D4SX07MBAPXY3QT5H",
+        "metadata": {
+          "content": {
+            "problem_statement": "使用者需要快速記錄待辦、標示完成，重新整理後仍保留內容。",
+            "solution": "本機繁體中文網頁提供新增欄位、完成切換與清單，以 localStorage 保存項目；全部檢視先未完成、後已完成，各組內依新增先後由新到舊顯示。",
+            "user_stories": [
+              "我可輸入非空白標題並新增一項未完成待辦。",
+              "我可勾選或取消完成，項目立即移到所屬狀態組；各組內保留原新增先後，不因切換而視為新項目。",
+              "我重新整理後仍看見原有項目與狀態；尚無項目時看見空清單提示。",
+              "若瀏覽器無法保存或保存資料損壞，我會看到清楚提示，不被誤告知已永久保存。"
+            ],
+            "implementation_decisions": [
+              "使用本機靜態網頁與瀏覽器 localStorage，資料含穩定 item identity 與建立次序。",
+              "標題去除前後空白，拒絕空白；以文字呈現使用者輸入。",
+              "持久資料保留新增先後及穩定 identity；顯示時以未完成優先分組，各組內保留新到舊順序，同時鐘或時鐘倒退也不改新增先後。",
+              "儲存失败保留本次記憶體資料與錯誤提示；讀到損壞資料時顯示提示，不靜默覆寫原資料。"
+            ],
+            "testing_decisions": [
+              "驗證新增、空白拒絕、純文字呈現、狀態分組與完成切換後的位置；同毫秒或時鐘倒退仍按新增先後。",
+              "驗證保存／載入、空狀態、保存失敗與損壞資料邊界。",
+              "在桌面瀏覽器驗證混合完成狀態的順序、勾選／取消跨组、新增位置、篩選一致與重整後資料及排序。"
+            ],
+            "out_of_scope": [
+              "篩選、搜尋、刪除、統計、匯出",
+              "使用者自選排序、優先級或到期日",
+              "雲端同步、登入、手機驗證"
+            ],
+            "further_notes": [
+              "操作說明是獨立 Spec，不依賴目前排序細節；本 Spec 後續變更應可觀察其 Ticket 與依賴影響。"
+            ]
+          },
+          "parent_node_id": "01M3JY37R2X5SCFQY52DDYNN2Y",
+          "source_parent_revision_id": "01M3KAD1ECNXBAMJ25N2V0W90J",
+          "content_revision_id": "01M3KADF6D4SX07MBAPXY3QT5H"
+        },
+        "created_at": "2026-09-28T02:39:29.853Z",
+        "updated_at": "2026-09-28T06:14:42.125Z"
+      },
+      "content_sha256": "ec837f403449128fc4b423f0337d9c15109806a29f2f511d683561e4359591d4"
+    },
+    "old": {
+      "source_file": "bRoundtripOld.json",
+      "graph_revision": {
+        "id": "01M3KCJ6F3KESEDVD33SVT3CGN",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "graph_draft_batch_id": "01M3KCJ6EZC255PHEZJ88DWSGF",
+        "source_product_brief_version_id": "01M3KA12FFGP6P112NQ93N7WDT",
+        "sequence_number": 15,
+        "is_noop_reconciliation": false,
+        "reconciliation_summary": "Save spec: 待辦清單操作與本機保存",
+        "created_at": "2026-09-28T06:52:14.178Z"
+      },
+      "node": {
+        "id": "01M3JY3DHYFY20WX92JYBQJNPG",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "待辦清單操作與本機保存-01m3jy3dhyfy20wx92jybqjnpg",
+        "type": "spec",
+        "title": "待辦清單操作與本機保存",
+        "description": "本機繁體中文網頁提供新增欄位、完成切換與清單，以 localStorage 保存項目並按建立先後由新到舊顯示。",
+        "source": "product_brief",
+        "source_ref_type": "product_brief_version",
+        "source_ref_id": "01M3KA12FFGP6P112NQ93N7WDT",
+        "lifecycle_status": "active",
+        "created_in_graph_revision_id": "01M3JY3DHY9YTTVFR8S29Y7S8K",
+        "last_changed_in_graph_revision_id": "01M3KCJ6F3KESEDVD33SVT3CGN",
+        "metadata": {
+          "content": {
+            "problem_statement": "使用者需要快速記錄待辦、標示完成，重新整理後仍保留內容。",
+            "solution": "本機繁體中文網頁提供新增欄位、完成切換與清單，以 localStorage 保存項目並按建立先後由新到舊顯示。",
+            "user_stories": [
+              "我可輸入非空白標題並新增一項未完成待辦。",
+              "我可勾選或取消完成，辨識目前狀態且不改變建立順序。",
+              "我重新整理後仍看見原有項目與狀態；尚無項目時看見空清單提示。",
+              "若瀏覽器無法保存或保存資料損壞，我會看到清楚提示，不被誤告知已永久保存。"
+            ],
+            "implementation_decisions": [
+              "使用本機靜態網頁與瀏覽器 localStorage，資料含穩定 item identity 與建立次序。",
+              "標題去除前後空白，拒絕空白；以文字呈現使用者輸入。",
+              "建立次序相同時仍使用穩定順序，完成切換不改變排序。",
+              "儲存失败保留本次記憶體資料與錯誤提示；讀到損壞資料時顯示提示，不靜默覆寫原資料。"
+            ],
+            "testing_decisions": [
+              "以可控制的建立順序驗證新增、空白拒絕、標題文字呈現及完成切換。",
+              "驗證保存／載入、空狀態、保存失敗與損壞資料邊界。",
+              "在桌面瀏覽器完成新增兩筆、勾選、重新整理並確認內容、狀態及順序。"
+            ],
+            "out_of_scope": [
+              "篩選、搜尋、刪除、統計、匯出",
+              "排序規則後續變更",
+              "雲端同步、登入、手機驗證"
+            ],
+            "further_notes": [
+              "操作說明是獨立 Spec，不依賴目前排序細節；本 Spec 後續變更應可觀察其 Ticket 與依賴影響。"
+            ]
+          },
+          "parent_node_id": "01M3JY37R2X5SCFQY52DDYNN2Y",
+          "source_parent_revision_id": "01M3KAD1ECNXBAMJ25N2V0W90J",
+          "content_revision_id": "01M3KCJ6F3KESEDVD33SVT3CGN"
+        },
+        "created_at": "2026-09-28T02:39:29.853Z",
+        "updated_at": "2026-09-28T06:52:14.178Z"
+      },
+      "archived_node_ids": [],
+      "planning": {
+        "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+        "stale_node_ids": [],
+        "affected_ticket_ids": [
+          "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "01M3K93WX6A48WS4YZMPW88CMQ"
+        ]
+      },
+      "content_sha256": "513e766da17b9ec4cf6c924f032f3e169bb8ae81eada94412faf5a3f79bb5f2a"
+    },
+    "restored": {
+      "source_file": "bRoundtripRestored.json",
+      "graph_revision": {
+        "id": "01M3KCJS69KYGP6GM7K1ZGMQC5",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "graph_draft_batch_id": "01M3KCJS68TG07TZHD0G5VV7NF",
+        "source_product_brief_version_id": "01M3KA12FFGP6P112NQ93N7WDT",
+        "sequence_number": 16,
+        "is_noop_reconciliation": false,
+        "reconciliation_summary": "Save spec: 待辦清單操作與本機保存",
+        "created_at": "2026-09-28T06:52:33.353Z"
+      },
+      "node": {
+        "id": "01M3JY3DHYFY20WX92JYBQJNPG",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "待辦清單操作與本機保存-01m3jy3dhyfy20wx92jybqjnpg",
+        "type": "spec",
+        "title": "待辦清單操作與本機保存",
+        "description": "本機繁體中文網頁提供新增欄位、完成切換與清單，以 localStorage 保存項目；全部檢視先未完成、後已完成，各組內依新增先後由新到舊顯示。",
+        "source": "product_brief",
+        "source_ref_type": "product_brief_version",
+        "source_ref_id": "01M3KA12FFGP6P112NQ93N7WDT",
+        "lifecycle_status": "active",
+        "created_in_graph_revision_id": "01M3JY3DHY9YTTVFR8S29Y7S8K",
+        "last_changed_in_graph_revision_id": "01M3KCJS69KYGP6GM7K1ZGMQC5",
+        "metadata": {
+          "content": {
+            "problem_statement": "使用者需要快速記錄待辦、標示完成，重新整理後仍保留內容。",
+            "solution": "本機繁體中文網頁提供新增欄位、完成切換與清單，以 localStorage 保存項目；全部檢視先未完成、後已完成，各組內依新增先後由新到舊顯示。",
+            "user_stories": [
+              "我可輸入非空白標題並新增一項未完成待辦。",
+              "我可勾選或取消完成，項目立即移到所屬狀態組；各組內保留原新增先後，不因切換而視為新項目。",
+              "我重新整理後仍看見原有項目與狀態；尚無項目時看見空清單提示。",
+              "若瀏覽器無法保存或保存資料損壞，我會看到清楚提示，不被誤告知已永久保存。"
+            ],
+            "implementation_decisions": [
+              "使用本機靜態網頁與瀏覽器 localStorage，資料含穩定 item identity 與建立次序。",
+              "標題去除前後空白，拒絕空白；以文字呈現使用者輸入。",
+              "持久資料保留新增先後及穩定 identity；顯示時以未完成優先分組，各組內保留新到舊順序，同時鐘或時鐘倒退也不改新增先後。",
+              "儲存失败保留本次記憶體資料與錯誤提示；讀到損壞資料時顯示提示，不靜默覆寫原資料。"
+            ],
+            "testing_decisions": [
+              "驗證新增、空白拒絕、純文字呈現、狀態分組與完成切換後的位置；同毫秒或時鐘倒退仍按新增先後。",
+              "驗證保存／載入、空狀態、保存失敗與損壞資料邊界。",
+              "在桌面瀏覽器驗證混合完成狀態的順序、勾選／取消跨组、新增位置、篩選一致與重整後資料及排序。"
+            ],
+            "out_of_scope": [
+              "篩選、搜尋、刪除、統計、匯出",
+              "使用者自選排序、優先級或到期日",
+              "雲端同步、登入、手機驗證"
+            ],
+            "further_notes": [
+              "操作說明是獨立 Spec，不依賴目前排序細節；本 Spec 後續變更應可觀察其 Ticket 與依賴影響。"
+            ]
+          },
+          "parent_node_id": "01M3JY37R2X5SCFQY52DDYNN2Y",
+          "source_parent_revision_id": "01M3KAD1ECNXBAMJ25N2V0W90J",
+          "content_revision_id": "01M3KCJS69KYGP6GM7K1ZGMQC5"
+        },
+        "created_at": "2026-09-28T02:39:29.853Z",
+        "updated_at": "2026-09-28T06:52:33.353Z"
+      },
+      "archived_node_ids": [],
+      "planning": {
+        "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+        "stale_node_ids": [],
+        "affected_ticket_ids": [
+          "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "01M3K93WX6A48WS4YZMPW88CMQ"
+        ]
+      },
+      "content_sha256": "ec837f403449128fc4b423f0337d9c15109806a29f2f511d683561e4359591d4"
+    },
+    "restored_content_equals_before": true,
+    "content_version_advanced": true
+  },
+  "negative_checks": [
+    {
+      "source_file": "bRoundtripHandoffRejected.json",
+      "operation": "start_implementation",
+      "request": {
+        "implementation_brief_id": "01M3KB12V4HT2WH5W4814544P2",
+        "current_repository_state": {
+          "commit_sha": "df6017401f752ea191cf6c1b2264c64b07ce67b3"
+        }
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "STALE_HANDOFF",
+          "message": "Implementation handoff is stale.",
+          "details": {
+            "reason": "graph_node_changed",
+            "ticketRevisionId": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+            "graphNodeId": "01M3JY3DHYFY20WX92JYBQJNPG",
+            "sourceGraphRevisionId": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+            "lastChangedInGraphRevisionId": "01M3KCJS69KYGP6GM7K1ZGMQC5"
+          }
+        }
+      }
+    },
+    {
+      "source_file": "bRoundtripAcceptanceRejected.json",
+      "operation": "accept_implementation_result",
+      "request": {
+        "implementation_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+        "idempotency_key": "workflow-b-20260928-source-roundtrip-negative-acceptance-01"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "STALE_HANDOFF",
+          "message": "Implementation handoff is stale.",
+          "details": {
+            "reason": "graph_node_changed",
+            "ticketRevisionId": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+            "graphNodeId": "01M3JY3DHYFY20WX92JYBQJNPG",
+            "sourceGraphRevisionId": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+            "lastChangedInGraphRevisionId": "01M3KCJS69KYGP6GM7K1ZGMQC5"
+          }
+        }
+      }
+    }
+  ],
+  "acceptance_side_effect_check": {
+    "before_source_file": "bBeforeStaleAcceptance.json",
+    "after_source_file": "bAfterStaleAcceptance.json",
+    "complete_data_equal": true,
+    "before_data_sha256": "2081a88bbc4bdd1f86c8b4324969b7fafaea0895fddb4eb921fca27e40517cbd",
+    "after_data_sha256": "2081a88bbc4bdd1f86c8b4324969b7fafaea0895fddb4eb921fca27e40517cbd",
+    "delivery": {
+      "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+      "title": "完成本機待辦清單的新增、完成切換與保存",
+      "delivery_status": "planned",
+      "approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+      "source_freshness": "stale",
+      "source_problem": {
+        "reason": "graph_node_changed",
+        "details": {
+          "ticketRevisionId": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+          "graphNodeId": "01M3JY3DHYFY20WX92JYBQJNPG",
+          "sourceGraphRevisionId": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+          "lastChangedInGraphRevisionId": "01M3KCJS69KYGP6GM7K1ZGMQC5"
+        }
+      },
+      "dependency_ticket_ids": [],
+      "blocking_dependency_ids": [],
+      "next_action": "reconcile_sources",
+      "targets": [
+        {
+          "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+          "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "approved_brief_id": "01M3KB12V4HT2WH5W4814544P2",
+          "accepted_result_id": null,
+          "pending_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+          "criteria_without_evidence": [],
+          "unsatisfied_criterion_ids": []
+        }
+      ]
+    },
+    "targets": [
+      {
+        "target": {
+          "id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+          "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "lifecycle_status": "active",
+          "created_at": "2026-09-28T03:08:48.592Z",
+          "updated_at": "2026-09-28T03:08:48.592Z"
+        },
+        "repository": {
+          "id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+          "slug": "workflow-checklist",
+          "name": "workflow-checklist",
+          "root_path": "/Users/limingfeng/Project/workflow-checklist",
+          "remote_url": null,
+          "lifecycle_status": "active",
+          "created_at": "2026-09-28T02:38:24.446Z",
+          "updated_at": "2026-09-28T02:38:24.446Z"
+        },
+        "approved_brief": {
+          "id": "01M3KB12V4HT2WH5W4814544P2",
+          "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+          "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+          "ticket_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+          "product_brief_version_id": "01M3KA12FFGP6P112NQ93N7WDT",
+          "repository_context_snapshot_id": "01M3KB12V4NDY3ZKMY0C8JT5GN",
+          "supersedes_implementation_brief_id": "01M3JZTV0R0RYXD1ZF6CAVRVB3",
+          "slug": "implementation-brief-phymp3s2-20260928t062524835z",
+          "brief": {
+            "implementation_plan": [
+              "在清單snapshot分成未完成／已完成兩組，每組保持原新增先後；資料存取与identity不變。",
+              "更新頁面排序提示及README，篩選仍沿用清單順序；原獨立操作說明不改。",
+              "更新舊排序預期並加入混合狀態、跨組完成切換、同時間與倒退時間、重讀、篩選以及資料保護回歸。",
+              "完成本機桌面實测與獨立Spec/Standardsreview，本機commit並提交真實Result；先不接受，供新任務只讀接手。"
+            ],
+            "suggested_files_to_inspect": [
+              "src/checklist.js",
+              "src/filter.js",
+              "src/app.js",
+              "index.html",
+              "test/checklist.test.js",
+              "test/filter.test.js"
+            ],
+            "test_strategy": [
+              "Node20內建測試驗證完整清單、篩選及伺服器模組載入，保存起訖與退出碼。",
+              "真實桌面混合完成狀態、新增、勾選／取消、三種篩選、重整與身份比對。",
+              "兩位獨立agent審查最終確切版本，修復問題後複查。"
+            ],
+            "risks": [
+              "不可直接排序保存陣列，否則完成狀態往返會遺失原新增順序。",
+              "已接受的篩選Ticket仍需後續來源修復，本次程式整合不自動代表它的新規格已接受。"
+            ],
+            "pr_summary_draft": "本機清單加入未完成優先排序；主專案#111記錄有效replacement、實作證據及真實待接受接手檢查點。"
+          },
+          "review_status": "approved",
+          "lifecycle_status": "active",
+          "approved_by_actor_id": "00000000000000000000000001",
+          "approved_at": "2026-09-28T06:25:31.498Z",
+          "created_at": "2026-09-28T06:25:24.835Z",
+          "updated_at": "2026-09-28T06:25:31.498Z"
+        },
+        "pending_result": {
+          "id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+          "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+          "implementation_brief_id": "01M3KB12V4HT2WH5W4814544P2",
+          "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+          "ticket_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+          "supersedes_implementation_result_id": null,
+          "result": {
+            "summary": "排序r2已實作：未完成優先，各組新到舊，保留原身份、建立次序與資料格式。20項測試、桌面實測及獨立Spec/Standards review通過；先保留待接受結果供新任務接手。",
+            "unfinished_items": [],
+            "submission_disposition": "reviewable"
+          },
+          "review_status": "draft",
+          "lifecycle_status": "active",
+          "submission_disposition": "reviewable",
+          "stale_at_submission": false,
+          "stale_reasons": [],
+          "created_at": "2026-09-28T06:31:16.570Z",
+          "updated_at": "2026-09-28T06:31:16.570Z",
+          "archived_at": null
+        },
+        "accepted_result": null
+      }
+    ],
+    "meaning": "Pending Result remained draft and all returned data unchanged around rejected call; not a complete historical Acceptance audit."
+  },
+  "replacement_drafts": [
+    {
+      "source_file": "bListFinalDraft.json",
+      "ticket": {
+        "id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "完成本機待辦清單的新增-完成切換與保存",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "current_approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+        "lifecycle_status": "active",
+        "delivery_status": "planned",
+        "created_at": "2026-09-28T02:40:20.068Z",
+        "updated_at": "2026-09-28T06:24:24.855Z"
+      },
+      "revision": {
+        "id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "ticket_draft_batch_id": null,
+        "revision_number": 3,
+        "base_approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+        "source_graph_revision_id": "01M3KCJS69KYGP6GM7K1ZGMQC5",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "specification": {
+          "source_spec_id": "01M3JY3DHYFY20WX92JYBQJNPG",
+          "traces_to_ticket_id": null,
+          "user_story": "作為單人使用者，我希望先處理未完成待辦，各完成狀態組內仍按新增先後由新到舊，並保留原資料。",
+          "scope": [
+            "原新增、完成切換與 localStorage 保存",
+            "全部檢視未完成優先，各狀態組內新到舊；切換狀態立即調整所在組",
+            "三種篩選與新排序整合、資料及錯誤保護回歸"
+          ],
+          "acceptance_criteria": [
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac1",
+              "text": "本機繁體中文桌面頁面可新增非空白待辦，標題去除前後空白並以純文字顯示，原空清單與讀寫失敗提示維持有效。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac2",
+              "text": "全部檢視先未完成、再已完成；各組依新增先後由新到舊，同毫秒或時鐘倒退不改新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac3",
+              "text": "勾選或取消完成立即移至正確狀態組；保留 identity、文字與原建立次序，不影響其他項目的相對新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac4",
+              "text": "新增項目為未完成，出現在未完成組最前；重新整理後身份、文字、完成狀態與分組排序保持一致，持久資料格式不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac5",
+              "text": "未完成／已完成篩選只含對應狀態且組內新到舊，動態移出與焦點維持正常，重新整理回全部；獨立說明內容與行為不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac6",
+              "text": "提供新排序、跨組切換、篩選、新增與持久化／錯誤回歸測試，以及本機桌面操作紀錄，保存真實新 Result 供使用者接受。"
+            }
+          ],
+          "non_goals": [
+            "使用者自選排序、優先級、到期日、搜尋、刪除",
+            "修改獨立說明、篩選記憶",
+            "雲端部署、登入、手機驗證"
+          ],
+          "related_graph_node_ids": [
+            "01M3JY3DHYFY20WX92JYBQJNPG",
+            "01M3JY37R2X5SCFQY52DDYNN2Y",
+            "01M3JY14RZ5CYZCQNJZVERVJTC"
+          ],
+          "dependencies": [],
+          "implementation_notes": [
+            "保留已核准排序行為與本機產品 df6017401f752ea191cf6c1b2264c64b07ce67b3；本次來源往返驗證使 Spec 內容版本前進，需以最後有效來源修復。",
+            "沿用適用的測試、桌面紀錄與獨立 review 證據，逐項比對新 Revision 準則；只有發現實作缺口才修改程式。",
+            "清單保持本機、不建立 remote；主專案 #105 以獨立 PR 保存驗證；新 Result 仍需使用者接受。"
+          ]
+        },
+        "required_targets": [
+          {
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "scope": [
+              "清單分組排序、原資料保護與篩選整合驗證"
+            ]
+          }
+        ],
+        "review_status": "draft",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": null,
+        "approved_at": null,
+        "created_at": "2026-09-28T06:53:30.913Z",
+        "updated_at": "2026-09-28T06:53:30.913Z"
+      },
+      "proposed_implementation_targets": [
+        {
+          "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+          "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "scope": [
+            "清單分組排序、原資料保護與篩選整合驗證"
+          ],
+          "identity_action": "reuse"
+        }
+      ],
+      "archived_stale_revision_ids": []
+    },
+    {
+      "source_file": "bFilterFinalDraft.json",
+      "ticket": {
+        "id": "01M3K93WX6A48WS4YZMPW88CMQ",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "在本機清單加入完成狀態篩選",
+        "title": "在本機清單加入完成狀態篩選",
+        "current_approved_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+        "lifecycle_status": "active",
+        "delivery_status": "done",
+        "created_at": "2026-09-28T05:51:59.909Z",
+        "updated_at": "2026-09-28T06:06:50.883Z"
+      },
+      "revision": {
+        "id": "01M3KCN5S62J4WEQ1K0MKC07G0",
+        "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "ticket_draft_batch_id": null,
+        "revision_number": 2,
+        "base_approved_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+        "source_graph_revision_id": "01M3KCJS69KYGP6GM7K1ZGMQC5",
+        "title": "在本機清單加入完成狀態篩選",
+        "specification": {
+          "source_spec_id": "01M3K932Y5QHE8WGSKQG4R0HC3",
+          "traces_to_ticket_id": null,
+          "user_story": "作為單人使用者，我希望三種完成狀態篩選沿用未完成優先、各組新到舊的新排序，保留資料與既有操作。",
+          "scope": [
+            "三種篩選的規則、可操作 UI、空狀態及動態更新",
+            "新增、完成切換與重新整理的整合驗證",
+            "沿用未完成優先、各組內按新增先後由新到舊排序，保留既有資料與獨立說明"
+          ],
+          "acceptance_criteria": [
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac1",
+              "text": "初次開啟與重新整理後顯示全部；三種選项可用鍵盤操作，清楚標示目前選擇。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac2",
+              "text": "未完成只顯示未完成，已完成只顯示已完成；全部先未完成、再已完成，各狀態組均按新增先後由新到舊，同毫秒或時鐘倒退不改新增次序。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac3",
+              "text": "勾選／取消立即更新篩選結果；項目移出目前檢視後仍有合理鍵盤焦點。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac4",
+              "text": "任一檢視仍可新增非空白待辦並持久保存；新增未完成項目在已完成檢視隱藏，切回全部或未完成可見。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac5",
+              "text": "無符合項目時顯示對應空狀態；原本讀寫失敗保護與提示保持有效。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac6",
+              "text": "切換篩選不改 identity、文字、完成狀態、建立順序或儲存格式，不儲存篩選選擇，獨立操作說明內容與行為不變。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac7",
+              "text": "提供可重現規則測試及本機桌面實測，記錄篩選、動態切換、空狀態、鍵盤及重整保留資料；另提交結果供使用者接受。"
+            }
+          ],
+          "non_goals": [
+            "使用者自選排序、儲存篩選選擇、搜尋、刪除",
+            "修改操作說明內容",
+            "遠端發布、登入、手機驗證"
+          ],
+          "related_graph_node_ids": [
+            "01M3K932Y5QHE8WGSKQG4R0HC3",
+            "01M3K9230M6CAH3C9WWPXM5KFH",
+            "01M3JY14RZ5CYZCQNJZVERVJTC"
+          ],
+          "dependencies": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "implementation_notes": [
+            "依已核准 Brief v3 與現行篩選 Spec 修復來源，保留 Ticket 與 Repository Target identity；清單新版接受前保持依賴阻擋。",
+            "本機程式 df6017401f752ea191cf6c1b2264c64b07ce67b3 已包含排序與篩選整合，核對適用測試及桌面證據後提交本 Revision 自己的 Result，不沿用舊 Acceptance 作為新規格接受。",
+            "清單保持本機、不建立 remote；主專案 #105 保存驗證 PR。"
+          ]
+        },
+        "required_targets": [
+          {
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "scope": [
+              "篩選規則與 UI 整合、本機驗證"
+            ]
+          }
+        ],
+        "review_status": "draft",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": null,
+        "approved_at": null,
+        "created_at": "2026-09-28T06:53:51.782Z",
+        "updated_at": "2026-09-28T06:53:51.782Z"
+      },
+      "proposed_implementation_targets": [
+        {
+          "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+          "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "scope": [
+            "篩選規則與 UI 整合、本機驗證"
+          ],
+          "identity_action": "reuse"
+        }
+      ],
+      "archived_stale_revision_ids": []
+    }
+  ],
+  "implementation_revalidation": {
+    "list_start": {
+      "source_file": "bListFinalStart.json",
+      "freshness": "current",
+      "implementation_brief": {
+        "id": "01M3KCYBZ93KX7C9BGYPEF7QB7",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+        "ticket_revision_id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "product_brief_version_id": "01M3KA12FFGP6P112NQ93N7WDT",
+        "repository_context_snapshot_id": "01M3KCYBZ9EQWA675278W88NW3",
+        "supersedes_implementation_brief_id": "01M3KB12V4HT2WH5W4814544P2",
+        "slug": "implementation-brief-phymp3s2-20260928t065853032z",
+        "brief": {
+          "implementation_plan": [
+            "逐項比對r3六條準則與現行程式、既有20項測試和排序桌面紀錄；不因來源修復重寫相同程式。",
+            "保留原Ticket/Target与歷史結果，復用適用Observed Evidence，保存必要新Result供使用者接受。"
+          ],
+          "suggested_files_to_inspect": [
+            "src/checklist.js",
+            "src/app.js",
+            "src/filter.js",
+            "index.html"
+          ],
+          "test_strategy": [
+            "核對同一commit及12檔指紋後沿用20項既有測試、排序桌面與兩軸review。",
+            "加入三個篩選按鈕Enter操作及未完成檢視新增/重整的補充觀察。"
+          ],
+          "risks": [
+            "Spec版本已前進，舊r2Result不能再接受，需r3獨立Result。",
+            "瀏覽器未注入資料毀損或拒絕儲存，錯誤邊界以既有Node測試支持。"
+          ],
+          "pr_summary_draft": "主專案#105保存來源往返拒絕、必要來源修復及新驗收證據；本機產品程式未改。"
+        },
+        "review_status": "approved",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": "00000000000000000000000001",
+        "approved_at": "2026-09-28T06:59:12.690Z",
+        "created_at": "2026-09-28T06:58:53.032Z",
+        "updated_at": "2026-09-28T06:59:12.690Z"
+      },
+      "implementation_target": {
+        "id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "lifecycle_status": "active",
+        "created_at": "2026-09-28T03:08:48.592Z",
+        "updated_at": "2026-09-28T03:08:48.592Z"
+      },
+      "ticket": {
+        "id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "完成本機待辦清單的新增-完成切換與保存",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "current_approved_revision_id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "lifecycle_status": "active",
+        "delivery_status": "planned",
+        "created_at": "2026-09-28T02:40:20.068Z",
+        "updated_at": "2026-09-28T06:57:55.325Z"
+      },
+      "ticket_revision": {
+        "id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "ticket_draft_batch_id": null,
+        "revision_number": 3,
+        "base_approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+        "source_graph_revision_id": "01M3KCJS69KYGP6GM7K1ZGMQC5",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "specification": {
+          "source_spec_id": "01M3JY3DHYFY20WX92JYBQJNPG",
+          "traces_to_ticket_id": null,
+          "user_story": "作為單人使用者，我希望先處理未完成待辦，各完成狀態組內仍按新增先後由新到舊，並保留原資料。",
+          "scope": [
+            "原新增、完成切換與 localStorage 保存",
+            "全部檢視未完成優先，各狀態組內新到舊；切換狀態立即調整所在組",
+            "三種篩選與新排序整合、資料及錯誤保護回歸"
+          ],
+          "acceptance_criteria": [
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac1",
+              "text": "本機繁體中文桌面頁面可新增非空白待辦，標題去除前後空白並以純文字顯示，原空清單與讀寫失敗提示維持有效。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac2",
+              "text": "全部檢視先未完成、再已完成；各組依新增先後由新到舊，同毫秒或時鐘倒退不改新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac3",
+              "text": "勾選或取消完成立即移至正確狀態組；保留 identity、文字與原建立次序，不影響其他項目的相對新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac4",
+              "text": "新增項目為未完成，出現在未完成組最前；重新整理後身份、文字、完成狀態與分組排序保持一致，持久資料格式不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac5",
+              "text": "未完成／已完成篩選只含對應狀態且組內新到舊，動態移出與焦點維持正常，重新整理回全部；獨立說明內容與行為不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac6",
+              "text": "提供新排序、跨組切換、篩選、新增與持久化／錯誤回歸測試，以及本機桌面操作紀錄，保存真實新 Result 供使用者接受。"
+            }
+          ],
+          "non_goals": [
+            "使用者自選排序、優先級、到期日、搜尋、刪除",
+            "修改獨立說明、篩選記憶",
+            "雲端部署、登入、手機驗證"
+          ],
+          "related_graph_node_ids": [
+            "01M3JY3DHYFY20WX92JYBQJNPG",
+            "01M3JY37R2X5SCFQY52DDYNN2Y",
+            "01M3JY14RZ5CYZCQNJZVERVJTC"
+          ],
+          "dependencies": [],
+          "implementation_notes": [
+            "保留已核准排序行為與本機產品 df6017401f752ea191cf6c1b2264c64b07ce67b3；本次來源往返驗證使 Spec 內容版本前進，需以最後有效來源修復。",
+            "沿用適用的測試、桌面紀錄與獨立 review 證據，逐項比對新 Revision 準則；只有發現實作缺口才修改程式。",
+            "清單保持本機、不建立 remote；主專案 #105 以獨立 PR 保存驗證；新 Result 仍需使用者接受。"
+          ]
+        },
+        "required_targets": [
+          {
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "scope": [
+              "清單分組排序、原資料保護與篩選整合驗證"
+            ]
+          }
+        ],
+        "review_status": "approved",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": "00000000000000000000000001",
+        "approved_at": "2026-09-28T06:57:55.325Z",
+        "created_at": "2026-09-28T06:53:30.913Z",
+        "updated_at": "2026-09-28T06:57:55.325Z"
+      },
+      "product_brief_version": {
+        "id": "01M3KA12FFGP6P112NQ93N7WDT",
+        "product_brief_id": "01M3JXW0DN1A75X6VFKKX3JHGJ",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "version_number": 3,
+        "base_approved_version_id": "01M3K8XHPM0PX5T79GHKCBBP04",
+        "brief": {
+          "product_goal": "建立一個可在本機瀏覽器操作的繁體中文日常待辦清單，作為 AI Product Graph #98 持續開發與跨對話接手的獨立驗證產品。",
+          "target_users": [
+            {
+              "name": "單人使用者",
+              "description": "希望快速記錄、完成待辦，並透過小範圍需求變更試用規劃到驗收流程。"
+            }
+          ],
+          "pain_points": [
+            {
+              "title": "不易追蹤尚未完成的小事",
+              "description": "需要直接可操作且重新整理後仍保留的清單。"
+            }
+          ],
+          "core_workflows": [
+            {
+              "title": "記錄與完成待辦",
+              "steps": [
+                "輸入非空白標題並新增待辦",
+                "瀏覽未完成優先的清單，未完成與已完成各組內依新增時間由新到舊",
+                "勾選完成或取消完成",
+                "重新整理後清單與完成狀態仍保留"
+              ]
+            },
+            {
+              "title": "了解操作方式",
+              "steps": [
+                "展開操作說明",
+                "閱讀新增、勾選、儲存位置及資料限制",
+                "關閉說明並繼續操作"
+              ]
+            },
+            {
+              "title": "依完成狀態查看待辦",
+              "steps": [
+                "初次開啟顯示全部待辦",
+                "切換全部、未完成或已完成篩選",
+                "篩選沿用目前清單順序；全部先未完成後已完成，各組內維持新到舊，切換完成狀態立即調整位置",
+                "沒有符合項目時看见對應提示；重新整理回到全部"
+              ]
+            }
+          ],
+          "mvp_scope": [
+            "繁體中文本機桌面網頁，可新增非空白待辦、切換完成／未完成；本版全部檢視改為未完成優先，各狀態組內依新增先後由新到舊。",
+            "資料保存在同一瀏覽器的 localStorage；空清單有提示，重新整理保留內容與狀態。",
+            "提供獨立的簡短操作說明與本機資料限制說明，作為不依賴清單排序規格的對照功能。",
+            "提供可重現的規則驗證與本機瀏覽器操作結果，逐條整理 evidence／Result 待使用者接受。",
+            "保留全部／未完成／已完成篩選；篩選沿用目前清單順序。完成切換可改變所在狀態組，但不改 identity、文字、建立次序或持久化資料格式；新增仍可操作。篩選選擇不保存，重新整理回全部。",
+            "修改原清單與篩選的排序規格，對真正受影響的 Ticket 建立必要 replacement 並重新實作驗收；獨立操作說明規格不變，確認新來源後沿用有效交付與歷史 Acceptance。"
+          ],
+          "non_goals": [
+            "本版不加入搜尋、刪除、統計、匯出、多人協作、登入或跨裝置同步。",
+            "不部署到雲端、不連接 Plane／GitHub，不恢復先前刪除的測試專案。",
+            "不承諾清除瀏覽器資料後仍可復原，不驗證手機或跨瀏覽器相容性。",
+            "不新增使用者自選排序、優先級、到期日或篩選記憶功能；只做未完成優先與各組新到舊的固定排序。"
+          ],
+          "success_metrics": [
+            "本機桌面可完成新增、切換完成、重新整理保存及閱讀說明。",
+            "初版待辦與獨立說明各有可追溯的 Spec／Ticket、實作與待接受結果；使用者接受後才算交付完成。",
+            "後续 A／B／C 情境保留真實耗時、必要決策、重複確認、人工修正及重複 artifacts 的紀錄；未量測不填 0。",
+            "三種篩選與新增／完成切換／重新整理在本機桌面驗證通過；排序變更只修復真正受影響工作，獨立說明沿用原有效交付 identities。",
+            "真實變更後區分直接 stale、依賴 blocked 與無關 done；排序新 Result 先保存待接受，供不附完整歷史的新對話接手後完成必要驗收。"
+          ],
+          "risks": [
+            "localStorage 可能被瀏覽器清除或不可用，需提供可理解的提示；不把本機資料儲存誤述為備份。",
+            "此產品是小型工作流試用，結果不能直接推廣成大型專案的節省比例。"
+          ],
+          "open_questions": []
+        },
+        "review_status": "approved",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": "00000000000000000000000001",
+        "approved_at": "2026-09-28T06:13:40.985Z",
+        "created_at": "2026-09-28T06:07:55.887Z",
+        "updated_at": "2026-09-28T06:13:40.985Z"
+      },
+      "repository": {
+        "id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "workflow-checklist",
+        "name": "workflow-checklist",
+        "root_path": "/Users/limingfeng/Project/workflow-checklist",
+        "remote_url": null,
+        "lifecycle_status": "active",
+        "created_at": "2026-09-28T02:38:24.446Z",
+        "updated_at": "2026-09-28T02:38:24.446Z"
+      },
+      "repository_context_snapshot": {
+        "id": "01M3KCYBZ9EQWA675278W88NW3",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+        "baseline_commit_sha": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+        "dirty_state_fingerprint": null,
+        "context": {
+          "repository_name": "workflow-checklist",
+          "summary": "Spec來源往返後的清單r3；現有df60174已滿足相同行為，核對既有證據及補充桌面觀察。",
+          "file_list": [
+            "src/checklist.js",
+            "src/app.js",
+            "src/filter.js",
+            "index.html",
+            "test/checklist.test.js",
+            "test/filter.test.js",
+            "test/server.test.js"
+          ],
+          "module_notes": [
+            "snapshot穩定分組未完成/已完成，保存陣列仍保留新增先後。",
+            "filter與app互動程式未因來源修復改變；12檔指紋與20項測試時相同。"
+          ],
+          "has_uncommitted_changes": false
+        },
+        "is_approvable": true,
+        "created_at": "2026-09-28T06:58:53.032Z"
+      }
+    },
+    "applicability_report": {
+      "source_file": "repair-evidence-applicability.md",
+      "meaning": "Read-only mapping written while drafts were pending; its pending statements describe that earlier checkpoint and do not supersede subsequent formal approvals. No new test execution claimed."
+    },
+    "browser_supplement": {
+      "source_file": "sorting-filter-browser-supplement.json",
+      "kind": "manual_desktop_browser_verification",
+      "tool": "cua_repl",
+      "origin": "http://127.0.0.1:4178/",
+      "commit": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+      "started_at": "2026-09-28T06:56:57.466Z",
+      "finished_at": "2026-09-28T06:57:27.587Z",
+      "purpose": "補足既有證據未逐一記錄的三個篩選按鈕鍵盤操作與未完成檢視內新增；沒有程式變更。",
+      "steps": [
+        "以 Enter 啟動未完成按鈕，選中狀態與焦點在未完成，顯示原兩筆未完成。",
+        "未完成檢視輸入並以 Return 新增『驗證補充｜未完成檢視新增』，新項目位於未完成組第一，提示已保存。",
+        "以 Enter 啟動已完成按鈕，選中狀態與焦點在已完成，僅兩筆已完成，新未完成項目被篩除。",
+        "以 Enter 啟動全部按鈕，選中狀態與焦點在全部，五筆依三未完成、兩已完成顯示，新增項目第一。",
+        "重新整理後全部仍選中，新項目與原四筆文字、完成狀態及顯示順序保留。"
+      ],
+      "limitations": [
+        "以明確 locator 聚焦並按 Enter，未以 Tab 完整遍歷按鈕。",
+        "此補充使用可見文字與勾選狀態核對保存，未另讀 DOM identity；identity 驗證沿用前次排序桌面紀錄。",
+        "未注入資料毀損；錯誤保護沿用既有20項測試。"
+      ]
+    },
+    "code_change_required": false,
+    "reused_evidence_ids": [
+      "01M3KBBTAPYJCY9D68QW8HW04K",
+      "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+      "01M3KBBTASFV3BPYGZP098GZ9W"
+    ],
+    "new_evidence_ids": [
+      "01M3KD0E6XKJHK8CVXT733AJT0",
+      "01M3KD0E6XTMTEC78Q65ZAQ7K6"
+    ],
+    "filter_context": {
+      "source_file": "bFilterFinalContext.json",
+      "delivery": {
+        "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+        "title": "在本機清單加入完成狀態篩選",
+        "delivery_status": "planned",
+        "approved_revision_id": "01M3KCN5S62J4WEQ1K0MKC07G0",
+        "source_freshness": "current",
+        "source_problem": null,
+        "dependency_ticket_ids": [
+          "01M3JY4YK7TQWT4A4X03W2CF4Y"
+        ],
+        "blocking_dependency_ids": [
+          "01M3JY4YK7TQWT4A4X03W2CF4Y"
+        ],
+        "next_action": "complete_dependencies",
+        "targets": [
+          {
+            "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "approved_brief_id": null,
+            "accepted_result_id": null,
+            "pending_result_id": null,
+            "criteria_without_evidence": [
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac1",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac2",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac3",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac4",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac5",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac6",
+              "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac7"
+            ],
+            "unsatisfied_criterion_ids": []
+          }
+        ]
+      }
+    }
+  },
+  "replacement_approvals": [
+    {
+      "source_file": "bListFinalApproval.json",
+      "ticket": {
+        "id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "完成本機待辦清單的新增-完成切換與保存",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "current_approved_revision_id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "lifecycle_status": "active",
+        "delivery_status": "planned",
+        "created_at": "2026-09-28T02:40:20.068Z",
+        "updated_at": "2026-09-28T06:57:55.325Z"
+      },
+      "revision": {
+        "id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "ticket_draft_batch_id": null,
+        "revision_number": 3,
+        "base_approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+        "source_graph_revision_id": "01M3KCJS69KYGP6GM7K1ZGMQC5",
+        "title": "完成本機待辦清單的新增、完成切換與保存",
+        "specification": {
+          "source_spec_id": "01M3JY3DHYFY20WX92JYBQJNPG",
+          "traces_to_ticket_id": null,
+          "user_story": "作為單人使用者，我希望先處理未完成待辦，各完成狀態組內仍按新增先後由新到舊，並保留原資料。",
+          "scope": [
+            "原新增、完成切換與 localStorage 保存",
+            "全部檢視未完成優先，各狀態組內新到舊；切換狀態立即調整所在組",
+            "三種篩選與新排序整合、資料及錯誤保護回歸"
+          ],
+          "acceptance_criteria": [
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac1",
+              "text": "本機繁體中文桌面頁面可新增非空白待辦，標題去除前後空白並以純文字顯示，原空清單與讀寫失敗提示維持有效。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac2",
+              "text": "全部檢視先未完成、再已完成；各組依新增先後由新到舊，同毫秒或時鐘倒退不改新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac3",
+              "text": "勾選或取消完成立即移至正確狀態組；保留 identity、文字與原建立次序，不影響其他項目的相對新增次序。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac4",
+              "text": "新增項目為未完成，出現在未完成組最前；重新整理後身份、文字、完成狀態與分組排序保持一致，持久資料格式不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac5",
+              "text": "未完成／已完成篩選只含對應狀態且組內新到舊，動態移出與焦點維持正常，重新整理回全部；獨立說明內容與行為不變。"
+            },
+            {
+              "id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac6",
+              "text": "提供新排序、跨組切換、篩選、新增與持久化／錯誤回歸測試，以及本機桌面操作紀錄，保存真實新 Result 供使用者接受。"
+            }
+          ],
+          "non_goals": [
+            "使用者自選排序、優先級、到期日、搜尋、刪除",
+            "修改獨立說明、篩選記憶",
+            "雲端部署、登入、手機驗證"
+          ],
+          "related_graph_node_ids": [
+            "01M3JY3DHYFY20WX92JYBQJNPG",
+            "01M3JY37R2X5SCFQY52DDYNN2Y",
+            "01M3JY14RZ5CYZCQNJZVERVJTC"
+          ],
+          "dependencies": [],
+          "implementation_notes": [
+            "保留已核准排序行為與本機產品 df6017401f752ea191cf6c1b2264c64b07ce67b3；本次來源往返驗證使 Spec 內容版本前進，需以最後有效來源修復。",
+            "沿用適用的測試、桌面紀錄與獨立 review 證據，逐項比對新 Revision 準則；只有發現實作缺口才修改程式。",
+            "清單保持本機、不建立 remote；主專案 #105 以獨立 PR 保存驗證；新 Result 仍需使用者接受。"
+          ]
+        },
+        "required_targets": [
+          {
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "scope": [
+              "清單分組排序、原資料保護與篩選整合驗證"
+            ]
+          }
+        ],
+        "review_status": "approved",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": "00000000000000000000000001",
+        "approved_at": "2026-09-28T06:57:55.325Z",
+        "created_at": "2026-09-28T06:53:30.913Z",
+        "updated_at": "2026-09-28T06:57:55.325Z"
+      },
+      "implementation_targets": [
+        {
+          "id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+          "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "lifecycle_status": "active",
+          "identity_action": "reused",
+          "created_at": "2026-09-28T03:08:48.592Z",
+          "updated_at": "2026-09-28T03:08:48.592Z"
+        }
+      ],
+      "archived_implementation_target_ids": [],
+      "archived_implementation_brief_ids": [
+        "01M3KB12V4HT2WH5W4814544P2"
+      ],
+      "archived_implementation_result_ids": [
+        "01M3KBBTAVGSQ1EAT5YKGY7GWY"
+      ],
+      "archived_stale_revision_ids": [],
+      "created_sync_intent_ids": [],
+      "sync_health": "current"
+    },
+    {
+      "source_file": "bFilterFinalApproval.json",
+      "ticket": {
+        "id": "01M3K93WX6A48WS4YZMPW88CMQ",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "slug": "在本機清單加入完成狀態篩選",
+        "title": "在本機清單加入完成狀態篩選",
+        "current_approved_revision_id": "01M3KCN5S62J4WEQ1K0MKC07G0",
+        "lifecycle_status": "active",
+        "delivery_status": "planned",
+        "created_at": "2026-09-28T05:51:59.909Z",
+        "updated_at": "2026-09-28T06:58:00.392Z"
+      },
+      "revision": {
+        "id": "01M3KCN5S62J4WEQ1K0MKC07G0",
+        "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "ticket_draft_batch_id": null,
+        "revision_number": 2,
+        "base_approved_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+        "source_graph_revision_id": "01M3KCJS69KYGP6GM7K1ZGMQC5",
+        "title": "在本機清單加入完成狀態篩選",
+        "specification": {
+          "source_spec_id": "01M3K932Y5QHE8WGSKQG4R0HC3",
+          "traces_to_ticket_id": null,
+          "user_story": "作為單人使用者，我希望三種完成狀態篩選沿用未完成優先、各組新到舊的新排序，保留資料與既有操作。",
+          "scope": [
+            "三種篩選的規則、可操作 UI、空狀態及動態更新",
+            "新增、完成切換與重新整理的整合驗證",
+            "沿用未完成優先、各組內按新增先後由新到舊排序，保留既有資料與獨立說明"
+          ],
+          "acceptance_criteria": [
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac1",
+              "text": "初次開啟與重新整理後顯示全部；三種選项可用鍵盤操作，清楚標示目前選擇。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac2",
+              "text": "未完成只顯示未完成，已完成只顯示已完成；全部先未完成、再已完成，各狀態組均按新增先後由新到舊，同毫秒或時鐘倒退不改新增次序。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac3",
+              "text": "勾選／取消立即更新篩選結果；項目移出目前檢視後仍有合理鍵盤焦點。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac4",
+              "text": "任一檢視仍可新增非空白待辦並持久保存；新增未完成項目在已完成檢視隱藏，切回全部或未完成可見。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac5",
+              "text": "無符合項目時顯示對應空狀態；原本讀寫失敗保護與提示保持有效。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac6",
+              "text": "切換篩選不改 identity、文字、完成狀態、建立順序或儲存格式，不儲存篩選選擇，獨立操作說明內容與行為不變。"
+            },
+            {
+              "id": "01M3K93WX6A48WS4YZMPW88CMQ:r2:ac7",
+              "text": "提供可重現規則測試及本機桌面實測，記錄篩選、動態切換、空狀態、鍵盤及重整保留資料；另提交結果供使用者接受。"
+            }
+          ],
+          "non_goals": [
+            "使用者自選排序、儲存篩選選擇、搜尋、刪除",
+            "修改操作說明內容",
+            "遠端發布、登入、手機驗證"
+          ],
+          "related_graph_node_ids": [
+            "01M3K932Y5QHE8WGSKQG4R0HC3",
+            "01M3K9230M6CAH3C9WWPXM5KFH",
+            "01M3JY14RZ5CYZCQNJZVERVJTC"
+          ],
+          "dependencies": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "implementation_notes": [
+            "依已核准 Brief v3 與現行篩選 Spec 修復來源，保留 Ticket 與 Repository Target identity；清單新版接受前保持依賴阻擋。",
+            "本機程式 df6017401f752ea191cf6c1b2264c64b07ce67b3 已包含排序與篩選整合，核對適用測試及桌面證據後提交本 Revision 自己的 Result，不沿用舊 Acceptance 作為新規格接受。",
+            "清單保持本機、不建立 remote；主專案 #105 保存驗證 PR。"
+          ]
+        },
+        "required_targets": [
+          {
+            "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+            "scope": [
+              "篩選規則與 UI 整合、本機驗證"
+            ]
+          }
+        ],
+        "review_status": "approved",
+        "lifecycle_status": "active",
+        "approved_by_actor_id": "00000000000000000000000001",
+        "approved_at": "2026-09-28T06:58:00.392Z",
+        "created_at": "2026-09-28T06:53:51.782Z",
+        "updated_at": "2026-09-28T06:58:00.392Z"
+      },
+      "implementation_targets": [
+        {
+          "id": "01M3K9ASKPMV35V52PN3ENP6J5",
+          "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+          "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+          "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+          "lifecycle_status": "active",
+          "identity_action": "reused",
+          "created_at": "2026-09-28T05:55:45.907Z",
+          "updated_at": "2026-09-28T05:55:45.907Z"
+        }
+      ],
+      "archived_implementation_target_ids": [],
+      "archived_implementation_brief_ids": [
+        "01M3K9CMW3NQTY07S5BK4D1HHB"
+      ],
+      "archived_implementation_result_ids": [
+        "01M3K9WBNDZXJ5Y7NFXZK8BQYN"
+      ],
+      "archived_stale_revision_ids": [],
+      "created_sync_intent_ids": [],
+      "sync_health": "current"
+    }
+  ],
+  "final_results": {
+    "list": {
+      "source_file": "bListFinalResult.json",
+      "implementation_result": {
+        "id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+        "project_id": "01M3JXSN8AEP7243K15BFMV4EB",
+        "implementation_brief_id": "01M3KCYBZ93KX7C9BGYPEF7QB7",
+        "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+        "ticket_revision_id": "01M3KCMHD2SGC50XFRV3A0WAPS",
+        "supersedes_implementation_result_id": null,
+        "result": {
+          "summary": "清單r3依來源往返後的有效Spec完成驗證：未完成優先、組內新到舊、跨組切換與identity/資料格式保留。產品仍為df60174，20項既有測試及原排序桌面/兩軸review適用，補足三按鈕Enter與未完成檢視新增/重整觀察。沒有程式改動或未完成事項；此新Result待使用者接受，歷史Acceptance不移轉。",
+          "unfinished_items": [],
+          "submission_disposition": "reviewable"
+        },
+        "review_status": "draft",
+        "lifecycle_status": "active",
+        "submission_disposition": "reviewable",
+        "stale_at_submission": false,
+        "stale_reasons": [],
+        "created_at": "2026-09-28T07:00:00.862Z",
+        "updated_at": "2026-09-28T07:00:00.862Z",
+        "archived_at": null
+      },
+      "observed_evidence_ids": [
+        "01M3KBBTAPYJCY9D68QW8HW04K",
+        "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+        "01M3KBBTASFV3BPYGZP098GZ9W",
+        "01M3KD0E6XKJHK8CVXT733AJT0",
+        "01M3KD0E6XTMTEC78Q65ZAQ7K6"
+      ],
+      "criterion_verdicts": [
+        {
+          "id": "01M3KD0E6Z3HKZT8MYMJHNNPZ1",
+          "implementation_result_id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+          "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac1",
+          "verdict": "satisfied",
+          "reason": "原新增、純文字、空白拒絕與讀寫保護測試通過；新排序僅修改snapshot顯示。 相同commit與檔案指紋核對後，證據仍適用本r3準則。",
+          "evidence_ids": [
+            "01M3KBBTAPYJCY9D68QW8HW04K",
+            "01M3KBBTASFV3BPYGZP098GZ9W",
+            "01M3KD0E6XTMTEC78Q65ZAQ7K6"
+          ],
+          "created_at": "2026-09-28T07:00:00.862Z"
+        },
+        {
+          "id": "01M3KD0E6ZNZ7DWNPRVYG55MPA",
+          "implementation_result_id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+          "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac2",
+          "verdict": "satisfied",
+          "reason": "20項測試含混合分組、同毫秒／時鐘倒退，桌面確認未完成優先且各組新到舊。 相同commit與檔案指紋核對後，證據仍適用本r3準則。",
+          "evidence_ids": [
+            "01M3KBBTAPYJCY9D68QW8HW04K",
+            "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+            "01M3KD0E6XTMTEC78Q65ZAQ7K6"
+          ],
+          "created_at": "2026-09-28T07:00:00.862Z"
+        },
+        {
+          "id": "01M3KD0E6ZDKYYQNPQ2F9H4B21",
+          "implementation_result_id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+          "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac3",
+          "verdict": "satisfied",
+          "reason": "桌面完成後移至後組、取消後回原新增次序，測試核對identity與createdAt不變。 相同commit與檔案指紋核對後，證據仍適用本r3準則。",
+          "evidence_ids": [
+            "01M3KBBTAPYJCY9D68QW8HW04K",
+            "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+            "01M3KD0E6XTMTEC78Q65ZAQ7K6"
+          ],
+          "created_at": "2026-09-28T07:00:00.862Z"
+        },
+        {
+          "id": "01M3KD0E6ZNWDF5TP47Z2KP6G8",
+          "implementation_result_id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+          "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac4",
+          "verdict": "satisfied",
+          "reason": "桌面新增進未完成最前，重新整理後DOM身份文字狀態與分組排序完全一致；儲存陣列及v1格式測試不變。 相同commit與檔案指紋核對後，證據仍適用本r3準則。",
+          "evidence_ids": [
+            "01M3KBBTAPYJCY9D68QW8HW04K",
+            "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+            "01M3KBBTASFV3BPYGZP098GZ9W",
+            "01M3KD0E6XTMTEC78Q65ZAQ7K6"
+          ],
+          "created_at": "2026-09-28T07:00:00.862Z"
+        },
+        {
+          "id": "01M3KD0E6ZHFMB2WECCN1GEF5K",
+          "implementation_result_id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+          "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac5",
+          "verdict": "satisfied",
+          "reason": "三种篩選、動態移出與焦點、重整回全部皆實測；help markup byte相同且展開收合不改資料。 相同commit與檔案指紋核對後，證據仍適用本r3準則。",
+          "evidence_ids": [
+            "01M3KBBTAPYJCY9D68QW8HW04K",
+            "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+            "01M3KBBTASFV3BPYGZP098GZ9W",
+            "01M3KD0E6XTMTEC78Q65ZAQ7K6",
+            "01M3KD0E6XKJHK8CVXT733AJT0"
+          ],
+          "created_at": "2026-09-28T07:00:00.862Z"
+        },
+        {
+          "id": "01M3KD0E6Z1ZRFZ0S66NQ13R55",
+          "implementation_result_id": "01M3KD0E6ZT46X79XDDHKSCTB2",
+          "acceptance_criterion_id": "01M3JY4YK7TQWT4A4X03W2CF4Y:r3:ac6",
+          "verdict": "satisfied",
+          "reason": "相同df60174的20項測試、排序桌面與12檔指紋仍適用；逐條核對r3且補充三按鈕Enter與未完成檢視新增觀察。本Result依最後有效來源保存，等待使用者接受。",
+          "evidence_ids": [
+            "01M3KBBTAPYJCY9D68QW8HW04K",
+            "01M3KBBTASFCTF8QC3GQ4ZN3H3",
+            "01M3KBBTASFV3BPYGZP098GZ9W",
+            "01M3KD0E6XTMTEC78Q65ZAQ7K6",
+            "01M3KD0E6XKJHK8CVXT733AJT0"
+          ],
+          "created_at": "2026-09-28T07:00:00.862Z"
+        }
+      ]
+    },
+    "filter": null
+  },
+  "user_acceptances": null,
+  "final_graph": null,
+  "costs": {
+    "total_elapsed_seconds": null,
+    "active_work_seconds": null,
+    "waiting_seconds": null,
+    "repeated_confirmations": null,
+    "manual_corrections": null,
+    "duplicate_artifacts": null,
+    "known_roundtrip_server_interval": {
+      "start": "2026-09-28T06:52:14.178Z",
+      "end": "2026-09-28T06:52:33.353Z",
+      "meaning": "Two planning save events only; not scenario duration or active work."
+    }
+  },
+  "runtime": {
+    "process_commit": null,
+    "loaded_module_version": null,
+    "limitation": "Connected MCP loaded runtime remains unverified; PR base is not runtime source evidence."
+  },
+  "source_files": [
+    {
+      "file": "bAfterStaleAcceptance.json",
+      "bytes_sha256": "07508a24ef51458b3569e0907d9cf4bee4928df9a6c93ab94a216970b2360622",
+      "has_request": false,
+      "decoded_envelope_sha256": "505f9db920f83cd988873c5f2f78ce82c14de36ea7668f43cd4b9d0c84b2353b"
+    },
+    {
+      "file": "bBeforeStaleAcceptance.json",
+      "bytes_sha256": "07508a24ef51458b3569e0907d9cf4bee4928df9a6c93ab94a216970b2360622",
+      "has_request": false,
+      "decoded_envelope_sha256": "505f9db920f83cd988873c5f2f78ce82c14de36ea7668f43cd4b9d0c84b2353b"
+    },
+    {
+      "file": "bFilterFinalApproval.json",
+      "bytes_sha256": "388999660ecca10d53b8f497ed4bfbd3780387f30c1bb223c4602af691673fc4",
+      "has_request": true,
+      "decoded_envelope_sha256": "91749359d329a111961ac5a9841460c692ee152d862edc156f348cd6f5db8c9a"
+    },
+    {
+      "file": "bFilterFinalContext.json",
+      "bytes_sha256": "05d36dec59844c6c2dbb570d2005ffb8b00f0552c8bebcd1ed68c4dab2aa7b00",
+      "has_request": false,
+      "decoded_envelope_sha256": "6ca9bae833d408f6a3bab35f57641bb4cc2d9a12fd0662ef5d17b1961723a298"
+    },
+    {
+      "file": "bFilterFinalDraft.json",
+      "bytes_sha256": "91d9733460ecdfde91d73b56be2e1eaa92584630e8399e244b682616d0f00062",
+      "has_request": true,
+      "decoded_envelope_sha256": "315a82607ba723f905549a777e64a708f8a602664ef595ad5b6ef39ded660435"
+    },
+    {
+      "file": "bGraphAfterRoundtrip.json",
+      "bytes_sha256": "0711d26de516a4da57794169be5e2507ef6bffbf46b5800c1074fc8cf6ceedab",
+      "has_request": false,
+      "decoded_envelope_sha256": "6299c239e7087bf7ba92e83aca1fc2783030efd3734276930897a58ba10862e5"
+    },
+    {
+      "file": "bHelpAfterRoundtrip.json",
+      "bytes_sha256": "94b4c053a5fea3dda26a11be7119d994645aac6f7296a97bb56095f1abc5cab9",
+      "has_request": false,
+      "decoded_envelope_sha256": "bf2a11840534d3e8647b256069a127b19fc1d61504929d93ca9aeb2cf923eb6f"
+    },
+    {
+      "file": "bListFinalApproval.json",
+      "bytes_sha256": "5e5bdc0bf9709b9b92a5081ce935ca92d221eef5eb4d746922f4b6dee39a1193",
+      "has_request": true,
+      "decoded_envelope_sha256": "5d1becc0016e26f39ac410265a2bd9fdc18d0bab76c3f663b4ea4ccda9a0fc15"
+    },
+    {
+      "file": "bListFinalBriefDraft.json",
+      "bytes_sha256": "d2e2bcb1e87a2928a3316737fdec0d5a8e057341f863eab1ce1f08910fddf55d",
+      "has_request": true,
+      "decoded_envelope_sha256": "251ced380dd5c80571de2471928f1c7a54962d757ca75a479cfd6f583c0a12fd"
+    },
+    {
+      "file": "bListFinalContext.json",
+      "bytes_sha256": "53a1e425acb086304333231788e89ed98b6f35460d7447731467ad1ba71c5456",
+      "has_request": false,
+      "decoded_envelope_sha256": "c84ee281b787772e3d5f752ecb0023d3498e6d85a4d371394869d1525ece2980"
+    },
+    {
+      "file": "bListFinalDraft.json",
+      "bytes_sha256": "eceb16a0f88c3752f5ea724f669870d8f227e61f118af916ab2357cd453684e4",
+      "has_request": true,
+      "decoded_envelope_sha256": "11070ae1a7edd9e0169532fc16d67ef6e736a9656c7e02047a4f8cbfcf6ee1e8"
+    },
+    {
+      "file": "bListFinalResult.json",
+      "bytes_sha256": "108e8e0c7aadf3955ee5ba4f83dd1764f473db0c52b6e1053e7ab96de05fc497",
+      "has_request": true,
+      "decoded_envelope_sha256": "66e070a65d2eb75e4003fe6884d9448c91a1053f25cac8d7a08c0b568a449426"
+    },
+    {
+      "file": "bListFinalStart.json",
+      "bytes_sha256": "d16e6d5d6814bbbed6c0aa500e363755edfe2228d5692c426f80d651c5cd92de",
+      "has_request": true,
+      "decoded_envelope_sha256": "5bccf400888fc68b711e6dec10b4724ac4853b60d7c7a8ee0f14d16e7380f96b"
+    },
+    {
+      "file": "bProductAfterRoundtrip.json",
+      "bytes_sha256": "c8cf5e0077befb1ffd3dc10261614237da046fcc79f7debf122968f023a3135c",
+      "has_request": false,
+      "decoded_document_sha256": "8ba433ea61d27570b762e26171de8af948bbd91d71e86aca4cb4abfce6227026"
+    },
+    {
+      "file": "bRoundtripAcceptanceRejected.json",
+      "bytes_sha256": "cec451ebdb3998875f36295530bb324d2aa3fdb48ab3e763838c7c5b061cc444",
+      "has_request": true,
+      "decoded_envelope_sha256": "ee94f26593ec5b29ae6d3a30b91db6d4f1ffb08fb9aab39ae5fb37dabae9cfc8"
+    },
+    {
+      "file": "bRoundtripBefore.json",
+      "bytes_sha256": "d3c9814c56cc0f1813a826fad33e37fe00da5394d5a0850b47bb5eb6e0e4796e",
+      "has_request": false,
+      "decoded_envelope_sha256": "502eac66172ff0d9063a91e915145c9204565a2ba8f237ca595826db56936c3a"
+    },
+    {
+      "file": "bRoundtripHandoffRejected.json",
+      "bytes_sha256": "05902144a37d9c55e6c0d168db05333fe6f37c994f603e7ba951e0ca9218bc13",
+      "has_request": true,
+      "decoded_envelope_sha256": "ee94f26593ec5b29ae6d3a30b91db6d4f1ffb08fb9aab39ae5fb37dabae9cfc8"
+    },
+    {
+      "file": "bRoundtripOld.json",
+      "bytes_sha256": "ab3436b12af838c3c8b99f5651af771c1e721851674f3a491372ca37daffc945",
+      "has_request": true,
+      "decoded_envelope_sha256": "d632e5b8c48a478e0b9254e4d0ca2866e5eb46501a54008b2e91887ea0266642"
+    },
+    {
+      "file": "bRoundtripRestored.json",
+      "bytes_sha256": "df5cfb6df0dc1de326040353c64d4a544dfe6f5de5b930f72b97970c93496f06",
+      "has_request": true,
+      "decoded_envelope_sha256": "973bfab6efdf92caa93cbe5087d63f9c06636dd2952eabfb942cfc85aa1fd674"
+    },
+    {
+      "file": "repair-evidence-applicability.md",
+      "bytes_sha256": "2a7f8a5388c3c15595b842931a3d02c1d351a78e9e9851e734dc1c327235fee9",
+      "kind": "local_markdown_evidence_mapping"
+    },
+    {
+      "file": "sorting-filter-browser-supplement.json",
+      "bytes_sha256": "365ba43c4f3ec1ead8c814830029e13790cca97f085a0cf9137888d9f860f595",
+      "has_request": false,
+      "decoded_document_sha256": "3209d3753b94228cb698c6e60c6d7148f012236fd4083eee0beae62457857a5d"
+    }
+  ],
+  "hash_method": "Python json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(comma, colon)) UTF-8 bytes; not RFC 8785. Content comparison includes title, description, parent identity and structured content only.",
+  "after_roundtrip_checkpoint": {
+    "graph_source_file": "bGraphAfterRoundtrip.json",
+    "graph_revision_id": "01M3KCJS69KYGP6GM7K1ZGMQC5",
+    "planning": {
+      "root_node_id": "01M3JY14RZ5CYZCQNJZVERVJTC",
+      "stale_node_ids": [],
+      "affected_ticket_ids": [
+        "01M3JY4YK7TQWT4A4X03W2CF4Y",
+        "01M3K93WX6A48WS4YZMPW88CMQ"
+      ]
+    },
+    "delivery": {
+      "scope": "active_project_tickets",
+      "summary": {
+        "total": 3,
+        "done": 2,
+        "stale": 2,
+        "blocked": 1,
+        "awaiting_acceptance": 1
+      },
+      "tickets": [
+        {
+          "ticket_id": "01M3JY4YK7TQWT4A4X03W2CF4Y",
+          "title": "完成本機待辦清單的新增、完成切換與保存",
+          "delivery_status": "planned",
+          "approved_revision_id": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+          "source_freshness": "stale",
+          "source_problem": {
+            "reason": "graph_node_changed",
+            "details": {
+              "ticketRevisionId": "01M3KAJCA9NHJQC6SFV0EXG1NK",
+              "graphNodeId": "01M3JY3DHYFY20WX92JYBQJNPG",
+              "sourceGraphRevisionId": "01M3KAEJYTHYBPHDWSHD0R3XDQ",
+              "lastChangedInGraphRevisionId": "01M3KCJS69KYGP6GM7K1ZGMQC5"
+            }
+          },
+          "dependency_ticket_ids": [],
+          "blocking_dependency_ids": [],
+          "next_action": "reconcile_sources",
+          "targets": [
+            {
+              "implementation_target_id": "01M3JZS32J1PG41ZYQPHYMP3S2",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3KB12V4HT2WH5W4814544P2",
+              "accepted_result_id": null,
+              "pending_result_id": "01M3KBBTAVGSQ1EAT5YKGY7GWY",
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        {
+          "ticket_id": "01M3JY4YKBVSWSNGTFWWV5Y2DJ",
+          "title": "提供可獨立使用的操作說明與資料限制",
+          "delivery_status": "done",
+          "approved_revision_id": "01M3JY4YKBTV4V7YBZR77TXXKP",
+          "source_freshness": "current",
+          "source_problem": null,
+          "dependency_ticket_ids": [],
+          "blocking_dependency_ids": [],
+          "next_action": "done",
+          "targets": [
+            {
+              "implementation_target_id": "01M3JZS7NP4Z74DCXM0J1N73HV",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3JZTZR6S7RS3FB26P5ZHZX3",
+              "accepted_result_id": "01M3K097JXX36TDET2SCJ2F738",
+              "pending_result_id": null,
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        },
+        {
+          "ticket_id": "01M3K93WX6A48WS4YZMPW88CMQ",
+          "title": "在本機清單加入完成狀態篩選",
+          "delivery_status": "done",
+          "approved_revision_id": "01M3K93WX6B1YF53VWM7V87HCQ",
+          "source_freshness": "stale",
+          "source_problem": {
+            "reason": "graph_node_changed",
+            "details": {
+              "ticketRevisionId": "01M3K93WX6B1YF53VWM7V87HCQ",
+              "graphNodeId": "01M3K932Y5QHE8WGSKQG4R0HC3",
+              "sourceGraphRevisionId": "01M3K932Y50ZPDAT76R7SHYRPW",
+              "lastChangedInGraphRevisionId": "01M3KAEJYTHYBPHDWSHD0R3XDQ"
+            }
+          },
+          "dependency_ticket_ids": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "blocking_dependency_ids": [
+            "01M3JY4YK7TQWT4A4X03W2CF4Y"
+          ],
+          "next_action": "reconcile_sources",
+          "targets": [
+            {
+              "implementation_target_id": "01M3K9ASKPMV35V52PN3ENP6J5",
+              "repository_id": "01M3JY1DNY41ABJ8WTZ1F9M0XN",
+              "approved_brief_id": "01M3K9CMW3NQTY07S5BK4D1HHB",
+              "accepted_result_id": "01M3K9WBNDZXJ5Y7NFXZK8BQYN",
+              "pending_result_id": null,
+              "criteria_without_evidence": [],
+              "unsatisfied_criterion_ids": []
+            }
+          ]
+        }
+      ]
+    },
+    "help_source_file": "bHelpAfterRoundtrip.json",
+    "help_complete_data_equals_scenario_c_after_context_1": true,
+    "help_data_sha256": "16d610eca753f600a7266f160d26547c49e59d62f257c15427dd96c6e3140f4c",
+    "product_source_file": "bProductAfterRoundtrip.json",
+    "product": {
+      "observed_at": "2026-09-28T06:56:02.346567+00:00",
+      "commit": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+      "status_porcelain": "",
+      "help_context_unchanged": true
+    }
+  },
+  "approval_user_decision": {
+    "scope": "Both displayed replacement drafts approved and implementation authorized in one user reply.",
+    "message_timestamp_utc": null
+  }
+}

@@ -1,0 +1,1317 @@
+{
+  "schema_version": 1,
+  "kind": "isolated_protocol_replay",
+  "database": ":memory:",
+  "live_database_accessed": false,
+  "product_modified": false,
+  "actor": {
+    "id": "isolated-protocol-reviewer-not-user",
+    "displayName": "隔離協定測試 actor，非使用者"
+  },
+  "fixture_seed_actor": "acceptance-user (existing synthetic fixture only)",
+  "product_commit": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+  "source_commit": "5b9d83dfdeb5a1e0da2ef50107e130699a5fbaf7",
+  "script_sha256": "866b901d6afa6ec1bd99dcd03d2fa5999eeff446b5d959de04096a2c71327c7c",
+  "started_at": "2026-09-28T07:31:01.601Z",
+  "completed_at": "2026-09-28T07:31:01.698Z",
+  "elapsed_ms": 97,
+  "assertions": {
+    "blocked_before_acceptance": true,
+    "dependency_retained": true,
+    "baseline_mismatch_rejected_atomically": true,
+    "current_handoff": true,
+    "pending_not_accepted": true,
+    "dependent_accepted_by_test_actor": true,
+    "idempotency": true,
+    "sqlite_integrity": true
+  },
+  "acceptance_records": [
+    {
+      "implementation_result_id": "01M3KES7DDTPQG2Y8CCH9HN5VH",
+      "actor_id": "isolated-protocol-reviewer-not-user"
+    },
+    {
+      "implementation_result_id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+      "actor_id": "isolated-protocol-reviewer-not-user"
+    }
+  ],
+  "calls": [
+    {
+      "name": "get_work_context",
+      "arguments": {
+        "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3"
+      },
+      "started_at": "2026-09-28T07:31:01.679Z",
+      "completed_at": "2026-09-28T07:31:01.682Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "ticket": {
+            "id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "slug": "隔離篩選協定",
+            "title": "隔離篩選協定",
+            "current_approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "lifecycle_status": "active",
+            "delivery_status": "planned",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "revision": {
+            "id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "ticket_draft_batch_id": "01M3KES7DEV9R34TM2EJA48AD2",
+            "revision_number": 1,
+            "base_approved_revision_id": null,
+            "source_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+            "title": "隔離篩選協定",
+            "specification": {
+              "traces_to_ticket_id": null,
+              "user_story": "在上游接受後交付篩選",
+              "scope": [
+                "協定回放"
+              ],
+              "acceptance_criteria": [
+                {
+                  "id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+                  "text": "隔離下游可完成協定"
+                }
+              ],
+              "non_goals": [
+                "不證明產品 UI 或使用者已接受"
+              ],
+              "related_graph_node_ids": [
+                "01M3KES7CZH7AP3FPEAYJQ6SQR"
+              ],
+              "dependencies": [
+                "01M3KES7D0WKAFCB5PHMHTRRGX"
+              ],
+              "implementation_notes": []
+            },
+            "required_targets": [
+              {
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "scope": [
+                  "協定"
+                ]
+              }
+            ],
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "isolated-protocol-reviewer-not-user",
+            "approved_at": "2026-09-28T07:31:01.679Z",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "product_brief_version": {
+            "id": "01M3KES7CXY1MTCK29GTPR4CDC",
+            "product_brief_id": "01M3KES7CXTHA43P63WHFQW0Q4",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "version_number": 1,
+            "base_approved_version_id": null,
+            "brief": {
+              "product_goal": "Deliver",
+              "target_users": [],
+              "pain_points": [],
+              "core_workflows": [],
+              "mvp_scope": [],
+              "non_goals": [],
+              "success_metrics": [],
+              "risks": [],
+              "open_questions": []
+            },
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "acceptance-user",
+            "approved_at": "2026-09-27T00:00:03.000Z",
+            "created_at": "2026-09-27T00:00:02.000Z",
+            "updated_at": "2026-09-27T00:00:03.000Z"
+          },
+          "related_nodes": [
+            {
+              "id": "01M3KES7CZH7AP3FPEAYJQ6SQR",
+              "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+              "slug": "deliver",
+              "type": "product_goal",
+              "title": "Deliver",
+              "description": null,
+              "source": "product_brief",
+              "source_ref_type": "product_brief_version",
+              "source_ref_id": "01M3KES7CXY1MTCK29GTPR4CDC",
+              "lifecycle_status": "active",
+              "created_in_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+              "last_changed_in_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+              "metadata": {},
+              "created_at": "2026-09-27T00:00:05.000Z",
+              "updated_at": "2026-09-27T00:00:05.000Z"
+            }
+          ],
+          "related_edges": [],
+          "delivery": {
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "title": "隔離篩選協定",
+            "delivery_status": "planned",
+            "approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "source_freshness": "current",
+            "source_problem": null,
+            "dependency_ticket_ids": [
+              "01M3KES7D0WKAFCB5PHMHTRRGX"
+            ],
+            "blocking_dependency_ids": [
+              "01M3KES7D0WKAFCB5PHMHTRRGX"
+            ],
+            "next_action": "complete_dependencies",
+            "targets": [
+              {
+                "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "approved_brief_id": null,
+                "accepted_result_id": null,
+                "pending_result_id": null,
+                "criteria_without_evidence": [
+                  "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1"
+                ],
+                "unsatisfied_criterion_ids": []
+              }
+            ]
+          },
+          "targets": [
+            {
+              "target": {
+                "id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "lifecycle_status": "active",
+                "created_at": "2026-09-28T07:31:01.679Z",
+                "updated_at": "2026-09-28T07:31:01.679Z"
+              },
+              "repository": {
+                "id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "slug": "repo-0",
+                "name": "Repository 0",
+                "root_path": null,
+                "remote_url": null,
+                "lifecycle_status": "active",
+                "created_at": "2026-09-27T00:00:06.000Z",
+                "updated_at": "2026-09-27T00:00:06.000Z"
+              },
+              "approved_brief": null,
+              "pending_result": null,
+              "accepted_result": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "accept_implementation_result",
+      "arguments": {
+        "implementation_result_id": "01M3KES7DDTPQG2Y8CCH9HN5VH",
+        "idempotency_key": "isolated-upstream"
+      },
+      "started_at": "2026-09-28T07:31:01.682Z",
+      "completed_at": "2026-09-28T07:31:01.685Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "archived_result_ids": [],
+          "criterion_outcomes": [
+            {
+              "acceptance_criterion_id": "01M3KES7D0WKAFCB5PHMHTRRGX:r1:ac1",
+              "created_at": "2026-09-28T07:31:01.683Z",
+              "id": "01M3KES7DMTTJA6THSSDQMBXZ8",
+              "outcome": "satisfied",
+              "result_acceptance_id": "01M3KES7DMAX358HEV91MVJ5SZ",
+              "submitted_verdict_id": "01M3KES7DEJW7BCQMRTYZMR9HB",
+              "waiver_decision_id": null
+            },
+            {
+              "acceptance_criterion_id": "01M3KES7D0WKAFCB5PHMHTRRGX:r1:ac2",
+              "created_at": "2026-09-28T07:31:01.683Z",
+              "id": "01M3KES7DMZ4PTB3B8C2DR71FH",
+              "outcome": "satisfied",
+              "result_acceptance_id": "01M3KES7DMAX358HEV91MVJ5SZ",
+              "submitted_verdict_id": "01M3KES7DESBBKK90392JNP8S9",
+              "waiver_decision_id": null
+            },
+            {
+              "acceptance_criterion_id": "01M3KES7D0WKAFCB5PHMHTRRGX:r1:ac3",
+              "created_at": "2026-09-28T07:31:01.683Z",
+              "id": "01M3KES7DMV216CPGXCJV3ZN8P",
+              "outcome": "satisfied",
+              "result_acceptance_id": "01M3KES7DMAX358HEV91MVJ5SZ",
+              "submitted_verdict_id": "01M3KES7DEF0C7AZ097BB0R61J",
+              "waiver_decision_id": null
+            }
+          ],
+          "implementation_result": {
+            "id": "01M3KES7DDTPQG2Y8CCH9HN5VH",
+            "lifecycle_status": "active",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "review_status": "approved"
+          },
+          "result_acceptance": {
+            "accepted_at": "2026-09-28T07:31:01.683Z",
+            "actor_id": "isolated-protocol-reviewer-not-user",
+            "id": "01M3KES7DMAX358HEV91MVJ5SZ",
+            "implementation_result_id": "01M3KES7DDTPQG2Y8CCH9HN5VH",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5"
+          },
+          "ticket": {
+            "delivery_status": "done",
+            "id": "01M3KES7D0WKAFCB5PHMHTRRGX"
+          },
+          "waiver_decisions": []
+        },
+        "audit_log_id": "01M3KES7DMG0S8QJ8SS8JQ84KW"
+      }
+    },
+    {
+      "name": "get_work_context",
+      "arguments": {
+        "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3"
+      },
+      "started_at": "2026-09-28T07:31:01.685Z",
+      "completed_at": "2026-09-28T07:31:01.686Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "ticket": {
+            "id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "slug": "隔離篩選協定",
+            "title": "隔離篩選協定",
+            "current_approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "lifecycle_status": "active",
+            "delivery_status": "planned",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "revision": {
+            "id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "ticket_draft_batch_id": "01M3KES7DEV9R34TM2EJA48AD2",
+            "revision_number": 1,
+            "base_approved_revision_id": null,
+            "source_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+            "title": "隔離篩選協定",
+            "specification": {
+              "traces_to_ticket_id": null,
+              "user_story": "在上游接受後交付篩選",
+              "scope": [
+                "協定回放"
+              ],
+              "acceptance_criteria": [
+                {
+                  "id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+                  "text": "隔離下游可完成協定"
+                }
+              ],
+              "non_goals": [
+                "不證明產品 UI 或使用者已接受"
+              ],
+              "related_graph_node_ids": [
+                "01M3KES7CZH7AP3FPEAYJQ6SQR"
+              ],
+              "dependencies": [
+                "01M3KES7D0WKAFCB5PHMHTRRGX"
+              ],
+              "implementation_notes": []
+            },
+            "required_targets": [
+              {
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "scope": [
+                  "協定"
+                ]
+              }
+            ],
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "isolated-protocol-reviewer-not-user",
+            "approved_at": "2026-09-28T07:31:01.679Z",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "product_brief_version": {
+            "id": "01M3KES7CXY1MTCK29GTPR4CDC",
+            "product_brief_id": "01M3KES7CXTHA43P63WHFQW0Q4",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "version_number": 1,
+            "base_approved_version_id": null,
+            "brief": {
+              "product_goal": "Deliver",
+              "target_users": [],
+              "pain_points": [],
+              "core_workflows": [],
+              "mvp_scope": [],
+              "non_goals": [],
+              "success_metrics": [],
+              "risks": [],
+              "open_questions": []
+            },
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "acceptance-user",
+            "approved_at": "2026-09-27T00:00:03.000Z",
+            "created_at": "2026-09-27T00:00:02.000Z",
+            "updated_at": "2026-09-27T00:00:03.000Z"
+          },
+          "related_nodes": [
+            {
+              "id": "01M3KES7CZH7AP3FPEAYJQ6SQR",
+              "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+              "slug": "deliver",
+              "type": "product_goal",
+              "title": "Deliver",
+              "description": null,
+              "source": "product_brief",
+              "source_ref_type": "product_brief_version",
+              "source_ref_id": "01M3KES7CXY1MTCK29GTPR4CDC",
+              "lifecycle_status": "active",
+              "created_in_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+              "last_changed_in_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+              "metadata": {},
+              "created_at": "2026-09-27T00:00:05.000Z",
+              "updated_at": "2026-09-27T00:00:05.000Z"
+            }
+          ],
+          "related_edges": [],
+          "delivery": {
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "title": "隔離篩選協定",
+            "delivery_status": "planned",
+            "approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "source_freshness": "current",
+            "source_problem": null,
+            "dependency_ticket_ids": [
+              "01M3KES7D0WKAFCB5PHMHTRRGX"
+            ],
+            "blocking_dependency_ids": [],
+            "next_action": "implement",
+            "targets": [
+              {
+                "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "approved_brief_id": null,
+                "accepted_result_id": null,
+                "pending_result_id": null,
+                "criteria_without_evidence": [
+                  "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1"
+                ],
+                "unsatisfied_criterion_ids": []
+              }
+            ]
+          },
+          "targets": [
+            {
+              "target": {
+                "id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "lifecycle_status": "active",
+                "created_at": "2026-09-28T07:31:01.679Z",
+                "updated_at": "2026-09-28T07:31:01.679Z"
+              },
+              "repository": {
+                "id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "slug": "repo-0",
+                "name": "Repository 0",
+                "root_path": null,
+                "remote_url": null,
+                "lifecycle_status": "active",
+                "created_at": "2026-09-27T00:00:06.000Z",
+                "updated_at": "2026-09-27T00:00:06.000Z"
+              },
+              "approved_brief": null,
+              "pending_result": null,
+              "accepted_result": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "create_implementation_brief_draft",
+      "arguments": {
+        "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+        "repo_context": {
+          "repository_name": "Repository 0",
+          "summary": "使用真實 clean commit，但不改產品",
+          "file_list": [
+            "src/filter.js"
+          ],
+          "module_notes": [],
+          "baseline_commit_sha": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+          "has_uncommitted_changes": false
+        },
+        "brief": {
+          "implementation_plan": [
+            "回放 handoff 與交付契約"
+          ],
+          "suggested_files_to_inspect": [
+            "src/filter.js"
+          ],
+          "test_strategy": [
+            "正確 baseline 通過，錯誤 baseline 拒絕"
+          ],
+          "risks": [],
+          "pr_summary_draft": "隔離驗證"
+        }
+      },
+      "started_at": "2026-09-28T07:31:01.686Z",
+      "completed_at": "2026-09-28T07:31:01.687Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "implementation_brief": {
+            "id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+            "ticket_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "product_brief_version_id": "01M3KES7CXY1MTCK29GTPR4CDC",
+            "repository_context_snapshot_id": "01M3KES7DQ7RFQF57KQ2MVDA11",
+            "supersedes_implementation_brief_id": null,
+            "slug": "implementation-brief-acjcbcjq-20260928t073101686z",
+            "brief": {
+              "implementation_plan": [
+                "回放 handoff 與交付契約"
+              ],
+              "suggested_files_to_inspect": [
+                "src/filter.js"
+              ],
+              "test_strategy": [
+                "正確 baseline 通過，錯誤 baseline 拒絕"
+              ],
+              "risks": [],
+              "pr_summary_draft": "隔離驗證"
+            },
+            "review_status": "draft",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": null,
+            "approved_at": null,
+            "created_at": "2026-09-28T07:31:01.686Z",
+            "updated_at": "2026-09-28T07:31:01.686Z"
+          },
+          "repository_context_snapshot": {
+            "id": "01M3KES7DQ7RFQF57KQ2MVDA11",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+            "baseline_commit_sha": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+            "dirty_state_fingerprint": null,
+            "context": {
+              "repository_name": "Repository 0",
+              "summary": "使用真實 clean commit，但不改產品",
+              "file_list": [
+                "src/filter.js"
+              ],
+              "module_notes": [],
+              "has_uncommitted_changes": false
+            },
+            "is_approvable": true,
+            "created_at": "2026-09-28T07:31:01.686Z"
+          }
+        },
+        "audit_log_id": "01M3KES7DQ5GNDAT6F3GCKHTMY"
+      }
+    },
+    {
+      "name": "start_implementation",
+      "arguments": {
+        "implementation_brief_id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+        "current_repository_state": {
+          "commit_sha": "deliberately-wrong-isolated-baseline"
+        }
+      },
+      "started_at": "2026-09-28T07:31:01.687Z",
+      "completed_at": "2026-09-28T07:31:01.689Z",
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "STALE_HANDOFF",
+          "message": "Implementation handoff is stale.",
+          "details": {
+            "reason": "repository_baseline_mismatch",
+            "repositoryContextSnapshotId": "01M3KES7DQ7RFQF57KQ2MVDA11",
+            "expectedCommitSha": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+            "currentCommitSha": "deliberately-wrong-isolated-baseline"
+          }
+        }
+      }
+    },
+    {
+      "name": "start_implementation",
+      "arguments": {
+        "implementation_brief_id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+        "current_repository_state": {
+          "commit_sha": "df6017401f752ea191cf6c1b2264c64b07ce67b3"
+        }
+      },
+      "started_at": "2026-09-28T07:31:01.689Z",
+      "completed_at": "2026-09-28T07:31:01.690Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "freshness": "current",
+          "implementation_brief": {
+            "id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+            "ticket_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "product_brief_version_id": "01M3KES7CXY1MTCK29GTPR4CDC",
+            "repository_context_snapshot_id": "01M3KES7DQ7RFQF57KQ2MVDA11",
+            "supersedes_implementation_brief_id": null,
+            "slug": "implementation-brief-acjcbcjq-20260928t073101686z",
+            "brief": {
+              "implementation_plan": [
+                "回放 handoff 與交付契約"
+              ],
+              "suggested_files_to_inspect": [
+                "src/filter.js"
+              ],
+              "test_strategy": [
+                "正確 baseline 通過，錯誤 baseline 拒絕"
+              ],
+              "risks": [],
+              "pr_summary_draft": "隔離驗證"
+            },
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "isolated-protocol-reviewer-not-user",
+            "approved_at": "2026-09-28T07:31:01.689Z",
+            "created_at": "2026-09-28T07:31:01.686Z",
+            "updated_at": "2026-09-28T07:31:01.689Z"
+          },
+          "implementation_target": {
+            "id": "01M3KES7DF19V4SACWACJCBCJQ",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+            "lifecycle_status": "active",
+            "created_at": "2026-09-28T07:31:01.679Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "ticket": {
+            "id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "slug": "隔離篩選協定",
+            "title": "隔離篩選協定",
+            "current_approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "lifecycle_status": "active",
+            "delivery_status": "planned",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "ticket_revision": {
+            "id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "ticket_draft_batch_id": "01M3KES7DEV9R34TM2EJA48AD2",
+            "revision_number": 1,
+            "base_approved_revision_id": null,
+            "source_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+            "title": "隔離篩選協定",
+            "specification": {
+              "traces_to_ticket_id": null,
+              "user_story": "在上游接受後交付篩選",
+              "scope": [
+                "協定回放"
+              ],
+              "acceptance_criteria": [
+                {
+                  "id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+                  "text": "隔離下游可完成協定"
+                }
+              ],
+              "non_goals": [
+                "不證明產品 UI 或使用者已接受"
+              ],
+              "related_graph_node_ids": [
+                "01M3KES7CZH7AP3FPEAYJQ6SQR"
+              ],
+              "dependencies": [
+                "01M3KES7D0WKAFCB5PHMHTRRGX"
+              ],
+              "implementation_notes": []
+            },
+            "required_targets": [
+              {
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "scope": [
+                  "協定"
+                ]
+              }
+            ],
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "isolated-protocol-reviewer-not-user",
+            "approved_at": "2026-09-28T07:31:01.679Z",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "product_brief_version": {
+            "id": "01M3KES7CXY1MTCK29GTPR4CDC",
+            "product_brief_id": "01M3KES7CXTHA43P63WHFQW0Q4",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "version_number": 1,
+            "base_approved_version_id": null,
+            "brief": {
+              "product_goal": "Deliver",
+              "target_users": [],
+              "pain_points": [],
+              "core_workflows": [],
+              "mvp_scope": [],
+              "non_goals": [],
+              "success_metrics": [],
+              "risks": [],
+              "open_questions": []
+            },
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "acceptance-user",
+            "approved_at": "2026-09-27T00:00:03.000Z",
+            "created_at": "2026-09-27T00:00:02.000Z",
+            "updated_at": "2026-09-27T00:00:03.000Z"
+          },
+          "repository": {
+            "id": "01M3KES7CZY43SS62RVBNGDB7P",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "slug": "repo-0",
+            "name": "Repository 0",
+            "root_path": null,
+            "remote_url": null,
+            "lifecycle_status": "active",
+            "created_at": "2026-09-27T00:00:06.000Z",
+            "updated_at": "2026-09-27T00:00:06.000Z"
+          },
+          "repository_context_snapshot": {
+            "id": "01M3KES7DQ7RFQF57KQ2MVDA11",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+            "baseline_commit_sha": "df6017401f752ea191cf6c1b2264c64b07ce67b3",
+            "dirty_state_fingerprint": null,
+            "context": {
+              "repository_name": "Repository 0",
+              "summary": "使用真實 clean commit，但不改產品",
+              "file_list": [
+                "src/filter.js"
+              ],
+              "module_notes": [],
+              "has_uncommitted_changes": false
+            },
+            "is_approvable": true,
+            "created_at": "2026-09-28T07:31:01.686Z"
+          }
+        }
+      }
+    },
+    {
+      "name": "submit_work_result",
+      "arguments": {
+        "implementation_brief_id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+        "summary": "合成協定 fixture；非產品篩選實作證據或使用者驗收",
+        "unfinished_items": [],
+        "evidence": [
+          {
+            "ref": "protocol",
+            "evidence_type": "test_execution",
+            "idempotency_key": "isolated-protocol-evidence",
+            "payload": {
+              "schema_version": 1,
+              "command": "isolated dependency and baseline assertions (synthetic protocol evidence)",
+              "status": "passed",
+              "exit_code": 0,
+              "started_at": "2026-09-28T07:31:01.601Z",
+              "completed_at": "2026-09-28T07:31:01.690Z"
+            }
+          }
+        ],
+        "criterion_verdicts": [
+          {
+            "acceptance_criterion_id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+            "verdict": "satisfied",
+            "reason": "僅回放協定",
+            "evidence_refs": [
+              "protocol"
+            ]
+          }
+        ]
+      },
+      "started_at": "2026-09-28T07:31:01.690Z",
+      "completed_at": "2026-09-28T07:31:01.692Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "implementation_result": {
+            "id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "implementation_brief_id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+            "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+            "ticket_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "supersedes_implementation_result_id": null,
+            "result": {
+              "summary": "合成協定 fixture；非產品篩選實作證據或使用者驗收",
+              "unfinished_items": [],
+              "submission_disposition": "reviewable"
+            },
+            "review_status": "draft",
+            "lifecycle_status": "active",
+            "submission_disposition": "reviewable",
+            "stale_at_submission": false,
+            "stale_reasons": [],
+            "created_at": "2026-09-28T07:31:01.691Z",
+            "updated_at": "2026-09-28T07:31:01.691Z",
+            "archived_at": null
+          },
+          "observed_evidence_ids": [
+            "01M3KES7DV6QV0Q5PV84H5EY2A"
+          ],
+          "criterion_verdicts": [
+            {
+              "id": "01M3KES7DWH2V1XP497EVV0GDB",
+              "implementation_result_id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+              "acceptance_criterion_id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+              "verdict": "satisfied",
+              "reason": "僅回放協定",
+              "evidence_ids": [
+                "01M3KES7DV6QV0Q5PV84H5EY2A"
+              ],
+              "created_at": "2026-09-28T07:31:01.691Z"
+            }
+          ]
+        },
+        "audit_log_id": "01M3KES7DW43ZF4C1YAS154N7Q"
+      }
+    },
+    {
+      "name": "get_work_context",
+      "arguments": {
+        "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3"
+      },
+      "started_at": "2026-09-28T07:31:01.692Z",
+      "completed_at": "2026-09-28T07:31:01.693Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "ticket": {
+            "id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "slug": "隔離篩選協定",
+            "title": "隔離篩選協定",
+            "current_approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "lifecycle_status": "active",
+            "delivery_status": "planned",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "revision": {
+            "id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "ticket_draft_batch_id": "01M3KES7DEV9R34TM2EJA48AD2",
+            "revision_number": 1,
+            "base_approved_revision_id": null,
+            "source_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+            "title": "隔離篩選協定",
+            "specification": {
+              "traces_to_ticket_id": null,
+              "user_story": "在上游接受後交付篩選",
+              "scope": [
+                "協定回放"
+              ],
+              "acceptance_criteria": [
+                {
+                  "id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+                  "text": "隔離下游可完成協定"
+                }
+              ],
+              "non_goals": [
+                "不證明產品 UI 或使用者已接受"
+              ],
+              "related_graph_node_ids": [
+                "01M3KES7CZH7AP3FPEAYJQ6SQR"
+              ],
+              "dependencies": [
+                "01M3KES7D0WKAFCB5PHMHTRRGX"
+              ],
+              "implementation_notes": []
+            },
+            "required_targets": [
+              {
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "scope": [
+                  "協定"
+                ]
+              }
+            ],
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "isolated-protocol-reviewer-not-user",
+            "approved_at": "2026-09-28T07:31:01.679Z",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "product_brief_version": {
+            "id": "01M3KES7CXY1MTCK29GTPR4CDC",
+            "product_brief_id": "01M3KES7CXTHA43P63WHFQW0Q4",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "version_number": 1,
+            "base_approved_version_id": null,
+            "brief": {
+              "product_goal": "Deliver",
+              "target_users": [],
+              "pain_points": [],
+              "core_workflows": [],
+              "mvp_scope": [],
+              "non_goals": [],
+              "success_metrics": [],
+              "risks": [],
+              "open_questions": []
+            },
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "acceptance-user",
+            "approved_at": "2026-09-27T00:00:03.000Z",
+            "created_at": "2026-09-27T00:00:02.000Z",
+            "updated_at": "2026-09-27T00:00:03.000Z"
+          },
+          "related_nodes": [
+            {
+              "id": "01M3KES7CZH7AP3FPEAYJQ6SQR",
+              "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+              "slug": "deliver",
+              "type": "product_goal",
+              "title": "Deliver",
+              "description": null,
+              "source": "product_brief",
+              "source_ref_type": "product_brief_version",
+              "source_ref_id": "01M3KES7CXY1MTCK29GTPR4CDC",
+              "lifecycle_status": "active",
+              "created_in_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+              "last_changed_in_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+              "metadata": {},
+              "created_at": "2026-09-27T00:00:05.000Z",
+              "updated_at": "2026-09-27T00:00:05.000Z"
+            }
+          ],
+          "related_edges": [],
+          "delivery": {
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "title": "隔離篩選協定",
+            "delivery_status": "planned",
+            "approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "source_freshness": "current",
+            "source_problem": null,
+            "dependency_ticket_ids": [
+              "01M3KES7D0WKAFCB5PHMHTRRGX"
+            ],
+            "blocking_dependency_ids": [],
+            "next_action": "review_result",
+            "targets": [
+              {
+                "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "approved_brief_id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+                "accepted_result_id": null,
+                "pending_result_id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+                "criteria_without_evidence": [],
+                "unsatisfied_criterion_ids": []
+              }
+            ]
+          },
+          "targets": [
+            {
+              "target": {
+                "id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "lifecycle_status": "active",
+                "created_at": "2026-09-28T07:31:01.679Z",
+                "updated_at": "2026-09-28T07:31:01.679Z"
+              },
+              "repository": {
+                "id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "slug": "repo-0",
+                "name": "Repository 0",
+                "root_path": null,
+                "remote_url": null,
+                "lifecycle_status": "active",
+                "created_at": "2026-09-27T00:00:06.000Z",
+                "updated_at": "2026-09-27T00:00:06.000Z"
+              },
+              "approved_brief": {
+                "id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "ticket_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+                "product_brief_version_id": "01M3KES7CXY1MTCK29GTPR4CDC",
+                "repository_context_snapshot_id": "01M3KES7DQ7RFQF57KQ2MVDA11",
+                "supersedes_implementation_brief_id": null,
+                "slug": "implementation-brief-acjcbcjq-20260928t073101686z",
+                "brief": {
+                  "implementation_plan": [
+                    "回放 handoff 與交付契約"
+                  ],
+                  "suggested_files_to_inspect": [
+                    "src/filter.js"
+                  ],
+                  "test_strategy": [
+                    "正確 baseline 通過，錯誤 baseline 拒絕"
+                  ],
+                  "risks": [],
+                  "pr_summary_draft": "隔離驗證"
+                },
+                "review_status": "approved",
+                "lifecycle_status": "active",
+                "approved_by_actor_id": "isolated-protocol-reviewer-not-user",
+                "approved_at": "2026-09-28T07:31:01.689Z",
+                "created_at": "2026-09-28T07:31:01.686Z",
+                "updated_at": "2026-09-28T07:31:01.689Z"
+              },
+              "pending_result": {
+                "id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "implementation_brief_id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+                "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "ticket_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+                "supersedes_implementation_result_id": null,
+                "result": {
+                  "summary": "合成協定 fixture；非產品篩選實作證據或使用者驗收",
+                  "unfinished_items": [],
+                  "submission_disposition": "reviewable"
+                },
+                "review_status": "draft",
+                "lifecycle_status": "active",
+                "submission_disposition": "reviewable",
+                "stale_at_submission": false,
+                "stale_reasons": [],
+                "created_at": "2026-09-28T07:31:01.691Z",
+                "updated_at": "2026-09-28T07:31:01.691Z",
+                "archived_at": null
+              },
+              "accepted_result": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "accept_implementation_result",
+      "arguments": {
+        "implementation_result_id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+        "idempotency_key": "isolated-dependent"
+      },
+      "started_at": "2026-09-28T07:31:01.693Z",
+      "completed_at": "2026-09-28T07:31:01.694Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "archived_result_ids": [],
+          "criterion_outcomes": [
+            {
+              "acceptance_criterion_id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+              "created_at": "2026-09-28T07:31:01.693Z",
+              "id": "01M3KES7DY0WHJN0K2PD15YHWY",
+              "outcome": "satisfied",
+              "result_acceptance_id": "01M3KES7DYZEAG9BFKEP82R2M7",
+              "submitted_verdict_id": "01M3KES7DWH2V1XP497EVV0GDB",
+              "waiver_decision_id": null
+            }
+          ],
+          "implementation_result": {
+            "id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+            "lifecycle_status": "active",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "review_status": "approved"
+          },
+          "result_acceptance": {
+            "accepted_at": "2026-09-28T07:31:01.693Z",
+            "actor_id": "isolated-protocol-reviewer-not-user",
+            "id": "01M3KES7DYZEAG9BFKEP82R2M7",
+            "implementation_result_id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5"
+          },
+          "ticket": {
+            "delivery_status": "done",
+            "id": "01M3KES7DENTVTRCJNS6VK24D3"
+          },
+          "waiver_decisions": []
+        },
+        "audit_log_id": "01M3KES7DYNBG4P22M3K4K1QJ1"
+      }
+    },
+    {
+      "name": "accept_implementation_result",
+      "arguments": {
+        "implementation_result_id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+        "idempotency_key": "isolated-dependent"
+      },
+      "started_at": "2026-09-28T07:31:01.694Z",
+      "completed_at": "2026-09-28T07:31:01.695Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "archived_result_ids": [],
+          "criterion_outcomes": [
+            {
+              "acceptance_criterion_id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+              "created_at": "2026-09-28T07:31:01.693Z",
+              "id": "01M3KES7DY0WHJN0K2PD15YHWY",
+              "outcome": "satisfied",
+              "result_acceptance_id": "01M3KES7DYZEAG9BFKEP82R2M7",
+              "submitted_verdict_id": "01M3KES7DWH2V1XP497EVV0GDB",
+              "waiver_decision_id": null
+            }
+          ],
+          "implementation_result": {
+            "id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+            "lifecycle_status": "active",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "review_status": "approved"
+          },
+          "result_acceptance": {
+            "accepted_at": "2026-09-28T07:31:01.693Z",
+            "actor_id": "isolated-protocol-reviewer-not-user",
+            "id": "01M3KES7DYZEAG9BFKEP82R2M7",
+            "implementation_result_id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5"
+          },
+          "ticket": {
+            "delivery_status": "done",
+            "id": "01M3KES7DENTVTRCJNS6VK24D3"
+          },
+          "waiver_decisions": []
+        },
+        "audit_log_id": "01M3KES7DYNBG4P22M3K4K1QJ1"
+      }
+    },
+    {
+      "name": "get_work_context",
+      "arguments": {
+        "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3"
+      },
+      "started_at": "2026-09-28T07:31:01.695Z",
+      "completed_at": "2026-09-28T07:31:01.698Z",
+      "response": {
+        "ok": true,
+        "data": {
+          "ticket": {
+            "id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "slug": "隔離篩選協定",
+            "title": "隔離篩選協定",
+            "current_approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "lifecycle_status": "active",
+            "delivery_status": "done",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.693Z"
+          },
+          "revision": {
+            "id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "ticket_draft_batch_id": "01M3KES7DEV9R34TM2EJA48AD2",
+            "revision_number": 1,
+            "base_approved_revision_id": null,
+            "source_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+            "title": "隔離篩選協定",
+            "specification": {
+              "traces_to_ticket_id": null,
+              "user_story": "在上游接受後交付篩選",
+              "scope": [
+                "協定回放"
+              ],
+              "acceptance_criteria": [
+                {
+                  "id": "01M3KES7DENTVTRCJNS6VK24D3:r1:ac1",
+                  "text": "隔離下游可完成協定"
+                }
+              ],
+              "non_goals": [
+                "不證明產品 UI 或使用者已接受"
+              ],
+              "related_graph_node_ids": [
+                "01M3KES7CZH7AP3FPEAYJQ6SQR"
+              ],
+              "dependencies": [
+                "01M3KES7D0WKAFCB5PHMHTRRGX"
+              ],
+              "implementation_notes": []
+            },
+            "required_targets": [
+              {
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "scope": [
+                  "協定"
+                ]
+              }
+            ],
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "isolated-protocol-reviewer-not-user",
+            "approved_at": "2026-09-28T07:31:01.679Z",
+            "created_at": "2026-09-28T07:31:01.678Z",
+            "updated_at": "2026-09-28T07:31:01.679Z"
+          },
+          "product_brief_version": {
+            "id": "01M3KES7CXY1MTCK29GTPR4CDC",
+            "product_brief_id": "01M3KES7CXTHA43P63WHFQW0Q4",
+            "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+            "version_number": 1,
+            "base_approved_version_id": null,
+            "brief": {
+              "product_goal": "Deliver",
+              "target_users": [],
+              "pain_points": [],
+              "core_workflows": [],
+              "mvp_scope": [],
+              "non_goals": [],
+              "success_metrics": [],
+              "risks": [],
+              "open_questions": []
+            },
+            "review_status": "approved",
+            "lifecycle_status": "active",
+            "approved_by_actor_id": "acceptance-user",
+            "approved_at": "2026-09-27T00:00:03.000Z",
+            "created_at": "2026-09-27T00:00:02.000Z",
+            "updated_at": "2026-09-27T00:00:03.000Z"
+          },
+          "related_nodes": [
+            {
+              "id": "01M3KES7CZH7AP3FPEAYJQ6SQR",
+              "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+              "slug": "deliver",
+              "type": "product_goal",
+              "title": "Deliver",
+              "description": null,
+              "source": "product_brief",
+              "source_ref_type": "product_brief_version",
+              "source_ref_id": "01M3KES7CXY1MTCK29GTPR4CDC",
+              "lifecycle_status": "active",
+              "created_in_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+              "last_changed_in_graph_revision_id": "01M3KES7CZTGYA1SX7GMEMV6W6",
+              "metadata": {},
+              "created_at": "2026-09-27T00:00:05.000Z",
+              "updated_at": "2026-09-27T00:00:05.000Z"
+            }
+          ],
+          "related_edges": [],
+          "delivery": {
+            "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+            "title": "隔離篩選協定",
+            "delivery_status": "done",
+            "approved_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+            "source_freshness": "current",
+            "source_problem": null,
+            "dependency_ticket_ids": [
+              "01M3KES7D0WKAFCB5PHMHTRRGX"
+            ],
+            "blocking_dependency_ids": [],
+            "next_action": "done",
+            "targets": [
+              {
+                "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "approved_brief_id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+                "accepted_result_id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+                "pending_result_id": null,
+                "criteria_without_evidence": [],
+                "unsatisfied_criterion_ids": []
+              }
+            ]
+          },
+          "targets": [
+            {
+              "target": {
+                "id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "ticket_id": "01M3KES7DENTVTRCJNS6VK24D3",
+                "repository_id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "lifecycle_status": "active",
+                "created_at": "2026-09-28T07:31:01.679Z",
+                "updated_at": "2026-09-28T07:31:01.679Z"
+              },
+              "repository": {
+                "id": "01M3KES7CZY43SS62RVBNGDB7P",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "slug": "repo-0",
+                "name": "Repository 0",
+                "root_path": null,
+                "remote_url": null,
+                "lifecycle_status": "active",
+                "created_at": "2026-09-27T00:00:06.000Z",
+                "updated_at": "2026-09-27T00:00:06.000Z"
+              },
+              "approved_brief": {
+                "id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "ticket_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+                "product_brief_version_id": "01M3KES7CXY1MTCK29GTPR4CDC",
+                "repository_context_snapshot_id": "01M3KES7DQ7RFQF57KQ2MVDA11",
+                "supersedes_implementation_brief_id": null,
+                "slug": "implementation-brief-acjcbcjq-20260928t073101686z",
+                "brief": {
+                  "implementation_plan": [
+                    "回放 handoff 與交付契約"
+                  ],
+                  "suggested_files_to_inspect": [
+                    "src/filter.js"
+                  ],
+                  "test_strategy": [
+                    "正確 baseline 通過，錯誤 baseline 拒絕"
+                  ],
+                  "risks": [],
+                  "pr_summary_draft": "隔離驗證"
+                },
+                "review_status": "approved",
+                "lifecycle_status": "active",
+                "approved_by_actor_id": "isolated-protocol-reviewer-not-user",
+                "approved_at": "2026-09-28T07:31:01.689Z",
+                "created_at": "2026-09-28T07:31:01.686Z",
+                "updated_at": "2026-09-28T07:31:01.689Z"
+              },
+              "pending_result": null,
+              "accepted_result": {
+                "id": "01M3KES7DWPKESC5AZ4VMMFTFC",
+                "project_id": "01M3KES7CVGK0KKE4BHQ4ASHK5",
+                "implementation_brief_id": "01M3KES7DQTN8EP4PNKGRF9E8Q",
+                "implementation_target_id": "01M3KES7DF19V4SACWACJCBCJQ",
+                "ticket_revision_id": "01M3KES7DE4WCDZPXTYSWY8E4D",
+                "supersedes_implementation_result_id": null,
+                "result": {
+                  "summary": "合成協定 fixture；非產品篩選實作證據或使用者驗收",
+                  "unfinished_items": [],
+                  "submission_disposition": "reviewable"
+                },
+                "review_status": "approved",
+                "lifecycle_status": "active",
+                "submission_disposition": "reviewable",
+                "stale_at_submission": false,
+                "stale_reasons": [],
+                "created_at": "2026-09-28T07:31:01.691Z",
+                "updated_at": "2026-09-28T07:31:01.693Z",
+                "archived_at": null
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "合成 fixture 不是 live Project",
+    "不是新的無歷史對話",
+    "不將 #104 C4 改成歷史通過",
+    "不證明 UI 或使用者 Acceptance"
+  ]
+}
