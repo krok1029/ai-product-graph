@@ -49,12 +49,12 @@ it.each(["core", "full"] as const)("exposes only the authorized %s profile surfa
   await server.connect(serverTransport); await client.connect(clientTransport);
   try {
     const names = (await client.listTools()).tools.map(tool => tool.name);
-    expect(names).toHaveLength(profile === "core" ? 23 : 44);
+    expect(names).toHaveLength(profile === "core" ? 23 : 45);
     expect(names.includes("reject_content_drift")).toBe(profile === "full");
     expect(names).not.toContain("adopt_content_drift");
-    expect(names).not.toContain("get_content_drift_resolution");
+    expect(names.includes("get_content_drift_resolution")).toBe(profile === "full");
     const templates = (await client.listResourceTemplates()).resourceTemplates.map(resource => resource.uriTemplate);
-    expect(templates).not.toContain("product-graph://content-drifts/{contentDriftId}/resolution");
+    expect(templates.includes("product-graph://content-drifts/{driftId}/resolution")).toBe(profile === "full");
     expect(f.allRows()).toEqual(before);
   } finally { await client.close(); await server.close(); f.database.close(); }
 });

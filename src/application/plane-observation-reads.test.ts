@@ -24,7 +24,7 @@ it("returns pinned observations/diffs in receipt/detection order with ID ties an
   const result = f.service.getMappingContentDriftHistory(f.mapping.id);
 
   expect(result.observations).toEqual([matching, tieA, tieB, later].map(({ snapshot, provenance }) => ({ snapshot, provenance })));
-  expect(result.drifts).toEqual([tieA.drift, tieB.drift, later.drift]);
+  expect(result.drifts).toEqual([tieA.drift, tieB.drift, later.drift].map(drift => ({ ...drift, resolution: null })));
   const future = (result.observations[1]!.snapshot.content as { future: Record<string, unknown> }).future;
   expect(Object.hasOwn(future, "__proto__")).toBe(true);
   expect(future.__proto__).toEqual({ value: 1 });
@@ -45,12 +45,12 @@ it("retains historical compared revisions after approval and archive without req
 
   expect(result.mapping.lifecycleStatus).toBe("archived");
   expect(result.observations[0]).toEqual(original.observations[0]);
-  expect(result.drifts).toEqual([old.drift, next.drift]);
+  expect(result.drifts).toEqual([old.drift, next.drift].map(drift => ({ ...drift, resolution: null })));
   expect(result.observations.map(value => value.provenance.sourceTicketRevisionId)).toEqual([f.revision.id, revision.id]);
   expect(f.allRows()).toEqual(before);
 });
 
-it("exposes the stored resolution Decision reference without interpreting its decision type", () => {
+it("rejects an unsupported legacy resolution Decision reference rather than interpreting it as resolved", () => {
   const captured = f.capture();
   f.ports.decisions.insert({ id: "future-resolution", projectId: f.project.id, actorId: captured.provenance.actorId,
     decisionType: "future_content_resolution", summary: "External decision", payload: {}, createdAt: "2026-09-27T13:00:00.000Z" });
@@ -58,10 +58,9 @@ it("exposes the stored resolution Decision reference without interpreting its de
   f.database.exec("DROP TRIGGER content_drift_resolution_reference_immutable");
   f.database.prepare("UPDATE content_drifts SET resolution_decision_id = 'future-resolution' WHERE id = ?").run(captured.drift!.id);
 
-  const result = f.service.getMappingContentDriftHistory(f.mapping.id);
-
-  expect(result.drifts[0]!.resolutionDecisionId).toBe("future-resolution");
-  expect(result.drifts[0]).not.toHaveProperty("resolutionState");
+  const before = f.allRows();
+  expect(() => f.service.getMappingContentDriftHistory(f.mapping.id)).toThrow(expect.objectContaining({ code: "CONFLICT" }));
+  expect(f.allRows()).toEqual(before);
 });
 
 it("returns NOT_FOUND for an unknown mapping", () => {
@@ -69,6 +68,7 @@ it("returns NOT_FOUND for an unknown mapping", () => {
 });
 
 it.each([
+  ["mapping metadata JSON", "UPDATE external_work_item_mappings SET metadata_json = '{'"],
   ["mapping owner type", "UPDATE external_work_item_mappings SET internal_owner_type = 'implementation_target'"],
   ["snapshot mapping", "UPDATE external_work_item_snapshots SET mapping_id = 'missing-mapping' WHERE id = 'captured'"],
   ["observation mapping", "UPDATE plane_observations SET mapping_id = 'missing-mapping'"],
