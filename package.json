@@ -18,7 +18,8 @@
     "plane:export": "node --import tsx src/plane-export.ts",
     "plane:export:built": "node dist/plane-export.js",
     "plane:observe": "node --import tsx src/plane-observe.ts",
-    "plane:observe:built": "node dist/plane-observe.js"
+    "plane:observe:built": "node dist/plane-observe.js",
+    "verify:runtime": "node dist/verify-local-runtime.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
