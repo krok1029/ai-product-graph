@@ -2,17 +2,21 @@
 
 ## 範圍與目前狀態
 
-本文件同時保存已交付能力與後續整合約束，不代表每條流程目前可用。Plane 已有首次 create／reconciliation、明確 observation、drift history、sync plan／health／termination；後續 update/status execution、差異 resolution 與 GitHub adapter 尚未交付。後續依 [roadmap](08-roadmap.md) 暫緩，先驗證本機持續開發與接手。
+本文件同時保存已交付能力與後續整合約束，不代表每條流程目前可用。2026-09-28 核對：Plane 已有首次 create／reconciliation、明確 observation、drift history、sync plan／health／termination；主分支另已合併差異拒絕、採用為候選草稿與處置查詢（PR #107／#110／#109）。後續 update/status execution 與完整雙向狀態衝突處理尚未交付。GitHub 專用 adapter 已依同日使用者決策移出必做範圍，改採下述 `gh` 工作方式。其餘擴充依 [roadmap](08-roadmap.md) 選定範圍，本機持續開發與接手仍在驗證。
+
+上述已合併能力不表示原本機 checkout 或既有 MCP process 已載入相同版本，詳見 [進度與版本核對](validation/2026-09-28-project-status.md)。差異已處置、候選已核准、實作已接受與外部同步成功是不同狀態；#94 父 Spec 仍待收尾，但 #95–#97 子票已關閉。
 
 ## 整合策略
 
 MCP server 應該擁有 product context 和 graph data；外部系統則負責它們擅長的專門工作流。
 
+本節與下方 External Work Item Ownership 保留已建模的 provider mapping／同步約束；其中 GitHub 多 repository 投影是條件式契約，僅在將來明確選擇建立該整合時適用，不是目前要實作的功能。Agent 直接使用 `gh` 不會自動建立 mapping、Sync Intent 或背景同步義務。
+
 AI Product Graph 是 Ticket 規格、Result Acceptance 與 `done` completion semantics 的權威來源。External Work Item 是外部工具中的同步投影，保留自己的 external status；外部 closed／done 不得直接完成內部 Ticket。
 
 內部 Ticket 已是 `done`、但外部 work item 被重新開啟時，adapter 必須建立 Sync Conflict，不得自動降低內部 Delivery Status。使用者將衝突分類為原 acceptance 無效、新增工作或外部誤操作後，系統才分別執行 Result Revocation、建立 Follow-up Ticket，或重新向外同步關閉。
 
-Adapter 讀取外部 title、description、acceptance criteria 或其他 specification content 時，必須先保存 immutable External Work Item Snapshot。若內容與目前 approved Ticket Revision 不同，建立 Content Drift；外部內容不得直接覆蓋 canonical specification。後續採用外部修改時，先由 agent 判斷是否仍在既有 Spec 範圍內。涉及產品方向或能力變更時先依正常流程修訂 Brief／Milestone／Spec，再以最新 approved Ticket revision 為 base、有效的候選 Spec 來源鏈建立 Ticket Revision Draft，最後走正常 approval。server 驗證階層與版本，不判斷自然語言語意一致；詳細後續契約由 [Spec #94](https://github.com/krok1029/ai-product-graph/issues/94) 追蹤。
+Adapter 讀取外部 title、description、acceptance criteria 或其他 specification content 時，必須先保存 immutable External Work Item Snapshot。若內容與目前 approved Ticket Revision 不同，建立 Content Drift；外部內容不得直接覆蓋 canonical specification。後續採用外部修改時，先由 agent 判斷是否仍在既有 Spec 範圍內。涉及產品方向或能力變更時先依正常流程修訂 Brief／Milestone／Spec，再以最新 approved Ticket revision 為 base、有效的候選 Spec 來源鏈建立 Ticket Revision Draft，最後走正常 approval。server 驗證階層與版本，不判斷自然語言語意一致；詳細契約由 [Spec #94](https://github.com/krok1029/ai-product-graph/issues/94) 追蹤。
 
 MVP External Export Policy 固定為 `manual_first_export`。核准 Ticket Revision 或 Implementation Target 不會自動在所有已連線 containers 建立 work items；使用者必須明確選擇 owner 與 External Container 執行首次 export。External Work Item mapping 成為 active 後，後續 approved revisions 與適用狀態變更才自動產生 Sync Intents。Project-level auto-export 延後評估。
 
@@ -32,7 +36,7 @@ Lifecycle intent 永久無法完成時，使用者只能選擇修復後重試、
 
 第一個 integration target 不是 PM 工具，而是透過 MCP 連接 AI agent。
 
-核心架構採用 DDD / ports & adapters。MCP、Plane、GitHub、未來 UI 或其他外部介面都應該透過 adapter 連到 application layer，不直接污染 domain model。
+核心架構採用 DDD / ports & adapters。Server 內的 MCP、Plane 與未來 UI 等介面透過 adapter 連到 application layer；GitHub 目前由 client agent 使用 `gh` 操作，再經既有 MCP evidence／Result 入口保存資料，不讓 domain 依賴 GitHub API 或 CLI。
 
 ## MCP Clients
 
@@ -53,24 +57,22 @@ Lifecycle intent 永久無法完成時，使用者只能選擇修復後重試、
 
 ## GitHub
 
-初始 use cases：
+2026-09-28 決策：專用 GitHub adapter 移出必做清單，不列入目前專案完成條件。先使用 `gh` 和既有證據流程，不另建 API 包裝或背景同步。
 
-- 把每個 repository-specific Implementation Target 匯出為該 Repository 的 GitHub Issue。
-- 保存 GitHub Issue 與 Implementation Target 的映射及 external status。
-- 把 PR 連到對應 Implementation Target，並可沿關係追溯到 Ticket。
-- 讀取 PR metadata。
-- 把 changed files 連到 graph nodes。
+目前工作方式：
 
-為什麼 GitHub 值得整合：
+1. Agent 依使用者授權，以 `gh` 查詢或操作 Issue／PR、取得 PR metadata 與修改檔案；需要 commit 基線時查本機 Git。
+2. 以已核准 Ticket／Implementation Brief 作為工作脈絡。將實際取得的 PR／commit／測試資料依既有 `pull_request`、`commit`、`test_execution` 或 `artifact` 契約，透過 `submit_work_result` 保存；已有證據可重用 IDs。
+3. Result 引用 repository-matched evidence 並逐條說明驗收條件，藉由 Brief／Target 追溯至 Ticket 與規格版本。Issue URL 或輔助關聯只有在現有欄位與契約適用時保存，不捏造新的 evidence type 或把聊天文字當成正式 mapping。
+4. PR 合併、Issue 關閉與內部 Result Acceptance 分開；仍由使用者接受產品交付。
 
-- Coding agents 和工程流程通常圍繞 repositories 和 PRs。
-- Issues 容易建立和連結。
-- 對早期 implementation workflow 已經足夠。
+`gh` 取得資料與 MCP 保存資料是兩個步驟，不是跨系統原子操作。遇到中斷先查外部現況及內部既有結果，避免盲目重建 Issue／PR 或重送 Result。這個工作方式不宣稱已提供自動 Issue mapping、changed files 的圖譜抽取、webhook 或持續狀態同步。
 
-整合順序：
+重新評估的條件：
 
-- 專用 GitHub adapter 尚未交付，本機流程不以它為前置條件。
-- 本機驗證後依實際工作選擇 provider；不必等待 Plane 全部完成，也不因已有 Plane 程式碼就優先擴充它。
+- 先記錄真實使用中可重現的漏記、重複操作或同步需求及其影響。
+- 優先補最小的工作流指引、欄位或查詢；只有既有 `gh` 加 MCP 方式無法合理解決時，才另定 adapter 範圍與驗收條件。
+- 本 repository 本身仍以 GitHub Issues 追蹤 Specs／Tickets，遵循 [issue tracker 規則](agents/issue-tracker.md)；這項工程管理安排不需要產品先實作專用 adapter。
 
 ## Plane
 
@@ -147,7 +149,7 @@ MVP approach：
 
 1. 穩定目前 MCP／skills 的持續開發及跨對話接手。
 2. 依實際使用證據補進度與變更查詢缺口。
-3. 使用者選定 Plane 或 GitHub 的具體情境後，才重啟該 provider 的交付。
+3. 使用者選定具體 Plane 情境後，才安排後續同步交付。GitHub 先採 `gh` 與既有證據流程，只按已觀察的缺口評估最小補強。
 4. 其他文件匯入或團隊回饋整合保持候選，不先安排實作。
 
 新增外部 resolution／mutation tools 與新的 resolution resource 僅註冊於 full；保留現有 core resources，不藉此次規格重訂改動 core 的本機工作流。外部內容差異已處理、候選草稿核准、Result Acceptance 與外部同步成功須分開呈現；任何一項不自動推出其他項成立。

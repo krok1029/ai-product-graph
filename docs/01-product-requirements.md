@@ -19,7 +19,7 @@
 - 本機 stdio MCP、SQLite 持久化、Project／Repository identities 與 Idea 保存。
 - Product Brief 與 Ticket Revision 的不可變版本及對話核准。
 - Milestone／Spec 保存、自動圖譜同步與來源變更診斷。
-- 三個 skills 編排規劃、實作、驗收；預設 core 提供 23 個 tools，full 相容模式提供 45 個 tools 及六個舊 prompts。
+- 三個 skills 編排規劃、實作、驗收；預設 core 提供 23 個 tools，full 相容模式提供 46 個 tools 及六個舊 prompts。
 - 工作上下文、真實 Repository baseline 檢查、Implementation Brief 與 handoff。
 - Observed Evidence、Implementation Result、Result Acceptance／Revocation 及跨重啟查詢。
 - 圖譜、trace 與 Ticket 交付診斷：依賴阻塞、來源過期、證據缺口、待接受結果及下一步。
@@ -40,13 +40,15 @@
 
 ## MVP 非目標與選配能力
 
+2026-09-28 範圍更新：雲端與多人版本已依使用者指示移出目前專案範圍，包含 Hosted MCP、多人帳號／權限／協作與相關 Postgres 遷移；不將其當成 MVP 後必做階段。產品以本機、單人使用為邊界，本機 Web UI 與外部 provider 連接可獨立評估。
+
 - 即時多人協作、複雜權限、付費、人力負載、工時與完整 sprint planning。
 - 原生 code editor、完整 Web UI 或互動式圖譜管理介面。
 - 取代 GitHub、Plane、Linear 等既有工具。
 - Server-side LLM、內建 coding agent、Hosted MCP、Postgres 或 embeddings。
 - 預設啟動外部同步、強制建立 PR／部署，或為了流程而增加中間文件。
 
-Plane 已有部分匯出及觀測能力，完整 update/status execution、差異處理與 GitHub adapter 仍屬選配後續工作。保留已完成能力與資料契約，但不把外部整合完成當成本機 MVP 的必要條件。
+Plane 已有部分匯出、觀測與差異處置能力，完整 update/status execution 與雙向狀態衝突處理仍屬選配後續工作。GitHub 專用 adapter 已依使用者決策移出必做範圍：由 agent 使用 `gh` 操作，透過既有流程保存交付證據；僅針對實際出現的漏記、重複操作或同步缺口評估最小補強。保留既有資料契約，不把外部整合完成當成本機 MVP 的必要條件。
 
 ## 後續驗證要求
 

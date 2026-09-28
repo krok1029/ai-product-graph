@@ -11,7 +11,7 @@ AI Product Graph 以本機 stdio MCP 提供結構化產品資料，client agent 
 | 介面 | 責任 | 範圍 |
 | --- | --- | --- |
 | Skills | 對話、內容生成、程式碼檢查、來源重新比對、整理驗收 | 規劃／實作／驗收三個入口 |
-| MCP tools | 驗證、保存、核准及查詢正式資料 | core 23 個；full 45 個 |
+| MCP tools | 驗證、保存、核准及查詢正式資料 | core 23 個；full 46 個 |
 | MCP resources | 提供 Project、graph、Ticket 與 trace 等上下文 | 本機讀取入口 |
 | MCP prompts | 相容原有 workflow templates | 六個，僅 full 提供 |
 | Markdown export | 閱讀、分享或人工檢視 | 按需，非正式資料來源或必經步驟 |
@@ -36,4 +36,4 @@ Server 不直接掃描 Repository。Client 檢查真實程式碼與 commit／dir
 
 Full 保留未採用新階層的舊專案操作及外部工具，不會因此自動遷移 Project、啟動 processor 或關閉 active mapping 的 enrollment。階層化專案即使由 full 操作也必須遵守新來源規則。
 
-Hosted MCP、Postgres、embeddings 及 UI 尚未排入交付。Primary client 是 Codex，資料與工具維持標準 MCP 邊界；其他 client 的 workflow 編排需另行驗證。先驗證本機持續開發的價值，後續依 [roadmap](08-roadmap.md) 處理真實缺口。
+依 2026-09-28 使用者決策，Hosted MCP、雲端多人功能與相關 Postgres 遷移已移出目前範圍；embeddings 及本機 UI 尚未排入交付。Primary client 是 Codex，資料與工具維持標準 MCP 邊界；其他 client 的 workflow 編排需另行驗證。先驗證本機持續開發的價值，後續依 [roadmap](08-roadmap.md) 處理真實缺口。
