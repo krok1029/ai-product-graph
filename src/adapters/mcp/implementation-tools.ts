@@ -16,7 +16,7 @@ import {
 } from "./serializers.js";
 import { success, toToolResult } from "./tool-envelope.js";
 
-export function registerImplementationTools(server: McpServer, service: ProductGraphService) {
+export function registerImplementationTools(server: McpServer, service: ProductGraphService, legacy = true) {
   server.registerTool(
     "create_implementation_brief_draft",
     {
@@ -59,6 +59,8 @@ export function registerImplementationTools(server: McpServer, service: ProductG
         );
       })
   );
+
+  if (!legacy) return;
 
   server.registerTool(
     "approve_implementation_brief",

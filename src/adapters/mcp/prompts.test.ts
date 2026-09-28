@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ProductGraphService } from "../../application/product-graph-service.js";
 import { openDatabase } from "../../infrastructure/sqlite/database.js";
 import { createSqlitePorts } from "../../infrastructure/sqlite/repositories.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 
 const cases = [
   {

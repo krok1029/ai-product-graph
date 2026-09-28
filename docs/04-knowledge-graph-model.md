@@ -13,11 +13,14 @@
 哪些回饋影響了它？
 ```
 
-## 初始 Node Types
+## Node Types
 
 | Type | 說明 |
 | --- | --- |
 | `idea` | 原始粗略想法或匯入的想法 |
+| `product_brief` | 目前產品方向的穩定圖譜根節點 |
+| `milestone` | Brief 下的階段成果、範圍與退出條件 |
+| `spec` | Milestone 下的能力規格及實作／測試決策 |
 | `product_goal` | 產品想達成的結果 |
 | `persona` | 目標使用者類型 |
 | `pain_point` | 使用者問題 |
@@ -108,7 +111,7 @@ SQLite 比較適合本機 MCP MVP：
 
 ## Graph 品質規則
 
-- 每張 ticket 應該連到至少一個 product goal 或 pain point。
+- 新階層 Ticket 必須來自 Spec，保存 Spec → Milestone → Product Brief 完整來源鏈；full 未採用階層的舊專案才沿用 product goal／pain point 規則。
 - 每個 Implementation Target 必須連到單一 Ticket 與單一 Repository；Ticket Revision 保存當版 required membership 與 scope。
 - 新版 Ticket Revision 對同一 Repository 必須重用 active Target identity；移除時 archive，重新加入時建立新 identity。
 - Product／project-level External Work Item 必須 `traces_to` Ticket；repository-specific External Work Item 必須 `traces_to` 單一 Implementation Target。
@@ -125,15 +128,15 @@ SQLite 比較適合本機 MCP MVP：
 - Sync Health 必須由目前應同步 revision／event 與各 active mappings 的 latest attempts 衍生，不得手動更新。
 - 每個 feature area 應該連到至少一個 persona 或 workflow。
 - 每個 PR 應該連到至少一張 ticket。
-- AI proposed graph changes 必須在 Graph Draft Batch 層級 review，batch 核准前不是 canonical nodes 或 edges。
-- Graph Draft Batch 可以是 no-op reconciliation：`changes` 為空，但必須包含 `reconciliation_summary` 並經使用者核准。
+- Core 的 Brief approval 自動同步根節點，Milestone／Spec 透過 `save_planning_node` 自動套用內容與關係，記錄 automation actor 與 applied audit，不另作 graph approval。
+- Full 未採用階層的舊專案保留手動 Graph Draft Batch review／approval，以及帶有 `reconciliation_summary` 的 no-op reconciliation；手動工具不能修改新階層節點。
 - 每次 Graph Draft Batch 成功套用都建立單調遞增的 Graph Revision；no-op batch 也建立 Graph Revision，但不修改任何 GraphNode 或 GraphEdge。
 - Graph Revision 必須保存來源 Product Brief Version；成功核准對應 batch 時，Project 的 Product Intent Reconciliation pointers 必須在同一 transaction 前進。
-- Product Intent Reconciliation 為 `pending` 時不得執行 implementation handoff 或 Result Acceptance；完成後只讓引用已變更或 archived nodes 的 Ticket Revisions 失效。
+- 根節點已對齊不代表下游來源有效。完整來源鏈必須重新比對；Milestone／Spec 依內容版本識別真正變更。相同內容的來源確認不使既有交付失效；真正變更、歸屬變動、封存及依賴問題仍阻擋 handoff／新 Acceptance。
 - Graph changes 第一版使用簡單 audit log 追蹤，不做完整 event sourcing。
 
 ### Ticket ownership 與 revision provenance
 
 Ticket canonical node 使用 Ticket ID，`type/source/source_ref_type = ticket`，`source_ref_id` 指向相同 Ticket。穩定 graph slug 為 `ticket:<Ticket ID>`，不以 title 或 Ticket slug 猜測 identity。Node 投影 aggregate 的 title／lifecycle；replacement draft 不改 title，approval 才同步。Archived Ticket 的 node 保留供歷史讀取。
 
-產品意圖 node／edge 的 created-in 與 last-changed Graph Revision 必填。Ticket-owned node／edge 的兩個 references 為 null；目前 nullable edge 僅限同 Project 的 Ticket endpoints。Ticket writes 不建立 Graph Revision、不移動 Project reconciliation pointers，也不使 pending Graph Draft Batch stale。Ticket generation 的 source nodes 與 revision related nodes 僅能引用 active product-intent ownership nodes；Ticket projection 不參與 revision-based freshness inputs。見 ADR 0036。
+產品意圖 node／edge 的 created-in 與 last-changed Graph Revision 必填。原 Ticket node 與 Ticket 間投影 edges 依 ADR0036 使用 nullable references；新增 Ticket → Spec 的 `belongs_to` edge 則引用來源 Graph Revision，metadata 保存建立投影的 Ticket Revision。Ticket writes 不建立產品意圖 Graph Revision，也不移動 Project reconciliation pointers。Milestone／Spec 的 `content_revision_id` 與每次保存的 Graph Revision 分開；來源鏈與內容版本依 ADR0040／0041 驗證，詳見 [階層規劃](23-planning-hierarchy.md)。

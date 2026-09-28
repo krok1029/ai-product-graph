@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ProductGraphService } from "../../application/product-graph-service.js";
 import { openDatabase } from "../../infrastructure/sqlite/database.js";
 import { createSqlitePorts } from "../../infrastructure/sqlite/repositories.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 import type { ToolEnvelope } from "./tool-envelope.js";
 
 const actor = { id: "00000000000000000000000042", displayName: "Container User" };

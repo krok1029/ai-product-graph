@@ -1,5 +1,8 @@
 # Skills 和 Tools
 
+目前交付的本機流程 skills、安裝方式與 tools 分工以 [Skill 主導的本機工作流](./22-skill-led-workflows.md) 為準。以下保留早期工具選型評估。
+
+
 ## 目前評估
 
 在寫規劃文件或開始簡單 prototype 前，不需要額外安裝 skills。

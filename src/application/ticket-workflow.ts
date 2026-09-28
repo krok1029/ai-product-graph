@@ -1,3 +1,4 @@
+import { projectTicketSpec, ticketPlanningSources } from "./planning-lineage.js";
 import { reconcileImplementationTargets } from "./ticket-target-reconciliation.js";
 import { PlaneMappingEnrollment } from "./plane-mapping-enrollment.js";
 // Ticket workflow 主流程。
@@ -30,6 +31,7 @@ import {
 
 export type TicketSpecInput= {
   title: string;
+  sourceSpecId?: string;
   tracesToTicketId?: string|null;
   userStory: string;
   scope: string[];
@@ -139,6 +141,7 @@ export class TicketWorkflow {
           normalized.dependencies
         );
         const lineage = this.lineage.reconcile(revision, now);
+        projectTicketSpec(this.ports, revision, this.options.idFactory, now);
         return {
           ticket,
           revision,
@@ -199,7 +202,8 @@ export class TicketWorkflow {
       const normalized = this.normalizeTicketSpecInput(
         ticket.projectId,
         input.sourceGraphRevisionId,
-        { ...input.specification, tracesToTicketId: input.specification.tracesToTicketId === undefined
+        { ...input.specification, sourceSpecId: input.specification.sourceSpecId ??
+          this.ports.ticketRevisions.findById(input.baseApprovedRevisionId)?.specification.source_spec_id, tracesToTicketId: input.specification.tracesToTicketId === undefined
           ? this.lineage.current(ticket.projectId, ticket.id)?.targetNodeId ?? null
           : input.specification.tracesToTicketId }
       );
@@ -331,6 +335,7 @@ export class TicketWorkflow {
         };
 
       const lineage = this.lineage.reconcile(revision, now);
+      projectTicketSpec(this.ports, revision, this.options.idFactory, now);
       const approvedRevision: TicketRevision= {
         ...revision,
         reviewStatus: "approved",
@@ -405,10 +410,16 @@ export class TicketWorkflow {
     if (acceptanceCriteria.length === 0) {
       throw validationError("Ticket acceptance_criteria requires at least one item.");
     }
-    const relatedGraphNodeIds = normalizeStringArray(
+    let relatedGraphNodeIds = normalizeStringArray(
       input.relatedGraphNodeIds,
       "related_graph_node_ids"
     );
+    const sourceSpecId = input.sourceSpecId;
+    if (sourceSpecId) {
+      relatedGraphNodeIds = [...new Set([...relatedGraphNodeIds, ...ticketPlanningSources(this.ports, projectId, sourceSpecId)])];
+    } else if (this.ports.graphNodes.list(projectId, "active").some(node => node.type === "product_brief")) {
+      throw validationError("New planning Tickets require source_spec_id; decompose Milestone into Spec first.");
+    }
     if (relatedGraphNodeIds.length === 0) {
       throw validationError("Ticket related_graph_node_ids requires at least one item.");
     }
@@ -435,6 +446,7 @@ export class TicketWorkflow {
     );
     return {
       title,
+      sourceSpecId,
       userStory,
       scope,
       acceptanceCriteria,
@@ -500,6 +512,7 @@ export class TicketWorkflow {
       sourceGraphRevisionId: input.sourceGraphRevisionId,
       title: input.normalized.title,
       specification: {
+        ...(input.normalized.sourceSpecId ? { source_spec_id: input.normalized.sourceSpecId } : {}),
         traces_to_ticket_id: input.normalized.tracesToTicketId,
         user_story: input.normalized.userStory,
         scope: input.normalized.scope,
@@ -580,6 +593,10 @@ export class TicketWorkflow {
   }
 
   private requireProductGoalOrPainPoint(revision: TicketRevision) {
+    if (revision.specification.source_spec_id) {
+      ticketPlanningSources(this.ports, revision.projectId, revision.specification.source_spec_id);
+      return;
+    }
     const nodes = revision.specification.related_graph_node_ids
       .map(nodeId => this.ports.graphNodes.findById(nodeId))
       .filter((node): node is GraphNode => node !== null);

@@ -10,6 +10,8 @@ import type {
   TicketRevision
 } from "../domain/models.js";
 import type { ApplicationPorts } from "./ports.js";
+import { planningChain } from "./planning-lineage.js";
+import { planningContentRevision } from "./planning-content-revision.js";
 import {
   normalizeOptionalText,
   normalizeRequiredString
@@ -31,45 +33,8 @@ export function evaluateImplementationFreshness(
   },
   options: { skipRepositoryState?: boolean } = {}
 ): ImplementationStaleReason | null {
-  const project = ports.projects.findById(ticket.projectId);
-  const productBrief = ports.productBriefs.findByProjectId(ticket.projectId);
-  if (project && project.lifecycleStatus !== "active") {
-    return { reason: "project_archived", details: { projectId: project.id } };
-  }
-  if (productBrief && productBrief.lifecycleStatus !== "active") {
-    return { reason: "product_brief_archived", details: { productBriefId: productBrief.id } };
-  }
-  if (
-    !project ||
-    !productBrief ||
-    project.lastReconciledProductBriefVersionId !==
-    productBrief.currentApprovedVersionId
-  ) {
-    return {
-      reason: "product_intent_unreconciled",
-      details: {
-        projectId: ticket.projectId,
-        currentProductBriefVersionId:
-          productBrief?.currentApprovedVersionId ?? null,
-        lastReconciledProductBriefVersionId:
-          project?.lastReconciledProductBriefVersionId ?? null
-      }
-    };
-  }
-  if (ticket.currentApprovedRevisionId !== revision.id) {
-    return {
-      reason: "ticket_revision_not_current",
-      details: {
-        ticketId: ticket.id,
-        currentApprovedRevisionId: ticket.currentApprovedRevisionId,
-        briefTicketRevisionId: revision.id
-      }
-    };
-  }
-  const sourceProblem = findTicketSourceProblem(ports, ticket, revision);
-  if (sourceProblem) {
-    return sourceProblem;
-  }
+  const sourceProblem = evaluateTicketSourceFreshness(ports, ticket, revision);
+  if (sourceProblem) return sourceProblem;
   if (options.skipRepositoryState === true) {
     return null;
   }
@@ -108,6 +73,41 @@ export function evaluateTicketSourceFreshness(
   ticket: Ticket,
   revision: TicketRevision
 ): ImplementationStaleReason | null {
+  const project = ports.projects.findById(ticket.projectId);
+  const productBrief = ports.productBriefs.findByProjectId(ticket.projectId);
+  if (project && project.lifecycleStatus !== "active") {
+    return { reason: "project_archived", details: { projectId: project.id } };
+  }
+  if (productBrief && productBrief.lifecycleStatus !== "active") {
+    return { reason: "product_brief_archived", details: { productBriefId: productBrief.id } };
+  }
+  if (
+    !project ||
+    !productBrief ||
+    project.lastReconciledProductBriefVersionId !==
+    productBrief.currentApprovedVersionId
+  ) {
+    return {
+      reason: "product_intent_unreconciled",
+      details: {
+        projectId: ticket.projectId,
+        currentProductBriefVersionId:
+          productBrief?.currentApprovedVersionId ?? null,
+        lastReconciledProductBriefVersionId:
+          project?.lastReconciledProductBriefVersionId ?? null
+      }
+    };
+  }
+  if (ticket.currentApprovedRevisionId !== revision.id) {
+    return {
+      reason: "ticket_revision_not_current",
+      details: {
+        ticketId: ticket.id,
+        currentApprovedRevisionId: ticket.currentApprovedRevisionId,
+        briefTicketRevisionId: revision.id
+      }
+    };
+  }
   return findTicketSourceProblem(ports, ticket, revision);
 }
 
@@ -121,6 +121,11 @@ function findTicketSourceProblem(
     return null;
   }
   visitedTicketIds.add(ticket.id);
+  // 採用階層後，舊 Ticket 不能因 Brief 根節點自動對齊而繞過來源補全。
+  if (!revision.specification.source_spec_id && ports.graphNodes.list(ticket.projectId, "active")
+    .some(node => node.type === "product_brief")) {
+    return { reason: "planning_source_missing", details: { ticketId: ticket.id, ticketRevisionId: revision.id } };
+  }
   if (
     revision.ticketId !== ticket.id ||
     revision.projectId !== ticket.projectId ||
@@ -137,7 +142,22 @@ function findTicketSourceProblem(
       }
     };
   }
-  for (const nodeId of ports.ticketRevisions.listGraphNodeIds(revision.id)) {
+  const nodeIds = ports.ticketRevisions.listGraphNodeIds(revision.id);
+  const reconciledAncestors = new Set<string>();
+  if (revision.specification.source_spec_id) {
+    try {
+      const chain = planningChain(ports, ticket.projectId, revision.specification.source_spec_id);
+      if (chain[0]?.type !== "spec" || chain.some(node => !nodeIds.includes(node.id))) {
+        return { reason: "planning_source_changed", details: { ticketId: ticket.id, ticketRevisionId: revision.id } };
+      }
+      // 完整來源鏈已確認後，上游的改動由 Spec 承接；Ticket 只因實際內容變更而失效。
+      for (const ancestor of chain.slice(1)) reconciledAncestors.add(ancestor.id);
+    } catch {
+      return { reason: "planning_source_unreconciled", details: { ticketId: ticket.id,
+        ticketRevisionId: revision.id, graphNodeId: revision.specification.source_spec_id } };
+    }
+  }
+  for (const nodeId of nodeIds) {
     const node = ports.graphNodes.findById(nodeId);
     if (!node || node.projectId !== revision.projectId) {
       return {
@@ -151,9 +171,11 @@ function findTicketSourceProblem(
         details: { ticketRevisionId: revision.id, graphNodeId: node.id }
       };
     }
-    const changedAfterSource = node.lastChangedInGraphRevisionId === null ? null : isGraphRevisionAfter(
+    if (reconciledAncestors.has(nodeId)) continue;
+    const contentRevisionId = planningContentRevision(node);
+    const changedAfterSource = contentRevisionId === null ? null : isGraphRevisionAfter(
       ports,
-      node.lastChangedInGraphRevisionId,
+      contentRevisionId,
       revision.sourceGraphRevisionId
     );
     if (changedAfterSource === null) {

@@ -57,7 +57,7 @@ it("explains termination consistently through strict tool and resource across st
 async function connect(databasePath: string) {
   const target = new Client({ name: "mapping-termination-tests", version: "1" });
   await target.connect(new StdioClientTransport({ command: process.execPath, args: ["--import", "tsx", resolve("src/index.ts")],
-    env: { ...getDefaultEnvironment(), AI_PRODUCT_GRAPH_DB_PATH: databasePath }, stderr: "pipe" }));
+    env: { AI_PRODUCT_GRAPH_MCP_PROFILE: "full", ...getDefaultEnvironment(), AI_PRODUCT_GRAPH_DB_PATH: databasePath }, stderr: "pipe" }));
   return target;
 }
 async function tool(client: Client, mappingId: string) {

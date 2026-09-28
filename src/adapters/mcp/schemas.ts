@@ -7,6 +7,9 @@ import { z } from "zod";
 
 export const graphNodeTypeSchema = z.enum([
   "idea",
+  "product_brief",
+  "milestone",
+  "spec",
   "product_goal",
   "persona",
   "pain_point",
@@ -64,6 +67,7 @@ export const productBriefJsonSchema = z
 export const ticketSpecificationSchema = z
   .object({
     title: z.string().min(1),
+    source_spec_id: z.string().min(1).optional(),
     traces_to_ticket_id: z.string().min(1).nullable().optional(),
     user_story: z.string().min(1),
     scope: z.array(z.string()),

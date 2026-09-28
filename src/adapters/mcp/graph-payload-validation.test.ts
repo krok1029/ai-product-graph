@@ -5,7 +5,7 @@ import type { GraphChangeInput } from "../../application/graph-workflow.js";
 import { ProductGraphService } from "../../application/product-graph-service.js";
 import { openDatabase } from "../../infrastructure/sqlite/database.js";
 import { createSqlitePorts } from "../../infrastructure/sqlite/repositories.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 
 async function setup() {
   const database = openDatabase(":memory:");

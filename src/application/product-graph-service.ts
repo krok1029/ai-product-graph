@@ -1,3 +1,5 @@
+import { PlanningWorkflow } from "./planning-workflow.js";
+import { LocalDeliveryWorkflow } from "./local-delivery-workflow.js";
 import { PlaneObservationReads } from "./plane-observation-reads.js";
 import { MappingSyncPlanReads } from "./mapping-sync-plan-reads.js";
 import { MappingTerminationReads } from "./mapping-termination-reads.js";
@@ -71,6 +73,8 @@ type ServiceOptions = {
 };
 
 export class ProductGraphService {
+  readonly planning: PlanningWorkflow;
+  readonly localDelivery: LocalDeliveryWorkflow;
   private readonly resultRevocationWorkflow: ResultRevocationWorkflow;
   private readonly resultAcceptanceWorkflow: ResultAcceptanceWorkflow;
   private readonly idFactory: () => string;
@@ -92,6 +96,10 @@ export class ProductGraphService {
       id: "00000000000000000000000001",
       displayName: "Local User"
     };
+    this.planning = new PlanningWorkflow(ports, { idFactory: this.idFactory, clock: this.clock });
+    this.localDelivery = new LocalDeliveryWorkflow(ports, {
+      idFactory: this.idFactory, clock: this.clock, actor: this.actor
+    });
     this.resultRevocationWorkflow = new ResultRevocationWorkflow(ports, {
       idFactory: this.idFactory, clock: this.clock, actor: this.actor
     });
@@ -453,7 +461,7 @@ export class ProductGraphService {
     });
   }
 
-  approveProductBriefVersion(productBriefVersionId: string) {
+  approveProductBriefVersion(productBriefVersionId: string, projectPlanning = false) {
     const actor = this.actor;
     const now = this.clock().toISOString();
 
@@ -559,17 +567,20 @@ export class ProductGraphService {
       });
       this.ports.auditLog.append(audit);
 
+      if (projectPlanning || this.planning.inspect(project.id).rootNodeId) this.planning.syncBrief(project.id);
+      const reconciled = this.ports.projects.findById(project.id)!;
+
       return {
         productBrief: updatedProductBrief,
         version: approvedVersion,
         productIntentReconciliation: {
           status:
-            project.lastReconciledProductBriefVersionId === version.id
+            reconciled.lastReconciledProductBriefVersionId === version.id
               ? ("current" as const)
               : ("pending" as const),
           currentProductBriefVersionId: version.id,
           lastReconciledProductBriefVersionId:
-            project.lastReconciledProductBriefVersionId
+            reconciled.lastReconciledProductBriefVersionId
         },
         archivedStaleVersionIds,
         auditLogId: audit.id

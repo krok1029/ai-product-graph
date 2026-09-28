@@ -10,7 +10,7 @@ import { openDatabase } from "../../infrastructure/sqlite/database.js";
 import { createSqlitePorts } from "../../infrastructure/sqlite/repositories.js";
 import { acceptanceFixture } from "../../test-support/result-acceptance-fixture.js";
 import { domainSnapshot } from "../../test-support/domain-snapshot.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 import type { ToolEnvelope } from "./tool-envelope.js";
 
 const cleanup: Array<() => void> = [];

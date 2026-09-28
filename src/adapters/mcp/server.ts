@@ -1,14 +1,6 @@
-import { registerPlaneObservationReadTools } from "./plane-observation-read-tools.js";
-import { registerMappingSyncPlanTools } from "./mapping-sync-plan-tools.js";
-import { registerMappingTerminationReadTools } from "./mapping-termination-read-tools.js";
-import { registerMappingTerminationCommand } from "./mapping-termination-command.js";
-import { registerTicketSyncHealthTools } from "./ticket-sync-health-tools.js";
-import { registerSyncHealthTools } from "./sync-health-tools.js";
-import { registerMappingSyncTools } from "./mapping-sync-tools.js";
-import { registerExternalWorkItemTools } from "./external-work-item-tools.js";
-import { registerPlaneExportTools } from "./plane-export-tools.js";
-import { registerSyncIntentTools } from "./sync-intent-tools.js";
-import { registerExternalContainerTools } from "./external-container-tools.js";
+import { registerPlanningTools, serializePlanningImpact } from "./planning-tools.js";
+import { registerExternalSyncTools } from "./external-sync-tools.js";
+import { registerLocalWorkflowTools } from "./local-workflow-tools.js";
 // MCP server 註冊入口。
 //
 // 註冊 AI Product Graph 的 MCP tools 與 resources。Validation、serialization
@@ -44,25 +36,21 @@ import { registerImplementationTools } from "./implementation-tools.js";
 
 import { registerResultTools } from "./result-tools.js";
 
-export function createMcpServer(service: ProductGraphService): McpServer {
+export function createMcpServer(
+  service: ProductGraphService, options: { profile?: "core" | "full" } = {}
+): McpServer {
   const server = new McpServer({
     name: "ai-product-graph",
     version: "0.1.0"
   });
 
-  registerPlaneObservationReadTools(server, service);
-  registerMappingTerminationCommand(server, service);
-  registerMappingTerminationReadTools(server, service);
-  registerMappingSyncPlanTools(server, service);
-  registerMappingSyncTools(server, service);
-  registerSyncHealthTools(server, service);
-  registerTicketSyncHealthTools(server, service);
-  registerExternalWorkItemTools(server, service);
-  registerExternalContainerTools(server, service);
+  if (options.profile === "full") {
+    registerExternalSyncTools(server, service);
+    registerPlanningPrompts(server);
+  }
   registerRepositoryTools(server, service);
-  registerSyncIntentTools(server, service);
-  registerPlaneExportTools(server, service);
-  registerPlanningPrompts(server);
+  registerLocalWorkflowTools(server, service);
+  registerPlanningTools(server, service);
 
   server.registerTool(
     "create_project",
@@ -211,7 +199,7 @@ export function createMcpServer(service: ProductGraphService): McpServer {
     async ({ product_brief_version_id }) =>
       toToolResult(() => {
         const result = service.approveProductBriefVersion(
-          product_brief_version_id
+          product_brief_version_id, options.profile !== "full"
         );
         return success(
           {
@@ -233,129 +221,132 @@ export function createMcpServer(service: ProductGraphService): McpServer {
       })
   );
 
-  server.registerTool(
-    "create_graph_draft_batch",
-    {
-      title: "Create Graph Draft Batch",
-      description:
-        "Create an atomic draft batch of scoped product-intent graph changes.",
-      inputSchema: {
-        project_id: z.string().min(1),
-        base_graph_revision_id: z.string().min(1).nullable(),
-        source_product_brief_version_id: z.string().min(1),
-        reconciliation_summary: z.string().optional(),
-        changes: z.array(
-          z
-            .object({
-              change_id: z.string().min(1),
-              operation: z.enum(["add","update","archive"]),
-              entity_kind: z.enum(["node","edge"]),
-              target_id: z.string().min(1).nullable(),
-              // 保留所有原始欄位，讓 application 拒絕未宣告欄位（包含 __proto__）。
-              payload: z.unknown().refine(
-                (value): value is Record<string, unknown> =>
-                  typeof value === "object" && value !== null && !Array.isArray(value),
-                "payload must be an object."
-              )
-            })
-            .strict()
-        )
-      }
-    },
-    async ({
-      project_id,
-      base_graph_revision_id,
-      source_product_brief_version_id,
-      reconciliation_summary,
-      changes
-    }) =>
-      toToolResult(() => {
-        const result = service.createGraphDraftBatch({
-          projectId: project_id,
-          baseGraphRevisionId: base_graph_revision_id,
-          sourceProductBriefVersionId:
-            source_product_brief_version_id,
-          ...(reconciliation_summary === undefined
-            ? {}
-            :{ reconciliationSummary: reconciliation_summary }),
-          changes: changes.map(change => ({
-            changeId: change.change_id,
-            operation: change.operation,
-            entityKind: change.entity_kind,
-            targetId: change.target_id,
-            payload: change.payload
-          }))
-        });
-        return success(
-          {
-            graph_draft_batch: {
-              ...serializeGraphDraftBatch(result.graphDraftBatch),
-              change_count: result.changeCount,
-              is_noop_reconciliation: result.isNoopReconciliation
+  if (options.profile === "full") {
+    server.registerTool(
+      "create_graph_draft_batch",
+      {
+        title: "Create Graph Draft Batch",
+        description:
+          "Create an atomic draft batch of scoped product-intent graph changes.",
+        inputSchema: {
+          project_id: z.string().min(1),
+          base_graph_revision_id: z.string().min(1).nullable(),
+          source_product_brief_version_id: z.string().min(1),
+          reconciliation_summary: z.string().optional(),
+          changes: z.array(
+            z
+              .object({
+                change_id: z.string().min(1),
+                operation: z.enum(["add","update","archive"]),
+                entity_kind: z.enum(["node","edge"]),
+                target_id: z.string().min(1).nullable(),
+                // 保留所有原始欄位，讓 application 拒絕未宣告欄位（包含 __proto__）。
+                payload: z.unknown().refine(
+                  (value): value is Record<string, unknown> =>
+                    typeof value === "object" && value !== null && !Array.isArray(value),
+                  "payload must be an object."
+                )
+              })
+              .strict()
+          )
+        }
+      },
+      async ({
+        project_id,
+        base_graph_revision_id,
+        source_product_brief_version_id,
+        reconciliation_summary,
+        changes
+      }) =>
+        toToolResult(() => {
+          const result = service.createGraphDraftBatch({
+            projectId: project_id,
+            baseGraphRevisionId: base_graph_revision_id,
+            sourceProductBriefVersionId:
+              source_product_brief_version_id,
+            ...(reconciliation_summary === undefined
+              ? {}
+              :{ reconciliationSummary: reconciliation_summary }),
+            changes: changes.map(change => ({
+              changeId: change.change_id,
+              operation: change.operation,
+              entityKind: change.entity_kind,
+              targetId: change.target_id,
+              payload: change.payload
+            }))
+          });
+          return success(
+            {
+              graph_draft_batch: {
+                ...serializeGraphDraftBatch(result.graphDraftBatch),
+                change_count: result.changeCount,
+                is_noop_reconciliation: result.isNoopReconciliation
+              },
+              validation: result.validation
             },
-            validation: result.validation
-          },
-          result.auditLogId
-        );
-      })
-  );
+            result.auditLogId
+          );
+        })
+    );
 
-  server.registerTool(
-    "approve_graph_draft_batch",
-    {
-      title: "Approve Graph Draft Batch",
-      description:
-        "Atomically apply a Graph Draft Batch and create a Graph Revision.",
-      inputSchema: {
-        graph_draft_batch_id: z.string().min(1)
-      }
-    },
-    async ({ graph_draft_batch_id }) =>
-      toToolResult(() => {
-        const result = service.approveGraphDraftBatch(
-          graph_draft_batch_id
-        );
-        return success(
-          {
-            graph_draft_batch: serializeGraphDraftBatch(
-              result.graphDraftBatch
-            ),
-            graph_revision: serializeGraphRevision(
-              result.graphRevision
-            ),
-            applied: {
-              added_ids: result.applied.addedIds,
-              updated_ids: result.applied.updatedIds,
-              archived_ids: result.applied.archivedIds,
-              is_noop_reconciliation:
-                result.applied.isNoopReconciliation,
-              reconciliation_summary:
-                result.applied.reconciliationSummary
+    server.registerTool(
+      "approve_graph_draft_batch",
+      {
+        title: "Approve Graph Draft Batch",
+        description:
+          "Atomically apply a Graph Draft Batch and create a Graph Revision.",
+        inputSchema: {
+          graph_draft_batch_id: z.string().min(1)
+        }
+      },
+      async ({ graph_draft_batch_id }) =>
+        toToolResult(() => {
+          const result = service.approveGraphDraftBatch(
+            graph_draft_batch_id
+          );
+          return success(
+            {
+              graph_draft_batch: serializeGraphDraftBatch(
+                result.graphDraftBatch
+              ),
+              graph_revision: serializeGraphRevision(
+                result.graphRevision
+              ),
+              applied: {
+                added_ids: result.applied.addedIds,
+                updated_ids: result.applied.updatedIds,
+                archived_ids: result.applied.archivedIds,
+                is_noop_reconciliation:
+                  result.applied.isNoopReconciliation,
+                reconciliation_summary:
+                  result.applied.reconciliationSummary
+              },
+              archived_stale_batch_ids: result.archivedStaleBatchIds,
+              product_intent_reconciliation: {
+                status: result.productIntentReconciliation.status,
+                current_product_brief_version_id:
+                  result.productIntentReconciliation
+                    .currentProductBriefVersionId,
+                last_reconciled_product_brief_version_id:
+                  result.productIntentReconciliation
+                    .lastReconciledProductBriefVersionId,
+                product_intent_graph_revision_id:
+                  result.productIntentReconciliation
+                    .productIntentGraphRevisionId
+              }
             },
-            archived_stale_batch_ids: result.archivedStaleBatchIds,
-            product_intent_reconciliation: {
-              status: result.productIntentReconciliation.status,
-              current_product_brief_version_id:
-                result.productIntentReconciliation
-                  .currentProductBriefVersionId,
-              last_reconciled_product_brief_version_id:
-                result.productIntentReconciliation
-                  .lastReconciledProductBriefVersionId,
-              product_intent_graph_revision_id:
-                result.productIntentReconciliation
-                  .productIntentGraphRevisionId
-            }
-          },
-          result.auditLogId
-        );
-      })
-  );
+            result.auditLogId
+          );
+        })
+    );
+
+  }
 
   server.registerTool(
     "get_graph_context",
     {
       title: "Get Graph Context",
-      description: "Read canonical graph nodes and edges for a Project.",
+      description: "Read canonical graph nodes and edges, planning impact and active-project delivery diagnostics: Ticket status, dependencies, pending Results, evidence gaps and next actions. Delivery diagnostics cover all active project Tickets regardless of graph filters.",
       inputSchema: {
         project_id: z.string().min(1),
         lifecycle_status: z
@@ -376,16 +367,18 @@ export function createMcpServer(service: ProductGraphService): McpServer {
         return success({
           graph_revision_id: result.graphRevisionId,
           nodes: result.nodes.map(serializeGraphNode),
-          edges: result.edges.map(serializeGraphEdge)
+          edges: result.edges.map(serializeGraphEdge),
+          planning: serializePlanningImpact(service.planning.inspect(project_id)),
+          delivery: service.localDelivery.getProjectDelivery(project_id)
         });
       })
   );
 
-  registerTicketTools(server, service);
+  registerTicketTools(server, service, options.profile === "full");
 
-  registerImplementationTools(server, service);
+  registerImplementationTools(server, service, options.profile === "full");
 
-  registerResultTools(server, service);
+  registerResultTools(server, service, options.profile === "full");
 
   registerProjectResources(server, service);
   registerNodeResources(server, service);

@@ -15,18 +15,19 @@ import {
 } from "./serializers.js";
 import { success, toToolResult } from "./tool-envelope.js";
 
-export function registerTicketTools(server: McpServer, service: ProductGraphService) {
+export function registerTicketTools(server: McpServer, service: ProductGraphService, legacy = true) {
+  const specificationSchema = legacy ? ticketSpecificationSchema : ticketSpecificationSchema.extend({ source_spec_id: z.string().min(1) });
   server.registerTool(
     "create_ticket_draft_batch",
     {
       title: "Create Ticket Draft Batch",
       description:
-        "Create draft Tickets and first Ticket Revisions from graph context.",
+        "Create draft Tickets and first Ticket Revisions from a parent Spec using complete, verifiable vertical slices.",
       inputSchema: {
         project_id: z.string().min(1),
         source_graph_revision_id: z.string().min(1),
         source_node_ids: z.array(z.string().min(1)),
-        tickets: z.array(ticketSpecificationSchema)
+        tickets: z.array(specificationSchema)
       }
     },
     async ({
@@ -76,7 +77,7 @@ export function registerTicketTools(server: McpServer, service: ProductGraphServ
         ticket_id: z.string().min(1),
         base_approved_revision_id: z.string().min(1),
         source_graph_revision_id: z.string().min(1),
-        specification: ticketSpecificationSchema
+        specification: specificationSchema
       }
     },
     async ({

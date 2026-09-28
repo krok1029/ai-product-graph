@@ -17,7 +17,9 @@ ADR 是決策歷史，不是日常操作手冊。一般使用時不需要逐篇�
 
 Repository 已提供完整本機主路徑：Project／Repository／Idea、Product Brief、Graph reconciliation、Ticket Revision、Implementation Brief／handoff、Evidence／Result submission、Result Acceptance／Revocation。另有 trace、MCP resources／prompts 與 Markdown export。`pnpm test` 的 stdio workflow 測試從空白 SQLite 開始，只透過 MCP 建立使用者資料，再驗證重啟後 receipt replay 與資料完整性。
 
-目前已實作的 tools：
+預設使用 core profile；日常操作請先看 [Skill 主導的本機工作流](./22-skill-led-workflows.md)。`get_work_context` 一次讀取 Ticket 工作上下文，`start_implementation` 合併核准與 handoff，`submit_work_result` 合併 evidence 與候選結果提交。六個舊 prompts 與外部整合介面只在 full profile 提供。
+
+以下是保留的底層／full 相容模式 tools；後續逐步範例描述舊介面的細節，core 使用者由三個 skills 與新入口完成相同的資料流程：
 
 - `create_project`
 - `list_projects`
@@ -47,18 +49,26 @@ Repository 已提供完整本機主路徑：Project／Repository／Idea、Produc
 
 開始 repository-backed 工作前，以 `create_repository` 建立 Project 範圍內的 Repository identity；可用 `list_repositories` 查詢既有 identity。此操作只保存 metadata，不掃描本機檔案，也不驗證遠端存取權。後續 Ticket targets、handoff 與 evidence 都使用回傳的 `repository.id`。
 
-現有功能與邊界驗收以 GitHub Issues／PR 為準；本機主要流程可用，不代表外部整合已提供。
+現有功能與邊界驗收以 GitHub Issues／PR 為準；本機主要流程可用，不代表外部整合已提供。後續先依 [roadmap](08-roadmap.md) 驗證需求變更、跨對話接手及操作成本，暫不恢復外部整合開發。
 
-外部 Plane／GitHub 同步目前只有資料模型與 durable outbox contract，尚未提供完整的使用者操作 tools。
+Plane 已提供首次匯出與觀測，但後續 update/status execution 尚未交付；外部整合 MCP tools 需選用 full profile。
 
 ## 核心原則
 
-1. AI 產生的是 draft，使用者明確 approval 後才成為目前有效版本。
+1. Product Brief、Ticket 與交付決策可在對話核准；Milestone／Spec 與衍生圖譜依已授權規劃直接保存，不另核准。
 2. Approved content 不原地改寫；修改時建立新 version／revision／brief／result。
 3. Product Brief 是產品意圖的權威來源，Graph 與 Tickets 是衍生資料。
-4. Product Brief 更新後，必須完成 Graph reconciliation 才能繼續 handoff 或 Result Acceptance。
+4. Product Brief 更新後須重新比對完整來源鏈；core 根節點自動同步不表示 Milestone／Spec 已確認。來源仍過期時不得繼續 handoff 或新 Result Acceptance。
 5. Ticket 的規格狀態與交付狀態分開；只有 Result Acceptance 能讓 Ticket 成為 `done`。
 6. 歷史資料以 archive 保留，不 hard delete。
+
+## 直接在對話中核准
+
+Agent 展示草稿內容與版本後，你可以直接說「可以」「同意，就這版」，不必再做一次正式核准、輸入版本 ID 或手動呼叫工具。Agent 會對你同意的版本呼叫核准工具，保存核准者、時間與版本，成功後回報結果。
+
+你也可以說「上面這三張都可以」，一次核准已展示的三個草稿；agent 會分別保存並回報各張結果。若部分失敗，已成功的核准仍保留；版本衝突時重新取得目前內容，不把原同意套用到新版本。只有無法確定你是否同意、或同意哪個版本時，才需要釐清。
+
+此方式適用 Product Brief、Ticket Revision、Implementation Brief 和 Implementation Result 的接受。一般同意不代表豁免未達成的驗收條件；需要 waiver 時仍須指定 criterion 與理由。後續新產生或修改的草稿需要你對其內容的新同意。
 
 ## 狀態速查
 
@@ -75,6 +85,8 @@ Repository 已提供完整本機主路徑：Project／Repository／Idea、Produc
 
 `review_status`、`lifecycle_status` 與 `delivery_status` 是三條獨立狀態軸，不要互相代用。
 
+目前 Milestone／Spec 的保存與更新契約見 [階層規劃](23-planning-hierarchy.md)。以下標準流程採用 core；後續保留的 graph batch 步驟屬於 full 舊專案相容操作。
+
 ## 標準操作流程
 
 ```text
@@ -82,8 +94,9 @@ Project
   -> Idea
   -> Product Brief Draft
   -> Product Brief Approval
-  -> Graph Draft Batch
-  -> Graph Batch Approval / Reconciliation
+  -> Milestone（階段成果與完成條件）
+  -> Spec（完整能力規格）
+  -> Graph 自動同步（無額外核准）
   -> Ticket Revision Draft
   -> Ticket Revision Approval
   -> Implementation Brief Draft
@@ -433,7 +446,7 @@ Integrity check 失敗時不可自動刪除或修復資料。
 
 - Project 與 Repository identities 正確。
 - Product Brief 有 current approved version。
-- Product Intent Reconciliation 是 `current`。
+- Product Intent Reconciliation 是 `current`，且準備使用的規劃來源鏈已重新比對；root current 不能代替下游確認。
 - 使用目前 Graph Revision 與 stable entity IDs。
 
 交給 coding agent 前：
@@ -441,7 +454,7 @@ Integrity check 失敗時不可自動刪除或修復資料。
 - Ticket Revision 是 current approved。
 - 每個 required Repository 都有 active Implementation Target。
 - Implementation Brief 是 active approved。
-- `get_implementation_handoff` 回傳 `freshness = current`。
+- Core 的 `start_implementation`（full 底層為 `get_implementation_handoff`）通過真實 Repository baseline 與來源檢查，回傳 `freshness = current`。
 
 接受實作前：
 
@@ -454,24 +467,24 @@ Integrity check 失敗時不可自動刪除或修復資料。
 變更產品意圖後：
 
 - 建立並核准新的 Product Brief Version。
-- 完成 Graph reconciliation，包含 no-op 情況。
-- 檢查受影響 Tickets 是否需要 replacement revision。
-- 只有 referenced product-intent nodes 被更新或 archived 的 Tickets 才建立 replacement revision，並為其 current targets 重建 Implementation Brief／handoff。
+- Core 自動同步根節點後，從上游重新比對受影響 Milestone／Spec；full legacy 才使用手動 batch／no-op reconciliation。
+- 相同內容確認後重新查詢影響清單，仍有效的 Ticket／Brief／Result／Acceptance 沿用。
+- 真正內容、歸屬、額外引用或依賴變更時，只修訂受影響工作；不自動撤銷有效歷史驗收。
 
 ## 文件閱讀路線
 
 只想操作：
 
-1. 本手冊。
-2. [Codex MCP Setup](./15-codex-mcp-setup.md)。
-3. 遇到 validation 時查 [MCP Tool Spec](./12-mcp-tool-spec.md)。
+1. [使用者工作流](./02-user-workflows.md) 與 [精簡工作流](./22-skill-led-workflows.md)。
+2. [Codex MCP Setup](./15-codex-mcp-setup.md) 與本手冊的對應章節。
+3. 遇到 validation 時查 [階層規劃](./23-planning-hierarchy.md) 與 [MCP Tool Spec](./12-mcp-tool-spec.md)。
 
 準備實作 server：
 
-1. [Phase 1A Scaffold Spec](./14-phase-1a-scaffold-spec.md)。
-2. [Implementation Plan](./11-implementation-plan.md)。
-3. [MCP Tool Spec](./12-mcp-tool-spec.md)。
-4. [SQLite Schema](./13-sqlite-schema.md)。
+1. [Roadmap](./08-roadmap.md) 與此次對應的 GitHub Spec／Ticket。
+2. [階層規劃](./23-planning-hierarchy.md)、[精簡工作流](./22-skill-led-workflows.md) 及相關 ADR。
+3. [MCP Tool Spec](./12-mcp-tool-spec.md) 與 [SQLite Schema](./13-sqlite-schema.md)。
+4. 追溯初始 scaffold 時才查 [Phase 1A](./14-phase-1a-scaffold-spec.md) 與 [原 Implementation Plan](./11-implementation-plan.md)，不把歷史切分當成新待辦。
 
 理解產品與 domain：
 

@@ -10,7 +10,7 @@ import { ProductGraphService } from "../../application/product-graph-service.js"
 import { openDatabase } from "../../infrastructure/sqlite/database.js";
 import { createSqlitePorts } from "../../infrastructure/sqlite/repositories.js";
 import { acceptanceFixture } from "../../test-support/result-acceptance-fixture.js";
-import { createMcpServer } from "./server.js";
+import { createFullMcpServer as createMcpServer } from "../../test-support/full-mcp-server.js";
 
 let f: ReturnType<typeof acceptanceFixture>;
 let connection: Awaited<ReturnType<typeof connect>>;
