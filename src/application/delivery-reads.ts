@@ -1,6 +1,7 @@
 // 將可採取的下一步與交付證據一併讀出；此投影不改寫核准、驗收或工作狀態。
 import type { Ticket } from "../domain/models.js";
 import type { ApplicationPorts } from "./ports.js";
+import { stageProgress, summarizeDelivery } from "./stage-progress.js";
 import { evaluateTicketSourceFreshness } from "./implementation-freshness.js";
 
 export class DeliveryReads {
@@ -58,12 +59,8 @@ export class DeliveryReads {
       .filter(ticket => ticket.lifecycleStatus === "active").map(ticket => this.ticket(ticket));
     return {
       scope: "active_project_tickets",
-      summary: {
-        total: tickets.length, done: tickets.filter(ticket => ticket.delivery_status === "done").length,
-        stale: tickets.filter(ticket => ticket.source_freshness === "stale").length,
-        blocked: tickets.filter(ticket => ticket.blocking_dependency_ids.length > 0 || ticket.delivery_status === "blocked").length,
-        awaiting_acceptance: tickets.filter(ticket => ticket.targets.some(target => target.pending_result_id)).length
-      },
+      summary: summarizeDelivery(tickets),
+      stage_progress: stageProgress(this.ports, projectId, tickets),
       tickets
     };
   }
